@@ -59,6 +59,8 @@ class MenuViewModel(
 
     private val repository = MenuRepository(application)
     private val preferences = MenuPreferencesDataSource(application)
+    private val aiInstructionsText: String =
+        application.assets.open("ai_llm_instructions.txt").bufferedReader().use { it.readText() }
 
     private val _uiState = MutableStateFlow(MenuUiState())
     val uiState: StateFlow<MenuUiState> = _uiState
@@ -87,6 +89,18 @@ class MenuViewModel(
         viewModelScope.launch {
             val label = resolveDisplayName(context, uri)
             preferences.saveMenuSelection(uri.toString(), label)
+        }
+    }
+
+    fun getAiInstructions(): String = aiInstructionsText
+
+    fun clearMenuSelection() {
+        viewModelScope.launch {
+            preferences.clearMenuSelection()
+            currentSelection = null
+            currentMenuData = null
+            selectedWeekId = null
+            _uiState.emit(MenuUiState())
         }
     }
 
@@ -157,7 +171,7 @@ class MenuViewModel(
                 } else {
                     emitLoadError(
                         message = primaryError.message
-                            ?: "No menu JSON found. Save it as ${MenuRepository.DEFAULT_DOWNLOADS_FILE_NAME} or choose a file.",
+                            ?: "Pick the most recent menu JSON. If you need one, copy the AI instructions and ask your favourite assistant to build it.",
                         selectionLabel = "No menu selected"
                     )
                 }

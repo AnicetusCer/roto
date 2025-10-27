@@ -29,7 +29,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -46,6 +48,7 @@ fun MenuRoot(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
 
     val openDocumentLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
@@ -65,6 +68,10 @@ fun MenuRoot(
         state = state,
         onRefresh = viewModel::refresh,
         onChooseFile = { openDocumentLauncher.launch(arrayOf("application/json", "text/plain")) },
+        onCopyInstructions = {
+            clipboard.setText(AnnotatedString(viewModel.getAiInstructions()))
+        },
+        onClearMenu = viewModel::clearMenuSelection,
         onSelectWeek = viewModel::selectWeek,
         onClearWeek = viewModel::clearSelectedWeek,
         modifier = modifier
@@ -76,6 +83,8 @@ fun MenuScreen(
     state: MenuUiState,
     onRefresh: () -> Unit,
     onChooseFile: () -> Unit,
+    onCopyInstructions: () -> Unit,
+    onClearMenu: () -> Unit,
     onSelectWeek: (String) -> Unit,
     onClearWeek: () -> Unit,
     modifier: Modifier = Modifier
@@ -85,6 +94,9 @@ fun MenuScreen(
         state.error != null -> SetupState(
             message = state.error,
             onChooseFile = onChooseFile,
+            onCopyInstructions = onCopyInstructions,
+            showClear = state.selectedSourceLabel != "No menu selected",
+            onClearMenu = onClearMenu,
             sourceLabel = state.selectedSourceLabel,
             modifier = modifier
         )
@@ -92,13 +104,17 @@ fun MenuScreen(
             state = state,
             onRefresh = onRefresh,
             onChooseFile = onChooseFile,
+            onClearMenu = onClearMenu,
             onSelectWeek = onSelectWeek,
             onClearWeek = onClearWeek,
             modifier = modifier
         )
         else -> SetupState(
-            message = "No menu JSON found yet. Choose your file or place ${MenuRepository.DEFAULT_DOWNLOADS_FILE_NAME} in Downloads.",
+            message = "Pick the most recent menu JSON. If you need one, copy the AI instructions and ask your favourite assistant to build it.",
             onChooseFile = onChooseFile,
+            onCopyInstructions = onCopyInstructions,
+            showClear = state.selectedSourceLabel != "No menu selected",
+            onClearMenu = onClearMenu,
             sourceLabel = state.selectedSourceLabel,
             modifier = modifier
         )
@@ -124,6 +140,9 @@ private fun LoadingState(modifier: Modifier = Modifier) {
 private fun SetupState(
     message: String,
     onChooseFile: () -> Unit,
+    onCopyInstructions: () -> Unit,
+    showClear: Boolean,
+    onClearMenu: () -> Unit,
     sourceLabel: String,
     modifier: Modifier = Modifier
 ) {
@@ -136,7 +155,9 @@ private fun SetupState(
     ) {
         SourceControls(
             selectedSourceLabel = sourceLabel,
-            onChooseFile = onChooseFile
+            onChooseFile = onChooseFile,
+            showClear = showClear,
+            onClearMenu = onClearMenu
         )
         Icon(
             imageVector = Icons.Filled.Error,
@@ -148,6 +169,9 @@ private fun SetupState(
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center
         )
+        Button(onClick = onCopyInstructions) {
+            Text("Copy AI Instructions")
+        }
     }
 }
 
@@ -156,6 +180,7 @@ private fun MenuContent(
     state: MenuUiState,
     onRefresh: () -> Unit,
     onChooseFile: () -> Unit,
+    onClearMenu: () -> Unit,
     onSelectWeek: (String) -> Unit,
     onClearWeek: () -> Unit,
     modifier: Modifier = Modifier
@@ -175,7 +200,9 @@ private fun MenuContent(
 
         SourceControls(
             selectedSourceLabel = state.selectedSourceLabel,
-            onChooseFile = onChooseFile
+            onChooseFile = onChooseFile,
+            showClear = true,
+            onClearMenu = onClearMenu
         )
 
         state.coverageStatus?.let {
@@ -220,7 +247,9 @@ private fun MenuContent(
 @Composable
 private fun SourceControls(
     selectedSourceLabel: String,
-    onChooseFile: () -> Unit
+    onChooseFile: () -> Unit,
+    showClear: Boolean,
+    onClearMenu: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
@@ -229,6 +258,9 @@ private fun SourceControls(
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = onChooseFile) { Text("Choose JSON") }
+            if (showClear) {
+                TextButton(onClick = onClearMenu) { Text("Clear menu") }
+            }
         }
     }
 }

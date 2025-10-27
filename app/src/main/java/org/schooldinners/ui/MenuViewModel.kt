@@ -12,6 +12,7 @@ import java.time.format.DateTimeParseException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.schooldinners.data.MenuData
 import org.schooldinners.data.MenuLoadResult
@@ -29,7 +30,15 @@ data class MenuUiState(
     val tomorrowMenu: DayMenuResult? = null,
     val selectedSourceLabel: String = "Bundled sample",
     val coverageMessage: String? = null,
-    val usingCustomSelection: Boolean = false
+    val usingCustomSelection: Boolean = false,
+    val previewOptions: List<PreviewOption> = emptyList(),
+    val activePreview: PreviewOption? = null
+)
+
+data class PreviewOption(
+    val id: String,
+    val label: String,
+    val menuResult: DayMenuResult
 )
 
 class MenuViewModel(
@@ -43,11 +52,13 @@ class MenuViewModel(
     val uiState: StateFlow<MenuUiState> = _uiState
 
     private var currentSelection: MenuSelection? = null
+    private var previewSelectionId: String? = null
 
     init {
         viewModelScope.launch {
             preferences.menuSelectionFlow.collectLatest { selection ->
                 currentSelection = selection
+                previewSelectionId = null
                 performLoad(selection)
             }
         }
@@ -69,6 +80,25 @@ class MenuViewModel(
     fun clearMenuSelection() {
         viewModelScope.launch {
             preferences.clearMenuSelection()
+        }
+    }
+
+    fun selectPreview(optionId: String) {
+        viewModelScope.launch {
+            previewSelectionId = optionId
+            val option = _uiState.value.previewOptions.find { it.id == optionId }
+            _uiState.update { state ->
+                state.copy(activePreview = option)
+            }
+        }
+    }
+
+    fun clearPreviewSelection() {
+        viewModelScope.launch {
+            previewSelectionId = null
+            _uiState.update { state ->
+                state.copy(activePreview = null)
+            }
         }
     }
 
@@ -104,18 +134,18 @@ class MenuViewModel(
                     repository.loadMenu(null)
                         .onSuccess { fallback ->
                             updateStateWithMenu(
-                                result = fallback,
-                                selectionUri = null,
-                                selectionLabel = null,
-                                today = today,
-                                tomorrow = tomorrow,
-                                warningOverride = primaryError.message
-                                    ?: "Couldn't read the selected file. Showing the bundled menu instead."
-                            )
-                        }
-                        .onFailure { fallbackError ->
-                            _uiState.emit(
-                                MenuUiState(
+                            result = fallback,
+                            selectionUri = null,
+                            selectionLabel = null,
+                            today = today,
+                            tomorrow = tomorrow,
+                            warningOverride = primaryError.message
+                                ?: "Couldn't read the selected file. Showing the bundled menu instead."
+                        )
+                    }
+                    .onFailure { fallbackError ->
+                        _uiState.emit(
+                            MenuUiState(
                                     isLoading = false,
                                     error = fallbackError.message
                                         ?: primaryError.message
@@ -146,6 +176,12 @@ class MenuViewModel(
         val todayMenu = getMenuForDate(menuData, today)
         val tomorrowMenu = getMenuForDate(menuData, tomorrow)
 
+        val previewOptions = buildPreviewOptions(menuData, today)
+        val activePreview = previewOptions.find { it.id == previewSelectionId }
+        if (activePreview == null) {
+            previewSelectionId = null
+        }
+
         val errorMessage = when {
             warningOverride != null -> warningOverride
             todayMenu == null && tomorrowMenu == null ->
@@ -172,7 +208,9 @@ class MenuViewModel(
                 tomorrowMenu = tomorrowMenu,
                 selectedSourceLabel = label,
                 coverageMessage = coverageMessage,
-                usingCustomSelection = result.sourceType == MenuSourceType.EXTERNAL_SELECTION
+                usingCustomSelection = result.sourceType == MenuSourceType.EXTERNAL_SELECTION,
+                previewOptions = previewOptions,
+                activePreview = activePreview
             )
         )
     }
@@ -195,6 +233,37 @@ class MenuViewModel(
                 "This rota only covers up to $latestFriday. Check if a new menu is available."
             else -> null
         }
+    }
+
+    private fun buildPreviewOptions(menuData: MenuData, today: LocalDate): List<PreviewOption> {
+        val mondays = menuData.cycle.weeks
+            .flatMap { week -> week.weekCommencing.mapNotNull(::parseIsoDateOrNull) }
+            .sorted()
+        if (mondays.isEmpty()) return emptyList()
+
+        val pastMonday = mondays.filter { !it.isAfter(today) }.maxOrNull()
+        val futureMonday = mondays.filter { !it.isBefore(today) }.minOrNull()
+
+        val options = mutableListOf<PreviewOption>()
+        pastMonday?.let { monday ->
+            getMenuForDate(menuData, monday)?.let { result ->
+                options += PreviewOption(
+                    id = "past_${monday}",
+                    label = "View week starting $monday",
+                    menuResult = result
+                )
+            }
+        }
+        futureMonday?.takeIf { it != pastMonday }?.let { monday ->
+            getMenuForDate(menuData, monday)?.let { result ->
+                options += PreviewOption(
+                    id = "future_${monday}",
+                    label = "Preview upcoming week starting $monday",
+                    menuResult = result
+                )
+            }
+        }
+        return options
     }
 
     private fun parseIsoDateOrNull(value: String): LocalDate? =

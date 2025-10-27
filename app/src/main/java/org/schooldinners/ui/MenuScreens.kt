@@ -65,6 +65,8 @@ fun MenuRoot(
             openDocumentLauncher.launch(arrayOf("application/json", "text/plain"))
         },
         onClearSelection = viewModel::clearMenuSelection,
+        onSelectPreview = viewModel::selectPreview,
+        onClearPreview = viewModel::clearPreviewSelection,
         modifier = modifier
     )
 }
@@ -75,6 +77,8 @@ fun MenuScreen(
     onRefresh: () -> Unit,
     onChooseFile: () -> Unit,
     onClearSelection: () -> Unit,
+    onSelectPreview: (String) -> Unit,
+    onClearPreview: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     when {
@@ -86,6 +90,11 @@ fun MenuScreen(
             onClearSelection = onClearSelection,
             usingCustomSelection = state.usingCustomSelection,
             sourceLabel = state.selectedSourceLabel,
+            coverageMessage = state.coverageMessage,
+            previewOptions = state.previewOptions,
+            activePreview = state.activePreview,
+            onSelectPreview = onSelectPreview,
+            onClearPreview = onClearPreview,
             modifier = modifier
         )
         state.tomorrowMenu != null || state.todayMenu != null -> MenuContent(
@@ -96,6 +105,10 @@ fun MenuScreen(
             usingCustomSelection = state.usingCustomSelection,
             onChooseFile = onChooseFile,
             onClearSelection = onClearSelection,
+            previewOptions = state.previewOptions,
+            activePreview = state.activePreview,
+            onSelectPreview = onSelectPreview,
+            onClearPreview = onClearPreview,
             modifier = modifier
         )
         else -> ErrorState(
@@ -105,6 +118,11 @@ fun MenuScreen(
             onClearSelection = onClearSelection,
             usingCustomSelection = state.usingCustomSelection,
             sourceLabel = state.selectedSourceLabel,
+            coverageMessage = state.coverageMessage,
+            previewOptions = state.previewOptions,
+            activePreview = state.activePreview,
+            onSelectPreview = onSelectPreview,
+            onClearPreview = onClearPreview,
             modifier = modifier
         )
     }
@@ -133,6 +151,11 @@ private fun ErrorState(
     onClearSelection: () -> Unit,
     usingCustomSelection: Boolean,
     sourceLabel: String,
+    coverageMessage: String?,
+    previewOptions: List<PreviewOption>,
+    activePreview: PreviewOption?,
+    onSelectPreview: (String) -> Unit,
+    onClearPreview: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -160,6 +183,23 @@ private fun ErrorState(
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center
         )
+        coverageMessage?.let {
+            Spacer(modifier = Modifier.height(12.dp))
+            InfoCard(message = it)
+        }
+        if (previewOptions.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(12.dp))
+            PreviewOptions(
+                options = previewOptions,
+                activePreview = activePreview,
+                onSelectPreview = onSelectPreview,
+                onClearPreview = onClearPreview
+            )
+        }
+        activePreview?.let {
+            Spacer(modifier = Modifier.height(12.dp))
+            MenuCard(title = it.label, menu = it.menuResult)
+        }
         Spacer(modifier = Modifier.padding(8.dp))
         Button(onClick = onRefresh) {
             Text("Try again")
@@ -176,6 +216,10 @@ private fun MenuContent(
     usingCustomSelection: Boolean,
     onChooseFile: () -> Unit,
     onClearSelection: () -> Unit,
+    previewOptions: List<PreviewOption>,
+    activePreview: PreviewOption?,
+    onSelectPreview: (String) -> Unit,
+    onClearPreview: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -202,6 +246,15 @@ private fun MenuContent(
             InfoCard(message = it)
         }
 
+        if (previewOptions.isNotEmpty()) {
+            PreviewOptions(
+                options = previewOptions,
+                activePreview = activePreview,
+                onSelectPreview = onSelectPreview,
+                onClearPreview = onClearPreview
+            )
+        }
+
         tomorrowMenu?.let {
             MenuCard(
                 title = "Tomorrow · ${friendlyDate(it)}",
@@ -216,6 +269,13 @@ private fun MenuContent(
             MenuCard(
                 title = "Today · ${friendlyDate(it)}",
                 menu = it
+            )
+        }
+
+        activePreview?.let {
+            MenuCard(
+                title = it.label,
+                menu = it.menuResult
             )
         }
     }
@@ -266,6 +326,33 @@ private fun InfoCard(message: String) {
                 text = message,
                 style = MaterialTheme.typography.bodyMedium
             )
+        }
+    }
+}
+
+@Composable
+private fun PreviewOptions(
+    options: List<PreviewOption>,
+    activePreview: PreviewOption?,
+    onSelectPreview: (String) -> Unit,
+    onClearPreview: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "Preview another week:",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold
+        )
+        options.forEach { option ->
+            val isActive = activePreview?.id == option.id
+            Button(onClick = { onSelectPreview(option.id) }) {
+                Text(option.label + if (isActive) " (viewing)" else "")
+            }
+        }
+        if (activePreview != null) {
+            TextButton(onClick = onClearPreview) {
+                Text("Hide preview")
+            }
         }
     }
 }

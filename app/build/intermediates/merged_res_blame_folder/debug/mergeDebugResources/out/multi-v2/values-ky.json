@@ -4,7 +4,7 @@
             "outputFile": "org.schooldinners.app-mergeDebugResources-56:/values-ky/values-ky.xml",
             "map": [
                 {
-                    "source": "/home/Mile/.gradle/caches/transforms-4/e3cb05eee76f911700f2556f089f835c/transformed/appcompat-1.6.1/res/values-ky/values-ky.xml",
+                    "source": "/home/Mile/.gradle/caches/transforms-4/6c5b50aee07317c654b2edbcbc30db59/transformed/appcompat-1.6.1/res/values-ky/values-ky.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -21,7 +21,7 @@
                     }
                 },
                 {
-                    "source": "/home/Mile/.gradle/caches/transforms-4/fb7129584e24e9a3b911dc6c83cadf01/transformed/material-1.11.0/res/values-ky/values-ky.xml",
+                    "source": "/home/Mile/.gradle/caches/transforms-4/6b5b76ad091749a41ddc7f24ab5eeda1/transformed/material-1.11.0/res/values-ky/values-ky.xml",
                     "from": {
                         "startLines": "2,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -40,24 +40,7 @@
                     }
                 },
                 {
-                    "source": "/home/Mile/.gradle/caches/transforms-4/5381949648d3d72f8087c90793725bf1/transformed/ui-release/res/values-ky/values-ky.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "105,198,282,392,492,577,659,757,846,931,997,1064,1149,1236,1309,1388,1456",
-                        "endColumns": "92,83,109,99,84,81,97,88,84,65,66,84,86,72,78,67,117",
-                        "endOffsets": "193,277,387,487,572,654,752,841,926,992,1059,1144,1231,1304,1383,1451,1569"
-                    },
-                    "to": {
-                        "startLines": "48,49,50,51,52,56,57,170,171,172,173,175,176,178,180,181,182",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "4562,4655,4739,4849,4949,5262,5344,16167,16256,16341,16407,16556,16641,16810,16984,17063,17131",
-                        "endColumns": "92,83,109,99,84,81,97,88,84,65,66,84,86,72,78,67,117",
-                        "endOffsets": "4650,4734,4844,4944,5029,5339,5437,16251,16336,16402,16469,16636,16723,16878,17058,17126,17244"
-                    }
-                },
-                {
-                    "source": "/home/Mile/.gradle/caches/transforms-4/c3260f8470e4477d690468876d5ba9c5/transformed/core-1.13.1/res/values-ky/values-ky.xml",
+                    "source": "/home/Mile/.gradle/caches/transforms-4/32dc61f7c41e7a7c507baff2eb455b9c/transformed/core-1.13.1/res/values-ky/values-ky.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9",
                         "startColumns": "4,4,4,4,4,4,4,4",
@@ -74,7 +57,7 @@
                     }
                 },
                 {
-                    "source": "/home/Mile/.gradle/caches/transforms-4/e17a0dc3c1d872fb14139c4b3a730651/transformed/material3-release/res/values-ky/values-ky.xml",
+                    "source": "/home/Mile/.gradle/caches/transforms-4/a826984b54f9d9acb2590dba040b56bf/transformed/material3-release/res/values-ky/values-ky.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -91,7 +74,7 @@
                     }
                 },
                 {
-                    "source": "/home/Mile/.gradle/caches/transforms-4/b1e6e4e45beeb7e1267826cc3e7985b4/transformed/foundation-release/res/values-ky/values-ky.xml",
+                    "source": "/home/Mile/.gradle/caches/transforms-4/5ec4e8ad3d885e6e0dfb2992fa2e25a8/transformed/foundation-release/res/values-ky/values-ky.xml",
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",
@@ -105,6 +88,23 @@
                         "startOffsets": "17249,17348",
                         "endColumns": "98,103",
                         "endOffsets": "17343,17447"
+                    }
+                },
+                {
+                    "source": "/home/Mile/.gradle/caches/transforms-4/2ba7fad5e99978489eff9565a63e009b/transformed/ui-release/res/values-ky/values-ky.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "105,198,282,392,492,577,659,757,846,931,997,1064,1149,1236,1309,1388,1456",
+                        "endColumns": "92,83,109,99,84,81,97,88,84,65,66,84,86,72,78,67,117",
+                        "endOffsets": "193,277,387,487,572,654,752,841,926,992,1059,1144,1231,1304,1383,1451,1569"
+                    },
+                    "to": {
+                        "startLines": "48,49,50,51,52,56,57,170,171,172,173,175,176,178,180,181,182",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "4562,4655,4739,4849,4949,5262,5344,16167,16256,16341,16407,16556,16641,16810,16984,17063,17131",
+                        "endColumns": "92,83,109,99,84,81,97,88,84,65,66,84,86,72,78,67,117",
+                        "endOffsets": "4650,4734,4844,4944,5029,5339,5437,16251,16336,16402,16469,16636,16723,16878,17058,17126,17244"
                     }
                 }
             ]

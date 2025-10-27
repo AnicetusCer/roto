@@ -1,0 +1,54 @@
+{
+  "schema_version": "0.2",
+  "school_name": "Example Primary School",
+  "notes": [
+    "Yoghurt and fresh fruit available daily.",
+    "Allergen info available on request."
+  ],
+  "cycle": {
+    "weeks": [
+      {
+        "week_id": "Week 1",
+        "week_commencing": [
+          "2025-11-03",
+          "2025-11-24"
+        ],
+        "days": {
+          "monday": {
+            "main": "Chicken Pie, Mash, Veg, Gravy",
+            "alt_hot": "Creamy Cajun Pasta Bake (V)",
+            "deli_option": "Jacket Potato / Wrap Option",
+            "dessert": "Jam & Coconut Sponge + Custard"
+          },
+          "tuesday": {
+            "main": "Beef Chilli, Rice, Peas & Carrots",
+            "alt_hot": "Veggie Sausage (VE), Mash, Gravy",
+            "deli_option": "Tuna Mayo Wrap / Jacket Potato",
+            "dessert": "Melon Slices & Shortbread"
+          }
+        }
+      },
+      {
+        "week_id": "Week 2",
+        "week_commencing": [
+          "2025-11-10",
+          "2025-12-01"
+        ],
+        "days": {
+          "monday": {
+            "main": "Veggie Lasagne (V) with Garlic Bread",
+            "alt_hot": "Tomato Soup & Crusty Roll",
+            "deli_option": "Cheese & Salad Wrap",
+            "dessert": "Fruit Salad"
+          },
+          "friday": {
+            "main": "Battered Fish, Chips & Peas",
+            "alt_hot": "Veggie Burger (V) & Chips",
+            "deli_option": "Beans on Jacket Potato",
+            "dessert": "Ice Cream Tub"
+          }
+        }
+      }
+    ]
+  }
+}

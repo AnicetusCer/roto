@@ -97,6 +97,8 @@ project_primer:
           purpose: "Browse any date's menu via date picker or next/prev controls."
       - setup_screen:
           purpose: "Initial and repeat JSON import/edit experience with validation."
+    orientation:
+      lock_to_portrait: "Keep the app in a non-rotating, vertical layout so the UI stays consistent for parents."
 
   development_environment:
     topology:
@@ -205,6 +207,14 @@ project_primer:
       - "Run Gradle builds from WSL when code changes land."
       - "Exercise emulator scenarios listed above after significant UI or logic updates."
       - "Keep sample JSON assets in sync with the documented schema."
+  parent_prompt_strategy:
+    goal: "Let parents convert their school PDF into the required JSON without embedding OCR logic in-app."
+    ai_helper_asset: "app/src/main/assets/ai_llm_instructions.txt"
+    workflow_summary:
+      - "App offers an info screen with a 'Copy AI Instructions' button that places the asset text on the clipboard."
+      - "Parent pastes those instructions into their preferred AI assistant, then provides the school menu."
+      - "AI returns JSON conforming to schema_version 0.2 and tells the parent to save it as SchoolNomNomsMenu.json in Downloads."
+      - "Our app imports that single file; if it already exists we overwrite/replace to keep one source of truth."
 
   references:
     source_documents:

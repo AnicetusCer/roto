@@ -61,7 +61,7 @@ fun MenuScreen(
             modifier = modifier
         )
         else -> ErrorState(
-            message = "No menu data available.",
+            message = "No menu available yet. When a new rota arrives, copy the AI Instructions and refresh SchoolNomNomsMenu.json.",
             onRefresh = onRefresh,
             modifier = modifier
         )

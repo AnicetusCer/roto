@@ -49,7 +49,7 @@ class MenuViewModel(
                     if (tomorrowMenu == null && todayMenu == null) {
                         _uiState.value = MenuUiState(
                             isLoading = false,
-                            error = "No menu found for today or tomorrow. Check your JSON file."
+                            error = "No menu found for today or tomorrow. When your school releases the next rota, use the AI Instructions to refresh SchoolNomNomsMenu.json."
                         )
                     } else {
                         _uiState.value = MenuUiState(

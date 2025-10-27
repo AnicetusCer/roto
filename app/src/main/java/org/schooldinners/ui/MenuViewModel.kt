@@ -19,9 +19,10 @@ data class MenuUiState(
 )
 
 class MenuViewModel(
-    application: Application,
-    private val repository: MenuRepository = MenuRepository(application)
+    application: Application
 ) : AndroidViewModel(application) {
+
+    private val repository = MenuRepository(application)
 
     private val _uiState = MutableStateFlow(MenuUiState())
     val uiState: StateFlow<MenuUiState> = _uiState

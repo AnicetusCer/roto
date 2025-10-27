@@ -34,7 +34,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import java.time.format.TextStyle
+import java.util.Locale
 import org.schooldinners.domain.DayMenuResult
+import org.schooldinners.data.MenuRepository
 
 @Composable
 fun MenuRoot(
@@ -42,8 +45,8 @@ fun MenuRoot(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-
     val context = LocalContext.current
+
     val openDocumentLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             try {
@@ -52,7 +55,7 @@ fun MenuRoot(
                     Intent.FLAG_GRANT_READ_URI_PERMISSION
                 )
             } catch (_: SecurityException) {
-                // Persistable permission may not be granted; continue with transient access
+                // not fatal; we'll rely on transient access
             }
             viewModel.onExternalFileChosen(context, uri)
         }
@@ -61,12 +64,10 @@ fun MenuRoot(
     MenuScreen(
         state = state,
         onRefresh = viewModel::refresh,
-        onChooseFile = {
-            openDocumentLauncher.launch(arrayOf("application/json", "text/plain"))
-        },
+        onChooseFile = { openDocumentLauncher.launch(arrayOf("application/json", "text/plain")) },
         onClearSelection = viewModel::clearMenuSelection,
-        onSelectPreview = viewModel::selectPreview,
-        onClearPreview = viewModel::clearPreviewSelection,
+        onSelectWeek = viewModel::selectWeek,
+        onClearWeek = viewModel::clearSelectedWeek,
         modifier = modifier
     )
 }
@@ -77,52 +78,35 @@ fun MenuScreen(
     onRefresh: () -> Unit,
     onChooseFile: () -> Unit,
     onClearSelection: () -> Unit,
-    onSelectPreview: (String) -> Unit,
-    onClearPreview: () -> Unit,
+    onSelectWeek: (String) -> Unit,
+    onClearWeek: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     when {
         state.isLoading -> LoadingState(modifier)
-        state.error != null -> ErrorState(
+        state.error != null -> SetupState(
             message = state.error,
-            onRefresh = onRefresh,
             onChooseFile = onChooseFile,
             onClearSelection = onClearSelection,
             usingCustomSelection = state.usingCustomSelection,
             sourceLabel = state.selectedSourceLabel,
-            coverageMessage = state.coverageMessage,
-            previewOptions = state.previewOptions,
-            activePreview = state.activePreview,
-            onSelectPreview = onSelectPreview,
-            onClearPreview = onClearPreview,
             modifier = modifier
         )
-        state.tomorrowMenu != null || state.todayMenu != null -> MenuContent(
-            todayMenu = state.todayMenu,
-            tomorrowMenu = state.tomorrowMenu,
-            selectedSourceLabel = state.selectedSourceLabel,
-            coverageMessage = state.coverageMessage,
-            usingCustomSelection = state.usingCustomSelection,
+        state.hasMenuData -> MenuContent(
+            state = state,
+            onRefresh = onRefresh,
             onChooseFile = onChooseFile,
             onClearSelection = onClearSelection,
-            previewOptions = state.previewOptions,
-            activePreview = state.activePreview,
-            onSelectPreview = onSelectPreview,
-            onClearPreview = onClearPreview,
+            onSelectWeek = onSelectWeek,
+            onClearWeek = onClearWeek,
             modifier = modifier
         )
-        else -> ErrorState(
-            message = "No menu available yet. When a new rota arrives, copy the AI Instructions and refresh SchoolNomNomsMenu.json.",
-            onRefresh = onRefresh,
+        else -> SetupState(
+            message = "No menu JSON found yet. Choose your file or place ${MenuRepository.DEFAULT_DOWNLOADS_FILE_NAME} in Downloads.",
             onChooseFile = onChooseFile,
             onClearSelection = onClearSelection,
             usingCustomSelection = state.usingCustomSelection,
             sourceLabel = state.selectedSourceLabel,
-            coverageMessage = state.coverageMessage,
-            previewOptions = state.previewOptions,
-            activePreview = state.activePreview,
-            onSelectPreview = onSelectPreview,
-            onClearPreview = onClearPreview,
             modifier = modifier
         )
     }
@@ -138,24 +122,18 @@ private fun LoadingState(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center
     ) {
         CircularProgressIndicator()
-        Spacer(modifier = Modifier.padding(8.dp))
-        Text(text = "Loading menu…")
+        Spacer(modifier = Modifier.height(12.dp))
+        Text("Loading menu…")
     }
 }
 
 @Composable
-private fun ErrorState(
+private fun SetupState(
     message: String,
-    onRefresh: () -> Unit,
     onChooseFile: () -> Unit,
     onClearSelection: () -> Unit,
     usingCustomSelection: Boolean,
     sourceLabel: String,
-    coverageMessage: String?,
-    previewOptions: List<PreviewOption>,
-    activePreview: PreviewOption?,
-    onSelectPreview: (String) -> Unit,
-    onClearPreview: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -163,7 +141,7 @@ private fun ErrorState(
             .fillMaxSize()
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         SourceControls(
             selectedSourceLabel = sourceLabel,
@@ -171,55 +149,27 @@ private fun ErrorState(
             onChooseFile = onChooseFile,
             onClearSelection = onClearSelection
         )
-        Spacer(modifier = Modifier.height(12.dp))
         Icon(
             imageVector = Icons.Filled.Error,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.error
         )
-        Spacer(modifier = Modifier.padding(8.dp))
         Text(
             text = message,
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center
         )
-        coverageMessage?.let {
-            Spacer(modifier = Modifier.height(12.dp))
-            InfoCard(message = it)
-        }
-        if (previewOptions.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(12.dp))
-            PreviewOptions(
-                options = previewOptions,
-                activePreview = activePreview,
-                onSelectPreview = onSelectPreview,
-                onClearPreview = onClearPreview
-            )
-        }
-        activePreview?.let {
-            Spacer(modifier = Modifier.height(12.dp))
-            MenuCard(title = it.label, menu = it.menuResult)
-        }
-        Spacer(modifier = Modifier.padding(8.dp))
-        Button(onClick = onRefresh) {
-            Text("Try again")
-        }
     }
 }
 
 @Composable
 private fun MenuContent(
-    todayMenu: DayMenuResult?,
-    tomorrowMenu: DayMenuResult?,
-    selectedSourceLabel: String,
-    coverageMessage: String?,
-    usingCustomSelection: Boolean,
+    state: MenuUiState,
+    onRefresh: () -> Unit,
     onChooseFile: () -> Unit,
     onClearSelection: () -> Unit,
-    previewOptions: List<PreviewOption>,
-    activePreview: PreviewOption?,
-    onSelectPreview: (String) -> Unit,
-    onClearPreview: () -> Unit,
+    onSelectWeek: (String) -> Unit,
+    onClearWeek: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -236,47 +186,47 @@ private fun MenuContent(
         )
 
         SourceControls(
-            selectedSourceLabel = selectedSourceLabel,
-            usingCustomSelection = usingCustomSelection,
+            selectedSourceLabel = state.selectedSourceLabel,
+            usingCustomSelection = state.usingCustomSelection,
             onChooseFile = onChooseFile,
             onClearSelection = onClearSelection
         )
 
-        coverageMessage?.let {
-            InfoCard(message = it)
+        state.coverageStatus?.let {
+            InfoCard(it.message)
         }
 
-        if (previewOptions.isNotEmpty()) {
-            PreviewOptions(
-                options = previewOptions,
-                activePreview = activePreview,
-                onSelectPreview = onSelectPreview,
-                onClearPreview = onClearPreview
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Text(
+                text = "Tomorrow",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            state.tomorrowMenu?.let {
+                MenuCard(title = friendlyDate(it), menu = it)
+            } ?: Text("No menu recorded for tomorrow.")
+
+            Text(
+                text = "Today",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            state.todayMenu?.let {
+                MenuCard(title = friendlyDate(it), menu = it)
+            } ?: Text("No menu recorded for today.")
+        }
+
+        if (state.weekMenus.isNotEmpty()) {
+            BrowseWeeksSection(
+                weekMenus = state.weekMenus,
+                selectedWeekMenu = state.selectedWeekMenu,
+                onSelectWeek = onSelectWeek,
+                onClearWeek = onClearWeek
             )
         }
 
-        tomorrowMenu?.let {
-            MenuCard(
-                title = "Tomorrow · ${friendlyDate(it)}",
-                menu = it
-            )
-        } ?: Text(
-            text = "No menu found for tomorrow.",
-            style = MaterialTheme.typography.bodyMedium
-        )
-
-        todayMenu?.let {
-            MenuCard(
-                title = "Today · ${friendlyDate(it)}",
-                menu = it
-            )
-        }
-
-        activePreview?.let {
-            MenuCard(
-                title = it.label,
-                menu = it.menuResult
-            )
+        Button(onClick = onRefresh) {
+            Text("Refresh")
         }
     }
 }
@@ -294,13 +244,9 @@ private fun SourceControls(
             style = MaterialTheme.typography.bodySmall
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = onChooseFile) {
-                Text("Choose JSON")
-            }
+            Button(onClick = onChooseFile) { Text("Choose JSON") }
             if (usingCustomSelection) {
-                TextButton(onClick = onClearSelection) {
-                    Text("Use bundled menu")
-                }
+                TextButton(onClick = onClearSelection) { Text("Use downloads menu") }
             }
         }
     }
@@ -309,9 +255,7 @@ private fun SourceControls(
 @Composable
 private fun InfoCard(message: String) {
     Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -322,37 +266,7 @@ private fun InfoCard(message: String) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Icon(imageVector = Icons.Filled.Info, contentDescription = null)
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-    }
-}
-
-@Composable
-private fun PreviewOptions(
-    options: List<PreviewOption>,
-    activePreview: PreviewOption?,
-    onSelectPreview: (String) -> Unit,
-    onClearPreview: () -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = "Preview another week:",
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold
-        )
-        options.forEach { option ->
-            val isActive = activePreview?.id == option.id
-            Button(onClick = { onSelectPreview(option.id) }) {
-                Text(option.label + if (isActive) " (viewing)" else "")
-            }
-        }
-        if (activePreview != null) {
-            TextButton(onClick = onClearPreview) {
-                Text("Hide preview")
-            }
+            Text(text = message, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -365,9 +279,7 @@ private fun MenuCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
             modifier = Modifier
@@ -375,33 +287,19 @@ private fun MenuCard(
                 .padding(PaddingValues(16.dp)),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-
+            Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             MealRow(label = "Main", value = menu.menu.main)
             MealRow(label = "Alt / Veg", value = menu.menu.altHot)
             MealRow(label = "Deli", value = menu.menu.deliOption)
             MealRow(label = "Dessert", value = menu.menu.dessert)
-
             if (menu.notes.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = "Notes",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Text("Notes", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                     menu.notes.forEach { note ->
-                        Text(
-                            text = "• $note",
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                        Text("• $note", style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
-
             Text(
                 text = "Week ${menu.weekId} · WC ${menu.weekCommencing}",
                 style = MaterialTheme.typography.labelMedium,
@@ -412,28 +310,79 @@ private fun MenuCard(
 }
 
 @Composable
-private fun MealRow(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier
-) {
+private fun MealRow(label: String, value: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
+        Text(text = label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+        Text(text = value, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+private fun BrowseWeeksSection(
+    weekMenus: List<WeekMenu>,
+    selectedWeekMenu: WeekMenu?,
+    onSelectWeek: (String) -> Unit,
+    onClearWeek: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
+            text = "Browse weeks",
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold
         )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium
-        )
+        weekMenus.forEach { week ->
+            Button(onClick = { onSelectWeek(week.id) }) {
+                Text(week.title)
+            }
+        }
+        selectedWeekMenu?.let { week ->
+            WeekMenuCard(week)
+            TextButton(onClick = onClearWeek) { Text("Hide week view") }
+        }
+    }
+}
+
+@Composable
+private fun WeekMenuCard(weekMenu: WeekMenu) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = weekMenu.title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            weekMenu.days.forEach { day ->
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    val dayName = day.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
+                    Text(
+                        text = "$dayName · ${day.date}",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    day.menu?.let { menu ->
+                        MealRow(label = "Main", value = menu.menu.main)
+                        MealRow(label = "Alt / Veg", value = menu.menu.altHot)
+                        MealRow(label = "Deli", value = menu.menu.deliOption)
+                        MealRow(label = "Dessert", value = menu.menu.dessert)
+                    } ?: Text("No menu recorded for this day.")
+                }
+            }
+        }
     }
 }
 
 private fun friendlyDate(result: DayMenuResult): String {
-    val dayName = result.dayOfWeek.name.lowercase().replaceFirstChar(Char::uppercaseChar)
+    val dayName = result.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
     return "$dayName ${result.date}"
 }

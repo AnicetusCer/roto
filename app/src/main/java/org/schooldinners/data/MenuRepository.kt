@@ -8,8 +8,7 @@ import java.io.File
 
 enum class MenuSourceType {
     EXTERNAL_SELECTION,
-    SCOPED_DOWNLOADS,
-    BUNDLED_SAMPLE
+    SCOPED_DOWNLOADS
 }
 
 data class MenuLoadResult(
@@ -19,7 +18,6 @@ data class MenuLoadResult(
 
 class MenuRepository(
     private val context: Context,
-    private val assetName: String = DEFAULT_ASSET_NAME,
     private val downloadsFileName: String = DEFAULT_DOWNLOADS_FILE_NAME
 ) {
 
@@ -29,7 +27,7 @@ class MenuRepository(
                 preferredUri != null -> readExternalFile(preferredUri)?.let { it to MenuSourceType.EXTERNAL_SELECTION }
                     ?: throw IllegalStateException("Unable to read the selected menu file.")
                 else -> readDownloadsMenu()?.let { it to MenuSourceType.SCOPED_DOWNLOADS }
-                    ?: (readBundledAsset() to MenuSourceType.BUNDLED_SAMPLE)
+                    ?: throw IllegalStateException("No menu JSON found. Save it as $downloadsFileName in the app downloads folder or choose a file manually.")
             }
             MenuLoadResult(
                 data = MenuJsonParser.parse(rawJson),
@@ -54,14 +52,8 @@ class MenuRepository(
         return readFirstExisting(candidateFiles)
     }
 
-    private fun readBundledAsset(): String =
-        context.assets.open(assetName).use { stream ->
-            stream.bufferedReader().readText()
-        }
-
     companion object {
         const val DEFAULT_DOWNLOADS_FILE_NAME = "SchoolNomNomsMenu.json"
-        const val DEFAULT_ASSET_NAME = "wetherby_st_james_n3_nov25_menu.json"
     }
 }
 

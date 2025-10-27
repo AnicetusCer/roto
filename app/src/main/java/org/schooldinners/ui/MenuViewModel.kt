@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.schooldinners.data.MenuData
-import org.schooldinners.data.MenuLoadResult
 import org.schooldinners.data.MenuPreferencesDataSource
 import org.schooldinners.data.MenuRepository
 import org.schooldinners.data.MenuSelection
@@ -24,21 +23,36 @@ import org.schooldinners.domain.DayMenuResult
 import org.schooldinners.domain.getMenuForDate
 
 data class MenuUiState(
-    val isLoading: Boolean = true,
+    val isLoading: Boolean = false,
     val error: String? = null,
+    val hasMenuData: Boolean = false,
     val todayMenu: DayMenuResult? = null,
     val tomorrowMenu: DayMenuResult? = null,
-    val selectedSourceLabel: String = "Bundled sample",
-    val coverageMessage: String? = null,
+    val selectedSourceLabel: String = "No menu selected",
     val usingCustomSelection: Boolean = false,
-    val previewOptions: List<PreviewOption> = emptyList(),
-    val activePreview: PreviewOption? = null
+    val coverageStatus: CoverageStatus? = null,
+    val weekMenus: List<WeekMenu> = emptyList(),
+    val selectedWeekMenu: WeekMenu? = null
 )
 
-data class PreviewOption(
+data class CoverageStatus(
+    val type: CoverageType,
+    val message: String
+)
+
+enum class CoverageType { FUTURE, PAST }
+
+data class WeekMenu(
     val id: String,
-    val label: String,
-    val menuResult: DayMenuResult
+    val title: String,
+    val startDate: LocalDate,
+    val days: List<WeekMenuDay>
+)
+
+data class WeekMenuDay(
+    val dayOfWeek: DayOfWeek,
+    val date: LocalDate,
+    val menu: DayMenuResult?
 )
 
 class MenuViewModel(
@@ -52,13 +66,14 @@ class MenuViewModel(
     val uiState: StateFlow<MenuUiState> = _uiState
 
     private var currentSelection: MenuSelection? = null
-    private var previewSelectionId: String? = null
+    private var currentMenuData: MenuData? = null
+    private var selectedWeekId: String? = null
 
     init {
         viewModelScope.launch {
             preferences.menuSelectionFlow.collectLatest { selection ->
                 currentSelection = selection
-                previewSelectionId = null
+                selectedWeekId = null
                 performLoad(selection)
             }
         }
@@ -83,22 +98,18 @@ class MenuViewModel(
         }
     }
 
-    fun selectPreview(optionId: String) {
-        viewModelScope.launch {
-            previewSelectionId = optionId
-            val option = _uiState.value.previewOptions.find { it.id == optionId }
-            _uiState.update { state ->
-                state.copy(activePreview = option)
-            }
+    fun selectWeek(weekId: String) {
+        selectedWeekId = weekId
+        val week = _uiState.value.weekMenus.find { it.id == weekId }
+        _uiState.update { state ->
+            state.copy(selectedWeekMenu = week)
         }
     }
 
-    fun clearPreviewSelection() {
-        viewModelScope.launch {
-            previewSelectionId = null
-            _uiState.update { state ->
-                state.copy(activePreview = null)
-            }
+    fun clearSelectedWeek() {
+        selectedWeekId = null
+        _uiState.update { state ->
+            state.copy(selectedWeekMenu = null)
         }
     }
 
@@ -121,12 +132,13 @@ class MenuViewModel(
         repository.loadMenu(preferredUri)
             .onSuccess { result ->
                 updateStateWithMenu(
-                    result = result,
+                    menuData = result.data,
+                    sourceType = result.sourceType,
                     selectionUri = preferredUri,
                     selectionLabel = preferredLabel,
                     today = today,
                     tomorrow = tomorrow,
-                    warningOverride = null
+                    messageOverride = null
                 )
             }
             .onFailure { primaryError ->
@@ -134,136 +146,145 @@ class MenuViewModel(
                     repository.loadMenu(null)
                         .onSuccess { fallback ->
                             updateStateWithMenu(
-                            result = fallback,
-                            selectionUri = null,
-                            selectionLabel = null,
-                            today = today,
-                            tomorrow = tomorrow,
-                            warningOverride = primaryError.message
-                                ?: "Couldn't read the selected file. Showing the bundled menu instead."
-                        )
-                    }
-                    .onFailure { fallbackError ->
-                        _uiState.emit(
-                            MenuUiState(
-                                    isLoading = false,
-                                    error = fallbackError.message
-                                        ?: primaryError.message
-                                        ?: "Failed to load menu data."
-                                )
+                                menuData = fallback.data,
+                                sourceType = fallback.sourceType,
+                                selectionUri = null,
+                                selectionLabel = null,
+                                today = today,
+                                tomorrow = tomorrow,
+                                messageOverride = primaryError.message
+                                    ?: "Couldn't read the selected file. Showing the app downloads menu instead."
+                            )
+                        }
+                        .onFailure { fallbackError ->
+                            emitLoadError(
+                                message = fallbackError.message
+                                    ?: primaryError.message
+                                    ?: "Failed to load menu data.",
+                                selectionLabel = preferredLabel ?: "Custom menu",
+                                customSelection = true
                             )
                         }
                 } else {
-                    _uiState.emit(
-                        MenuUiState(
-                            isLoading = false,
-                            error = primaryError.message ?: "Failed to load menu data."
-                        )
+                    emitLoadError(
+                        message = primaryError.message
+                            ?: "No menu JSON found. Save it as ${MenuRepository.DEFAULT_DOWNLOADS_FILE_NAME} or choose a file.",
+                        selectionLabel = "No menu selected",
+                        customSelection = false
                     )
                 }
             }
     }
 
+    private suspend fun emitLoadError(
+        message: String,
+        selectionLabel: String,
+        customSelection: Boolean
+    ) {
+        currentMenuData = null
+        selectedWeekId = null
+        _uiState.emit(
+            MenuUiState(
+                isLoading = false,
+                error = message,
+                hasMenuData = false,
+                selectedSourceLabel = selectionLabel,
+                usingCustomSelection = customSelection
+            )
+        )
+    }
+
     private suspend fun updateStateWithMenu(
-        result: MenuLoadResult,
+        menuData: MenuData,
+        sourceType: MenuSourceType,
         selectionUri: Uri?,
         selectionLabel: String?,
         today: LocalDate,
         tomorrow: LocalDate,
-        warningOverride: String?
+        messageOverride: String?
     ) {
-        val menuData = result.data
+        currentMenuData = menuData
+
         val todayMenu = getMenuForDate(menuData, today)
         val tomorrowMenu = getMenuForDate(menuData, tomorrow)
 
-        val previewOptions = buildPreviewOptions(menuData, today)
-        val activePreview = previewOptions.find { it.id == previewSelectionId }
-        if (activePreview == null) {
-            previewSelectionId = null
+        val weekMenus = buildWeekMenus(menuData)
+        val coverageStatus = computeCoverageStatus(weekMenus, today, tomorrow)
+
+        val activeWeek = weekMenus.find { it.id == selectedWeekId }
+        if (activeWeek == null) {
+            selectedWeekId = null
         }
 
-        val errorMessage = when {
-            warningOverride != null -> warningOverride
-            todayMenu == null && tomorrowMenu == null ->
-                "No menu found for today or tomorrow. When your school releases the next rota, use the AI Instructions to refresh SchoolNomNomsMenu.json."
-            else -> null
+        val label = when (sourceType) {
+            MenuSourceType.EXTERNAL_SELECTION -> selectionLabel ?: selectionUri?.lastPathSegment ?: "Custom menu"
+            MenuSourceType.SCOPED_DOWNLOADS -> "Downloads (app folder)"
         }
 
-        val coverageMessage = computeCoverageMessage(menuData, today, tomorrow)
-
-        val label = when (result.sourceType) {
-            MenuSourceType.EXTERNAL_SELECTION ->
-                selectionLabel ?: selectionUri?.lastPathSegment ?: "Custom menu"
-            MenuSourceType.SCOPED_DOWNLOADS ->
-                "Downloads (app folder)"
-            MenuSourceType.BUNDLED_SAMPLE ->
-                "Bundled sample"
-        }
+        val errorMessage = messageOverride
 
         _uiState.emit(
             MenuUiState(
                 isLoading = false,
                 error = errorMessage,
+                hasMenuData = true,
                 todayMenu = todayMenu,
                 tomorrowMenu = tomorrowMenu,
                 selectedSourceLabel = label,
-                coverageMessage = coverageMessage,
-                usingCustomSelection = result.sourceType == MenuSourceType.EXTERNAL_SELECTION,
-                previewOptions = previewOptions,
-                activePreview = activePreview
+                usingCustomSelection = sourceType == MenuSourceType.EXTERNAL_SELECTION,
+                coverageStatus = coverageStatus,
+                weekMenus = weekMenus,
+                selectedWeekMenu = activeWeek
             )
         )
     }
 
-    private fun computeCoverageMessage(
-        menuData: MenuData,
-        today: LocalDate,
-        tomorrow: LocalDate
-    ): String? {
-        val allMondays = menuData.cycle.weeks
-            .flatMap { week -> week.weekCommencing.mapNotNull(::parseIsoDateOrNull) }
-        val earliestMonday = allMondays.minOrNull()
-        val latestMonday = allMondays.maxOrNull()
-        val latestFriday = latestMonday?.plusDays(4)
-
-        return when {
-            earliestMonday != null && today.isBefore(earliestMonday) ->
-                "This rota starts on $earliestMonday. You're looking before the published weeks."
-            latestFriday != null && tomorrow.isAfter(latestFriday) ->
-                "This rota only covers up to $latestFriday. Check if a new menu is available."
-            else -> null
+    private fun buildWeekMenus(menuData: MenuData): List<WeekMenu> {
+        val weeks = mutableListOf<WeekMenu>()
+        menuData.cycle.weeks.forEach { week ->
+            week.weekCommencing.mapNotNull(::parseIsoDateOrNull).forEach { monday ->
+                val days = (0..4).map { offset ->
+                    val date = monday.plusDays(offset.toLong())
+                    val dayOfWeek = DayOfWeek.MONDAY.plus(offset.toLong())
+                    WeekMenuDay(
+                        dayOfWeek = dayOfWeek,
+                        date = date,
+                        menu = getMenuForDate(menuData, date)
+                    )
+                }
+                val id = "${week.weekId}_${monday}"
+                val title = "${week.weekId} · WC $monday"
+                weeks += WeekMenu(
+                    id = id,
+                    title = title,
+                    startDate = monday,
+                    days = days
+                )
+            }
         }
+        return weeks.sortedBy { it.startDate }
     }
 
-    private fun buildPreviewOptions(menuData: MenuData, today: LocalDate): List<PreviewOption> {
-        val mondays = menuData.cycle.weeks
-            .flatMap { week -> week.weekCommencing.mapNotNull(::parseIsoDateOrNull) }
-            .sorted()
-        if (mondays.isEmpty()) return emptyList()
+    private fun computeCoverageStatus(
+        weekMenus: List<WeekMenu>,
+        today: LocalDate,
+        tomorrow: LocalDate
+    ): CoverageStatus? {
+        if (weekMenus.isEmpty()) return null
+        val earliest = weekMenus.first().startDate
+        val latest = weekMenus.last().startDate.plusDays(4)
 
-        val pastMonday = mondays.filter { !it.isAfter(today) }.maxOrNull()
-        val futureMonday = mondays.filter { !it.isBefore(today) }.minOrNull()
-
-        val options = mutableListOf<PreviewOption>()
-        pastMonday?.let { monday ->
-            getMenuForDate(menuData, monday)?.let { result ->
-                options += PreviewOption(
-                    id = "past_${monday}",
-                    label = "View week starting $monday",
-                    menuResult = result
-                )
-            }
+        return when {
+            today.isBefore(earliest) -> CoverageStatus(
+                type = CoverageType.FUTURE,
+                message = "Menus begin on $earliest. Browse upcoming weeks below."
+            )
+            tomorrow.isAfter(latest) -> CoverageStatus(
+                type = CoverageType.PAST,
+                message = "Menus run up to $latest. Browse earlier weeks below."
+            )
+            else -> null
         }
-        futureMonday?.takeIf { it != pastMonday }?.let { monday ->
-            getMenuForDate(menuData, monday)?.let { result ->
-                options += PreviewOption(
-                    id = "future_${monday}",
-                    label = "Preview upcoming week starting $monday",
-                    menuResult = result
-                )
-            }
-        }
-        return options
     }
 
     private fun parseIsoDateOrNull(value: String): LocalDate? =
@@ -276,8 +297,8 @@ class MenuViewModel(
     private fun resolveDisplayName(context: Context, uri: Uri): String? =
         runCatching {
             context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                if (nameIndex != -1 && cursor.moveToFirst()) cursor.getString(nameIndex) else null
+                val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (index != -1 && cursor.moveToFirst()) cursor.getString(index) else null
             }
         }.getOrNull()
 }

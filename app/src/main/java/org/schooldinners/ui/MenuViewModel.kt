@@ -41,7 +41,7 @@ class MenuViewModel(
             val today = LocalDate.now()
             val tomorrow = today.plusDays(1)
 
-            repository.loadBundledMenu()
+            repository.loadMenu()
                 .onSuccess { menuData ->
                     val todayMenu = getMenuForDate(menuData, today)
                     val tomorrowMenu = getMenuForDate(menuData, tomorrow)

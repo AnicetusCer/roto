@@ -1,0 +1,212 @@
+project_primer:
+  project_identity:
+    name: "School NomNoms"
+    mission_summary: >
+      Offline, privacy-respecting Android app (F-Droid friendly) that tells parents
+      and carers what tomorrow's school dinner options are, while supporting lookups
+      for any other day.
+    core_question: "What's for lunch tomorrow at school?"
+    status: "Environment validated; Android project scaffold pending."
+    audience:
+      primary:
+        - parents
+        - carers
+        - school-age children
+      stretch:
+        - parents who prefer glanceable home screen widgets
+    principles:
+      - offline_first: "All data and logic stay on device; no servers or logins."
+      - privacy: "No analytics, tracking, or ads; F-Droid-friendly dependencies only."
+      - simple_input: "Parents can paste and edit a human-readable JSON rota."
+      - predictable: "App shows exactly the published school menu without guessing."
+
+  product_scope:
+    core_features:
+      - key: show_tomorrow_default
+        description: "Launch straight into tomorrow's menu with main, alt_hot, deli_option, dessert, and notes."
+      - key: choose_any_date
+        description: "Allow quick selection of any date to view the corresponding menu."
+      - key: rotation_awareness
+        description: "Map real calendar dates to Week 1/2/3 style cycles via configured week_commencing Mondays."
+      - key: offline_persistence
+        description: "Persist the menu JSON locally so data survives app restarts and works offline."
+      - key: human_editable_data
+        description: "Support pasting or importing JSON that parents can tweak or regenerate with an AI."
+    stretch_goals:
+      - key: home_screen_widget
+        description: "Android widget showing tomorrow's menu summary."
+      - key: multiple_profiles
+        description: "Optional ability to store menus for more than one school."
+      - key: holiday_exceptions
+        description: "Parents can mark no-school days to avoid confusing menus."
+      - key: allergen_filtering
+        description: "Surface dietary tags supplied by the school as display-only info."
+      - key: export_import_share
+        description: "One-tap share of the stored JSON to help other families."
+
+  data_model:
+    schema_version: "0.2"
+    structure_highlights:
+      - "school_name string and optional notes array."
+      - "cycle.weeks[] with week_id, week_commencing[] (ISO Mondays), and days.monday..friday entries."
+      - "Each day provides main, alt_hot, deli_option, dessert; weekend entries optional or omitted."
+    design_rationale: "Mirrors UK primary school rotating menus, allows repeated Mondays per week_id, and keeps data parent-editable."
+
+  rotation_logic:
+    steps:
+      - "Find monday_of_week for the target date."
+      - "Match monday_of_week against any cycle.weeks[].week_commencing entry."
+      - "If matched, select the weekday's meal set; otherwise show a friendly 'No menu found' message."
+      - "Render meals plus global notes for UI and widget consumption."
+
+  tech_foundation:
+    platform: "Android (minSdk 24, Kotlin, Jetpack Compose)."
+    storage: "Persist raw JSON in SharedPreferences or an internal file."
+    dependency_constraints:
+      - "Avoid Google Play Services and proprietary analytics for F-Droid compliance."
+      - "Keep the build reproducible with FLOSS-friendly tooling."
+
+  architecture_and_ui:
+    layers:
+      - name: data_layer
+        responsibilities:
+          - load_saved_menu_json
+          - save_menu_json
+          - parse_json_to_models
+      - name: domain_layer
+        responsibilities:
+          - get_menu_for_date
+          - format_data_for_presentation
+      - name: ui_layer
+        responsibilities:
+          - Compose screens for home, pick-a-day, and setup
+          - Manage minimal state via ViewModels
+      - name: widget_layer (stretch)
+        responsibilities:
+          - Provide a glanceable tomorrow summary using the same domain logic
+    screens:
+      - home_screen:
+          purpose: "Default landing page for tomorrow's menu."
+          key_elements:
+            - heading
+            - formatted_date
+            - meal_sections (main, alt_hot, deli_option, dessert)
+            - optional_notes
+            - button_view_other_day
+      - pick_a_day_screen:
+          purpose: "Browse any date's menu via date picker or next/prev controls."
+      - setup_screen:
+          purpose: "Initial and repeat JSON import/edit experience with validation."
+
+  development_environment:
+    topology:
+      dev_os: "WSL Fedora 42 inside Windows 11."
+      editor: "VS Code connected to the WSL workspace."
+      build_side: "WSL builds the APK via Gradle using Linux SDK and JDK."
+      test_side: "Windows 11 runs the Android Emulator for interactive testing."
+      privacy_target: "No Play Services dependency; deliver an F-Droid friendly offline app."
+    wsl_fedora_setup:
+      sdk_root: "/home/Mile/Android/sdk"
+      java:
+        version: "OpenJDK 21 (java-21-openjdk-devel or equivalent)."
+        verification:
+          - "java -version"
+          - "javac -version"
+        bashrc_exports:
+          - 'export JAVA_HOME="/usr/lib/jvm/<java-21-path>"'
+          - 'export PATH="$JAVA_HOME/bin:$PATH"'
+      android_sdk:
+        layout: "/home/Mile/Android/sdk with cmdline-tools, platform-tools, build-tools."
+        bashrc_exports:
+          - 'export ANDROID_SDK_ROOT="/home/Mile/Android/sdk"'
+          - 'export ANDROID_HOME="$ANDROID_SDK_ROOT"'
+          - 'export PATH="$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin"'
+          - 'export PATH="$PATH:$ANDROID_SDK_ROOT/platform-tools"'
+          - 'export PATH="$PATH:$ANDROID_SDK_ROOT/emulator"'
+        essential_packages:
+          - 'sdkmanager --licenses'
+          - 'sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"'
+    windows_11_setup:
+      virtualization_check: "Task Manager → Performance → CPU → Virtualization: Enabled."
+      android_sdk_root: "C:\\Android\\sdk"
+      env_paths:
+        - "C:\\Program Files\\Microsoft\\jdk-21.0.8.9-hotspot\\bin"
+        - "C:\\Android\\sdk\\cmdline-tools\\latest\\bin"
+        - "C:\\Android\\sdk\\platform-tools"
+        - "C:\\Android\\sdk\\emulator"
+      verification:
+        - 'echo $env:JAVA_HOME'
+        - 'java -version'
+        - 'where.exe java'
+        - 'sdkmanager --version'
+      packages_to_install:
+        - 'sdkmanager --licenses'
+        - 'sdkmanager "platform-tools" "emulator" "platforms;android-34" "build-tools;34.0.0" "system-images;android-34;google_apis;x86_64"'
+    android_virtual_device:
+      create:
+        command: >
+          avdmanager create avd --name "PixelLikeApi34" --package "system-images;android-34;google_apis;x86_64" --device "pixel_5"
+      run: 'emulator -avd PixelLikeApi34'
+      verify: 'adb devices  # expect emulator-5554 listed'
+      manual_testing_hints:
+        - "Toggle dark theme and large font."
+        - "Adjust date/time to simulate rota changes."
+        - "Rotate orientation via emulator toolbar."
+    project_location_strategy:
+      preferred_path_windows: "C:\\dev\\schooldinners-app"
+      preferred_path_wsl: "/mnt/c/dev/schooldinners-app"
+      rationale:
+        - "Single shared workspace for Gradle builds and Windows-side adb installs."
+        - "No need to copy APKs between environments."
+    dev_loop:
+      - step: build_apk_in_wsl
+        commands:
+          - 'cd /mnt/c/dev/schooldinners-app'
+          - './gradlew assembleDebug'
+        output: "/mnt/c/dev/schooldinners-app/app/build/outputs/apk/debug/app-debug.apk"
+      - step: run_emulator_on_windows
+        command: 'emulator -avd PixelLikeApi34'
+      - step: install_apk_from_windows
+        commands:
+          - 'adb devices'
+          - 'adb install -r C:\\dev\\schooldinners-app\\app\\build\\outputs\\apk\\debug\\app-debug.apk'
+      - step: manual_validation
+        checks:
+          - "Tomorrow's Menu populated with all meal sections."
+          - "Changing emulator date updates the displayed rota."
+          - "Weekends or unmatched dates show a polite no-menu message."
+
+  execution_plan:
+    immediate_next_steps:
+      - "Scaffold a Kotlin + Jetpack Compose Android project (package suggestion: org.schooldinners) without Play Services."
+      - "Add a placeholder Compose screen that renders hardcoded tomorrow menu rows."
+      - "Verify `./gradlew assembleDebug` succeeds under WSL and the APK installs via Windows adb."
+    upcoming_milestones:
+      - "Implement paste-JSON setup screen, persistence helpers, and validation."
+      - "Define data classes that match schema_version 0.2 and include a sample JSON for testing."
+      - "Build the rotation service (`getMenuForDate`) with unit tests covering matched, holiday, and multi-week scenarios."
+      - "Integrate persistence and domain logic into the home and pick-a-day screens."
+      - "Add widget support once the core experience is stable."
+
+  definition_of_done:
+    - "App installs and runs offline without proprietary services."
+    - "First launch prompts for menu JSON; saved data persists across restarts."
+    - "Tomorrow view and pick-a-day both display accurate meals or graceful no-menu messaging."
+    - "Invalid dates and weekends are handled without crashes."
+    - "Project remains F-Droid friendly (no analytics, ads, or Play Services)."
+
+  collaboration_notes:
+    purpose_of_file: "Primary shared memory for mission, environment, and workflow; update after major decisions."
+    working_agreements:
+      - "Prefer small, testable increments and validate builds in WSL before Windows installs."
+      - "Document new setup steps or architecture shifts here to keep both humans and AI aligned."
+      - "Surface open questions or blockers in future updates so we can address them early."
+    validation_habits:
+      - "Run Gradle builds from WSL when code changes land."
+      - "Exercise emulator scenarios listed above after significant UI or logic updates."
+      - "Keep sample JSON assets in sync with the documented schema."
+
+  references:
+    source_documents:
+      - ai_post_env_setup_primer.yaml
+      - ai_mission_primer.yaml

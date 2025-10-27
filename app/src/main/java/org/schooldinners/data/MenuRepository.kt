@@ -1,9 +1,21 @@
 package org.schooldinners.data
 
 import android.content.Context
+import android.net.Uri
 import android.os.Environment
 import androidx.annotation.VisibleForTesting
 import java.io.File
+
+enum class MenuSourceType {
+    EXTERNAL_SELECTION,
+    SCOPED_DOWNLOADS,
+    BUNDLED_SAMPLE
+}
+
+data class MenuLoadResult(
+    val data: MenuData,
+    val sourceType: MenuSourceType
+)
 
 class MenuRepository(
     private val context: Context,
@@ -11,11 +23,26 @@ class MenuRepository(
     private val downloadsFileName: String = DEFAULT_DOWNLOADS_FILE_NAME
 ) {
 
-    fun loadMenu(): Result<MenuData> =
+    fun loadMenu(preferredUri: Uri?): Result<MenuLoadResult> =
         runCatching {
-            val rawJson = readDownloadsMenu() ?: readBundledAsset()
-            MenuJsonParser.parse(rawJson)
+            val (rawJson, sourceType) = when {
+                preferredUri != null -> readExternalFile(preferredUri)?.let { it to MenuSourceType.EXTERNAL_SELECTION }
+                    ?: throw IllegalStateException("Unable to read the selected menu file.")
+                else -> readDownloadsMenu()?.let { it to MenuSourceType.SCOPED_DOWNLOADS }
+                    ?: (readBundledAsset() to MenuSourceType.BUNDLED_SAMPLE)
+            }
+            MenuLoadResult(
+                data = MenuJsonParser.parse(rawJson),
+                sourceType = sourceType
+            )
         }
+
+    private fun readExternalFile(uri: Uri): String? =
+        runCatching {
+            context.contentResolver.openInputStream(uri)?.use { stream ->
+                stream.bufferedReader().readText()
+            }
+        }.getOrNull()
 
     private fun readDownloadsMenu(): String? {
         val candidateFiles = buildList {

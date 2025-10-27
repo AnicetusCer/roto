@@ -65,7 +65,6 @@ fun MenuRoot(
         state = state,
         onRefresh = viewModel::refresh,
         onChooseFile = { openDocumentLauncher.launch(arrayOf("application/json", "text/plain")) },
-        onClearSelection = viewModel::clearMenuSelection,
         onSelectWeek = viewModel::selectWeek,
         onClearWeek = viewModel::clearSelectedWeek,
         modifier = modifier
@@ -77,7 +76,6 @@ fun MenuScreen(
     state: MenuUiState,
     onRefresh: () -> Unit,
     onChooseFile: () -> Unit,
-    onClearSelection: () -> Unit,
     onSelectWeek: (String) -> Unit,
     onClearWeek: () -> Unit,
     modifier: Modifier = Modifier
@@ -87,8 +85,6 @@ fun MenuScreen(
         state.error != null -> SetupState(
             message = state.error,
             onChooseFile = onChooseFile,
-            onClearSelection = onClearSelection,
-            usingCustomSelection = state.usingCustomSelection,
             sourceLabel = state.selectedSourceLabel,
             modifier = modifier
         )
@@ -96,7 +92,6 @@ fun MenuScreen(
             state = state,
             onRefresh = onRefresh,
             onChooseFile = onChooseFile,
-            onClearSelection = onClearSelection,
             onSelectWeek = onSelectWeek,
             onClearWeek = onClearWeek,
             modifier = modifier
@@ -104,8 +99,6 @@ fun MenuScreen(
         else -> SetupState(
             message = "No menu JSON found yet. Choose your file or place ${MenuRepository.DEFAULT_DOWNLOADS_FILE_NAME} in Downloads.",
             onChooseFile = onChooseFile,
-            onClearSelection = onClearSelection,
-            usingCustomSelection = state.usingCustomSelection,
             sourceLabel = state.selectedSourceLabel,
             modifier = modifier
         )
@@ -131,8 +124,6 @@ private fun LoadingState(modifier: Modifier = Modifier) {
 private fun SetupState(
     message: String,
     onChooseFile: () -> Unit,
-    onClearSelection: () -> Unit,
-    usingCustomSelection: Boolean,
     sourceLabel: String,
     modifier: Modifier = Modifier
 ) {
@@ -145,9 +136,7 @@ private fun SetupState(
     ) {
         SourceControls(
             selectedSourceLabel = sourceLabel,
-            usingCustomSelection = usingCustomSelection,
-            onChooseFile = onChooseFile,
-            onClearSelection = onClearSelection
+            onChooseFile = onChooseFile
         )
         Icon(
             imageVector = Icons.Filled.Error,
@@ -167,7 +156,6 @@ private fun MenuContent(
     state: MenuUiState,
     onRefresh: () -> Unit,
     onChooseFile: () -> Unit,
-    onClearSelection: () -> Unit,
     onSelectWeek: (String) -> Unit,
     onClearWeek: () -> Unit,
     modifier: Modifier = Modifier
@@ -187,9 +175,7 @@ private fun MenuContent(
 
         SourceControls(
             selectedSourceLabel = state.selectedSourceLabel,
-            usingCustomSelection = state.usingCustomSelection,
-            onChooseFile = onChooseFile,
-            onClearSelection = onClearSelection
+            onChooseFile = onChooseFile
         )
 
         state.coverageStatus?.let {
@@ -234,9 +220,7 @@ private fun MenuContent(
 @Composable
 private fun SourceControls(
     selectedSourceLabel: String,
-    usingCustomSelection: Boolean,
-    onChooseFile: () -> Unit,
-    onClearSelection: () -> Unit
+    onChooseFile: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
@@ -245,9 +229,6 @@ private fun SourceControls(
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = onChooseFile) { Text("Choose JSON") }
-            if (usingCustomSelection) {
-                TextButton(onClick = onClearSelection) { Text("Use downloads menu") }
-            }
         }
     }
 }

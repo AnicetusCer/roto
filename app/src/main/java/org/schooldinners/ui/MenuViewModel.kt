@@ -18,7 +18,6 @@ import org.schooldinners.data.MenuData
 import org.schooldinners.data.MenuPreferencesDataSource
 import org.schooldinners.data.MenuRepository
 import org.schooldinners.data.MenuSelection
-import org.schooldinners.data.MenuSourceType
 import org.schooldinners.domain.DayMenuResult
 import org.schooldinners.domain.getMenuForDate
 
@@ -29,7 +28,6 @@ data class MenuUiState(
     val todayMenu: DayMenuResult? = null,
     val tomorrowMenu: DayMenuResult? = null,
     val selectedSourceLabel: String = "No menu selected",
-    val usingCustomSelection: Boolean = false,
     val coverageStatus: CoverageStatus? = null,
     val weekMenus: List<WeekMenu> = emptyList(),
     val selectedWeekMenu: WeekMenu? = null
@@ -92,12 +90,6 @@ class MenuViewModel(
         }
     }
 
-    fun clearMenuSelection() {
-        viewModelScope.launch {
-            preferences.clearMenuSelection()
-        }
-    }
-
     fun selectWeek(weekId: String) {
         selectedWeekId = weekId
         val week = _uiState.value.weekMenus.find { it.id == weekId }
@@ -133,7 +125,6 @@ class MenuViewModel(
             .onSuccess { result ->
                 updateStateWithMenu(
                     menuData = result.data,
-                    sourceType = result.sourceType,
                     selectionUri = preferredUri,
                     selectionLabel = preferredLabel,
                     today = today,
@@ -147,7 +138,6 @@ class MenuViewModel(
                         .onSuccess { fallback ->
                             updateStateWithMenu(
                                 menuData = fallback.data,
-                                sourceType = fallback.sourceType,
                                 selectionUri = null,
                                 selectionLabel = null,
                                 today = today,
@@ -161,16 +151,14 @@ class MenuViewModel(
                                 message = fallbackError.message
                                     ?: primaryError.message
                                     ?: "Failed to load menu data.",
-                                selectionLabel = preferredLabel ?: "Custom menu",
-                                customSelection = true
+                                selectionLabel = preferredLabel ?: "Custom menu"
                             )
                         }
                 } else {
                     emitLoadError(
                         message = primaryError.message
                             ?: "No menu JSON found. Save it as ${MenuRepository.DEFAULT_DOWNLOADS_FILE_NAME} or choose a file.",
-                        selectionLabel = "No menu selected",
-                        customSelection = false
+                        selectionLabel = "No menu selected"
                     )
                 }
             }
@@ -178,8 +166,7 @@ class MenuViewModel(
 
     private suspend fun emitLoadError(
         message: String,
-        selectionLabel: String,
-        customSelection: Boolean
+        selectionLabel: String
     ) {
         currentMenuData = null
         selectedWeekId = null
@@ -188,15 +175,13 @@ class MenuViewModel(
                 isLoading = false,
                 error = message,
                 hasMenuData = false,
-                selectedSourceLabel = selectionLabel,
-                usingCustomSelection = customSelection
+                selectedSourceLabel = selectionLabel
             )
         )
     }
 
     private suspend fun updateStateWithMenu(
         menuData: MenuData,
-        sourceType: MenuSourceType,
         selectionUri: Uri?,
         selectionLabel: String?,
         today: LocalDate,
@@ -216,10 +201,7 @@ class MenuViewModel(
             selectedWeekId = null
         }
 
-        val label = when (sourceType) {
-            MenuSourceType.EXTERNAL_SELECTION -> selectionLabel ?: selectionUri?.lastPathSegment ?: "Custom menu"
-            MenuSourceType.SCOPED_DOWNLOADS -> "Downloads (app folder)"
-        }
+        val label = selectionLabel ?: selectionUri?.lastPathSegment ?: "Chosen menu"
 
         val errorMessage = messageOverride
 
@@ -231,7 +213,6 @@ class MenuViewModel(
                 todayMenu = todayMenu,
                 tomorrowMenu = tomorrowMenu,
                 selectedSourceLabel = label,
-                usingCustomSelection = sourceType == MenuSourceType.EXTERNAL_SELECTION,
                 coverageStatus = coverageStatus,
                 weekMenus = weekMenus,
                 selectedWeekMenu = activeWeek
@@ -277,11 +258,11 @@ class MenuViewModel(
         return when {
             today.isBefore(earliest) -> CoverageStatus(
                 type = CoverageType.FUTURE,
-                message = "Menus begin on $earliest. Browse upcoming weeks below."
+                message = "New menu begins on $earliest. Browse upcoming weeks below."
             )
             tomorrow.isAfter(latest) -> CoverageStatus(
                 type = CoverageType.PAST,
-                message = "Menus run up to $latest. Browse earlier weeks below."
+                message = "This menu is old. Menus ran until $latest. They can still be browsed below."
             )
             else -> null
         }

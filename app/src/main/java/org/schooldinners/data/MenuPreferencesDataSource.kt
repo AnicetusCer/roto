@@ -39,10 +39,4 @@ class MenuPreferencesDataSource(private val context: Context) {
         }
     }
 
-    suspend fun clearMenuSelection() {
-        context.menuPreferencesDataStore.edit { prefs ->
-            prefs.remove(Keys.MENU_URI)
-            prefs.remove(Keys.MENU_URI_LABEL)
-        }
-    }
 }

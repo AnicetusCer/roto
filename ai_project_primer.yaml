@@ -6,7 +6,7 @@ project_primer:
       and carers what tomorrow's school dinner options are, while supporting lookups
       for any other day.
     core_question: "What's for lunch tomorrow at school?"
-    status: "Environment validated; Android project scaffold pending."
+    status: "Interactive Compose app in place with JSON import, tomorrow/today view, and week browser."
     audience:
       primary:
         - parents
@@ -32,6 +32,8 @@ project_primer:
         description: "Persist the menu JSON locally so data survives app restarts and works offline."
       - key: human_editable_data
         description: "Support pasting or importing JSON that parents can tweak or regenerate with an AI."
+      - key: browse_week_menu
+        description: "Allow parents to open any published week and view all weekday meals."
     stretch_goals:
       - key: home_screen_widget
         description: "Android widget showing tomorrow's menu summary."
@@ -180,15 +182,13 @@ project_primer:
 
   execution_plan:
     immediate_next_steps:
-      - "Scaffold a Kotlin + Jetpack Compose Android project (package suggestion: org.schooldinners) without Play Services."
-      - "Add a placeholder Compose screen that renders hardcoded tomorrow menu rows."
-      - "Verify `./gradlew assembleDebug` succeeds under WSL and the APK installs via Windows adb."
+      - "Harden JSON validation and surface friendly error messages when required fields are missing."
+      - "Remember last-opened week/tab state for faster browsing."
+      - "Polish accessibility copy and consider larger text spacing for the setup instructions."
     upcoming_milestones:
-      - "Implement paste-JSON setup screen, persistence helpers, and validation."
-      - "Define data classes that match schema_version 0.2 and include a sample JSON for testing."
-      - "Build the rotation service (`getMenuForDate`) with unit tests covering matched, holiday, and multi-week scenarios."
-      - "Integrate persistence and domain logic into the home and pick-a-day screens."
-      - "Add widget support once the core experience is stable."
+      - "Offer optional pretty-print/report of the JSON structure for manual editors."
+      - "Add automated tests around repository failure handling and week browsing edge cases."
+      - "Explore homescreen widget or notification ideas once core flows are stable."
 
   definition_of_done:
     - "App installs and runs offline without proprietary services."
@@ -211,10 +211,10 @@ project_primer:
     goal: "Let parents convert their school PDF into the required JSON without embedding OCR logic in-app."
     ai_helper_asset: "app/src/main/assets/ai_llm_instructions.txt"
     workflow_summary:
-      - "App offers an info screen with a 'Copy AI Instructions' button that places the asset text on the clipboard."
-      - "Parent pastes those instructions into their preferred AI assistant, then provides the school menu."
-      - "AI returns JSON conforming to schema_version 0.2 and tells the parent to save it as SchoolNomNomsMenu.json in Downloads."
-      - "Our app imports that single file; if it already exists we overwrite/replace to keep one source of truth."
+      - "The setup screen now leads with plain-language instructions and a 'Copy AI Instructions' button (copies the asset text to the clipboard)."
+      - "Parents paste the prompt into any AI assistant, supply their current school-menu PDF/photo/text, and request the JSON conversion."
+      - "AI output should be saved as a `.json` file (the app suggests `SchoolNomNomsMenu.json` but any chosen file can be uploaded)."
+      - "Parents either upload the file through the app or drop it into the app-scoped Downloads folder; the app remembers the selection and can be cleared to return to setup."
 
   references:
     source_documents:

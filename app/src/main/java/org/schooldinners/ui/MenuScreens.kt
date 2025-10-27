@@ -27,6 +27,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -89,15 +92,18 @@ fun MenuScreen(
     onClearWeek: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val introText = "You need to provide the app with your school's menu in a simple JSON file."
+
     when {
         state.isLoading -> LoadingState(modifier)
         state.error != null -> SetupState(
-            message = state.error,
+            instructionsIntro = introText,
             onChooseFile = onChooseFile,
             onCopyInstructions = onCopyInstructions,
             showClear = state.selectedSourceLabel != "No menu selected",
             onClearMenu = onClearMenu,
             sourceLabel = state.selectedSourceLabel,
+            extraMessage = state.error,
             modifier = modifier
         )
         state.hasMenuData -> MenuContent(
@@ -110,12 +116,13 @@ fun MenuScreen(
             modifier = modifier
         )
         else -> SetupState(
-            message = "Pick the most recent menu JSON. If you need one, copy the AI instructions and ask your favourite assistant to build it.",
+            instructionsIntro = introText,
             onChooseFile = onChooseFile,
             onCopyInstructions = onCopyInstructions,
             showClear = state.selectedSourceLabel != "No menu selected",
             onClearMenu = onClearMenu,
             sourceLabel = state.selectedSourceLabel,
+            extraMessage = null,
             modifier = modifier
         )
     }
@@ -138,14 +145,17 @@ private fun LoadingState(modifier: Modifier = Modifier) {
 
 @Composable
 private fun SetupState(
-    message: String,
+    instructionsIntro: String,
     onChooseFile: () -> Unit,
     onCopyInstructions: () -> Unit,
     showClear: Boolean,
     onClearMenu: () -> Unit,
     sourceLabel: String,
+    extraMessage: String?,
     modifier: Modifier = Modifier
 ) {
+    var showFormatDetails by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -159,18 +169,42 @@ private fun SetupState(
             showClear = showClear,
             onClearMenu = onClearMenu
         )
-        Icon(
-            imageVector = Icons.Filled.Error,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.error
+        Text(
+            text = instructionsIntro,
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center
         )
         Text(
-            text = message,
+            text = "You don't have to hand-write JSON.",
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center
+        )
+        Text(
+            text = "Copy the AI prompt below, paste it into your favourite AI provider, and give it the current school menu (PDF, photo, or text). The AI will return the JSON this app expects.",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center
         )
         Button(onClick = onCopyInstructions) {
             Text("Copy AI Instructions")
+        }
+        Text(
+            text = "When the AI gives you the JSON, save or upload it here using the button above.",
+            style = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Center
+        )
+        TextButton(onClick = { showFormatDetails = !showFormatDetails }) {
+            Text(if (showFormatDetails) "Hide JSON format details" else "Show JSON format details")
+        }
+        if (showFormatDetails) {
+            FormatInfoCard()
+        }
+        extraMessage?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
@@ -257,7 +291,7 @@ private fun SourceControls(
             style = MaterialTheme.typography.bodySmall
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = onChooseFile) { Text("Choose JSON") }
+            Button(onClick = onChooseFile) { Text("Upload menu (JSON)") }
             if (showClear) {
                 TextButton(onClick = onClearMenu) { Text("Clear menu") }
             }
@@ -280,6 +314,31 @@ private fun InfoCard(message: String) {
         ) {
             Icon(imageVector = Icons.Filled.Info, contentDescription = null)
             Text(text = message, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+@Composable
+private fun FormatInfoCard() {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text("JSON structure overview", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text("• schema_version: \"0.2\"", style = MaterialTheme.typography.bodySmall)
+            Text("• school_name: your school name", style = MaterialTheme.typography.bodySmall)
+            Text("• notes: optional list of text lines", style = MaterialTheme.typography.bodySmall)
+            Text("• cycle.weeks: list of week objects", style = MaterialTheme.typography.bodySmall)
+            Text("  – week_id: label such as Week 1", style = MaterialTheme.typography.bodySmall)
+            Text("  – week_commencing: list of Monday dates (YYYY-MM-DD)", style = MaterialTheme.typography.bodySmall)
+            Text("  – days: entries for monday…friday with main/alt_hot/deli_option/dessert", style = MaterialTheme.typography.bodySmall)
+            Text("Save the file exactly as the AI returns it (with braces and quotes) and upload it using the button above.", style = MaterialTheme.typography.bodySmall)
         }
     }
 }

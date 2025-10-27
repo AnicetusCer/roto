@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "org.schooldinners.app-mergeDebugResources-56:/values-ldltr-v21/values-ldltr-v21.xml",
+            "outputFile": "org.schooldinners.app-mergeDebugResources-58:/values-ldltr-v21/values-ldltr-v21.xml",
             "map": [
                 {
                     "source": "/home/Mile/.gradle/caches/transforms-4/6c5b50aee07317c654b2edbcbc30db59/transformed/appcompat-1.6.1/res/values-ldltr-v21/values-ldltr-v21.xml",

@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "org.schooldinners.app-mergeDebugResources-56:/values-iw/values-iw.xml",
+            "outputFile": "org.schooldinners.app-mergeDebugResources-58:/values-iw/values-iw.xml",
             "map": [
                 {
                     "source": "/home/Mile/.gradle/caches/transforms-4/5ec4e8ad3d885e6e0dfb2992fa2e25a8/transformed/foundation-release/res/values-iw/values-iw.xml",

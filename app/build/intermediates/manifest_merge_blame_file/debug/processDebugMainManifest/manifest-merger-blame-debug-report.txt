@@ -53,17 +53,17 @@
 33            </intent-filter>
 34        </activity>
 35        <activity
-35-->[androidx.compose.ui:ui-tooling-android:1.6.2] /home/Mile/.gradle/caches/transforms-4/07a5546f57fb9a7e4a065f6927606883/transformed/ui-tooling-release/AndroidManifest.xml:23:9-25:39
-36            android:name="androidx.compose.ui.tooling.PreviewActivity"
-36-->[androidx.compose.ui:ui-tooling-android:1.6.2] /home/Mile/.gradle/caches/transforms-4/07a5546f57fb9a7e4a065f6927606883/transformed/ui-tooling-release/AndroidManifest.xml:24:13-71
+35-->[androidx.compose.ui:ui-test-manifest:1.6.2] /home/Mile/.gradle/caches/transforms-4/b87f022b5617facc9a8e91b8eb30109d/transformed/ui-test-manifest-1.6.2/AndroidManifest.xml:23:9-25:39
+36            android:name="androidx.activity.ComponentActivity"
+36-->[androidx.compose.ui:ui-test-manifest:1.6.2] /home/Mile/.gradle/caches/transforms-4/b87f022b5617facc9a8e91b8eb30109d/transformed/ui-test-manifest-1.6.2/AndroidManifest.xml:24:13-63
 37            android:exported="true" />
-37-->[androidx.compose.ui:ui-tooling-android:1.6.2] /home/Mile/.gradle/caches/transforms-4/07a5546f57fb9a7e4a065f6927606883/transformed/ui-tooling-release/AndroidManifest.xml:25:13-36
+37-->[androidx.compose.ui:ui-test-manifest:1.6.2] /home/Mile/.gradle/caches/transforms-4/b87f022b5617facc9a8e91b8eb30109d/transformed/ui-test-manifest-1.6.2/AndroidManifest.xml:25:13-36
 38        <activity
-38-->[androidx.compose.ui:ui-test-manifest:1.6.2] /home/Mile/.gradle/caches/transforms-4/b87f022b5617facc9a8e91b8eb30109d/transformed/ui-test-manifest-1.6.2/AndroidManifest.xml:23:9-25:39
-39            android:name="androidx.activity.ComponentActivity"
-39-->[androidx.compose.ui:ui-test-manifest:1.6.2] /home/Mile/.gradle/caches/transforms-4/b87f022b5617facc9a8e91b8eb30109d/transformed/ui-test-manifest-1.6.2/AndroidManifest.xml:24:13-63
+38-->[androidx.compose.ui:ui-tooling-android:1.6.2] /home/Mile/.gradle/caches/transforms-4/07a5546f57fb9a7e4a065f6927606883/transformed/ui-tooling-release/AndroidManifest.xml:23:9-25:39
+39            android:name="androidx.compose.ui.tooling.PreviewActivity"
+39-->[androidx.compose.ui:ui-tooling-android:1.6.2] /home/Mile/.gradle/caches/transforms-4/07a5546f57fb9a7e4a065f6927606883/transformed/ui-tooling-release/AndroidManifest.xml:24:13-71
 40            android:exported="true" />
-40-->[androidx.compose.ui:ui-test-manifest:1.6.2] /home/Mile/.gradle/caches/transforms-4/b87f022b5617facc9a8e91b8eb30109d/transformed/ui-test-manifest-1.6.2/AndroidManifest.xml:25:13-36
+40-->[androidx.compose.ui:ui-tooling-android:1.6.2] /home/Mile/.gradle/caches/transforms-4/07a5546f57fb9a7e4a065f6927606883/transformed/ui-tooling-release/AndroidManifest.xml:25:13-36
 41
 42        <provider
 42-->[androidx.emoji2:emoji2:1.3.0] /home/Mile/.gradle/caches/transforms-4/8fb99cd8365f704e700131ef3a6ac936/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20

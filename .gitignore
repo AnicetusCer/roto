@@ -1,0 +1,13 @@
+# Gradle & build outputs
+.gradle/
+**/build/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+
+# Local configuration
+local.properties
+
+# OS-specific metadata (e.g. NTFS alternate data streams)
+*:Zone.Identifier

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="org.schooldinners.data.MenuJsonParserTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2025-10-27T10:50:15" hostname="STREAMER" time="0.037">
-  <properties/>
-  <testcase name="parseOrNull returns null for invalid json" classname="org.schooldinners.data.MenuJsonParserTest" time="0.009"/>
-  <testcase name="parse november menu" classname="org.schooldinners.data.MenuJsonParserTest" time="0.011"/>
-  <testcase name="parse returns menu data with weeks and notes" classname="org.schooldinners.data.MenuJsonParserTest" time="0.017"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

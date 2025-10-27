@@ -92,7 +92,7 @@ fun MenuScreen(
     onClearWeek: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val introText = "You need to provide the app with your school's menu in a simple JSON file."
+    val introText = "You need to provide this app with your school's menu in a json formated file."
 
     when {
         state.isLoading -> LoadingState(modifier)
@@ -175,12 +175,12 @@ private fun SetupState(
             textAlign = TextAlign.Center
         )
         Text(
-            text = "You don't have to hand-write JSON.",
+            text = "Don't worry! we're going to get AI to make the file for you.",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center
         )
         Text(
-            text = "Copy the AI prompt below, paste it into your favourite AI provider, and give it the current school menu (PDF, photo, or text). The AI will return the JSON this app expects.",
+            text = "Simpily copy the AI prompt below, paste it into your favourite AI provider, your AI should then ask you to provide your current school menu (in any format it can read; PDF, photo, text etc). The AI will read it and produce a JSON formatted version of your menu that this app can then read.",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center
         )
@@ -188,12 +188,12 @@ private fun SetupState(
             Text("Copy AI Instructions")
         }
         Text(
-            text = "When the AI gives you the JSON, save or upload it here using the button above.",
+            text = "When the AI gives you the JSON formated file, save it to your phones download folder, open the app and then select it as the current menu. Repeat these steps when a new menu is released.",
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center
         )
         TextButton(onClick = { showFormatDetails = !showFormatDetails }) {
-            Text(if (showFormatDetails) "Hide JSON format details" else "Show JSON format details")
+            Text(if (showFormatDetails) "Hide JSON Schema" else "Show JSON Schema")
         }
         if (showFormatDetails) {
             FormatInfoCard()

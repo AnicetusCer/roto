@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.widget.Toast
 import org.roto.data.MenuPreferencesDataSource
 import org.roto.data.MenuRepository
 import org.roto.data.MenuSelection
@@ -151,11 +152,13 @@ class MenuViewModel(
                 _uiState.update { state ->
                     state.copy(setupMessage = SetupMessage("Copied sample to $location. Tap 'Load rota file' to open it.", false))
                 }
+                Toast.makeText(app, "Sample copied to $location", Toast.LENGTH_SHORT).show()
             }.onFailure { throwable ->
                 val reason = throwable.localizedMessage ?: "Unknown error"
                 _uiState.update { state ->
                     state.copy(setupMessage = SetupMessage("Couldn't copy sample: $reason", true))
                 }
+                Toast.makeText(app, "Couldn't copy sample: $reason", Toast.LENGTH_SHORT).show()
             }
         }
     }

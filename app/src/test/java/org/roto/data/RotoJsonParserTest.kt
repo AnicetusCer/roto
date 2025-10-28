@@ -3,6 +3,7 @@ package org.roto.data
 import org.junit.Test
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import java.io.File
 
@@ -23,6 +24,8 @@ class RotoJsonParserTest {
         assertEquals("0.3", rotaData.schemaVersion)
         assertEquals("Example Primary School", rotaData.rotaName)
         assertEquals(2, rotaData.notes.size)
+        assertNotNull(rotaData.cycle.repeat)
+        assertEquals("2025-11-03", rotaData.cycle.repeat?.startDate)
 
         val weeks = rotaData.cycle.weeks
         assertEquals(2, weeks.size)
@@ -50,6 +53,7 @@ class RotoJsonParserTest {
         assertEquals("0.3", rota.schemaVersion)
         assertEquals("Wetherby St James C of E Primary", rota.rotaName)
         assertEquals(3, rota.cycle.weeks.size)
+        assertEquals("2025-11-03", rota.cycle.repeat?.startDate)
 
         val weekOne = rota.cycle.weeks.first()
         assertEquals("Week 1", weekOne.weekId)

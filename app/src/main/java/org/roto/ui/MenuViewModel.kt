@@ -6,9 +6,10 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
-import java.util.Locale
+import java.time.temporal.TemporalAdjusters
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -210,7 +211,7 @@ class MenuViewModel(
         val tomorrowMenu = getMenuForDate(menuData, tomorrow)
 
         val weekMenus = buildWeekMenus(menuData)
-        val coverageStatus = computeCoverageStatus(weekMenus, today, tomorrow)
+        val coverageStatus = computeCoverageStatus(menuData, weekMenus, today, tomorrow)
 
         val activeWeek = weekMenus.find { it.id == selectedWeekId }
         if (activeWeek == null) {
@@ -239,38 +240,50 @@ class MenuViewModel(
     }
 
     private fun buildWeekMenus(menuData: RotoData): List<WeekMenu> {
-        val weeks = mutableListOf<WeekMenu>()
+        val mondays = mutableSetOf<LocalDate>()
         menuData.cycle.weeks.forEach { week ->
-            week.weekCommencing.mapNotNull(::parseIsoDateOrNull).forEach { monday ->
-                val days = week.days.entries.mapNotNull { (key, _) ->
-                    val date = resolveDateForDayKey(monday, key) ?: return@mapNotNull null
+            week.weekCommencing.mapNotNull(::parseIsoDateOrNull).forEach(mondays::add)
+        }
+
+        menuData.cycle.repeat?.let { repeat ->
+            val todayMonday = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+            for (offset in -1..5) {
+                mondays.add(todayMonday.plusWeeks(offset.toLong()))
+            }
+            parseIsoDateOrNull(repeat.startDate)?.let { mondays.add(it.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))) }
+        }
+
+        return mondays
+            .sorted()
+            .mapNotNull { monday ->
+                val baseResult = getMenuForDate(menuData, monday) ?: return@mapNotNull null
+                val days = (0..6).map { delta ->
+                    val date = monday.plusDays(delta.toLong())
                     WeekMenuDay(
                         date = date,
                         menu = getMenuForDate(menuData, date)
                     )
-                }.sortedBy { it.date }
-                if (days.isNotEmpty()) {
-                    val id = "${week.weekId}_${monday}"
-                    val title = "${week.weekId} · WC $monday"
-                    val endDate = days.maxOf { it.date }
-                    weeks += WeekMenu(
-                        id = id,
-                        title = title,
-                        startDate = monday,
-                        endDate = endDate,
-                        days = days
-                    )
                 }
+                if (days.all { it.menu == null }) return@mapNotNull null
+
+                val weekId = baseResult.weekId ?: "Week"
+                WeekMenu(
+                    id = "${weekId}_$monday",
+                    title = buildWeekTitle(baseResult, monday),
+                    startDate = monday,
+                    endDate = monday.plusDays(6),
+                    days = days
+                )
             }
-        }
-        return weeks.sortedBy { it.startDate }
     }
 
     private fun computeCoverageStatus(
+        menuData: RotoData,
         weekMenus: List<WeekMenu>,
         today: LocalDate,
         tomorrow: LocalDate
     ): CoverageStatus? {
+        if (menuData.cycle.repeat != null) return null
         if (weekMenus.isEmpty()) return null
         val earliest = weekMenus.first().startDate
         val latest = weekMenus.maxOf { it.endDate }
@@ -288,17 +301,8 @@ class MenuViewModel(
         }
     }
 
-    private fun resolveDateForDayKey(monday: LocalDate, key: String): LocalDate? =
-        when (key.lowercase(Locale.ROOT)) {
-            "monday" -> monday
-            "tuesday" -> monday.plusDays(1)
-            "wednesday" -> monday.plusDays(2)
-            "thursday" -> monday.plusDays(3)
-            "friday" -> monday.plusDays(4)
-            "saturday" -> monday.plusDays(5)
-            "sunday" -> monday.plusDays(6)
-            else -> parseIsoDateOrNull(key)
-        }
+    private fun buildWeekTitle(result: DayResult, monday: LocalDate): String =
+        result.weekId?.let { "$it · WC $monday" } ?: "WC $monday"
 
     private fun parseIsoDateOrNull(value: String): LocalDate? =
         try {

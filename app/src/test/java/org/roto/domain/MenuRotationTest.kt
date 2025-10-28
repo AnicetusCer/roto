@@ -56,6 +56,16 @@ class MenuRotationTest {
     }
 
     @Test
+    fun `loops rota beyond explicit anchors`() {
+        val rota = RotoJsonParser.parse(rotaJson)
+        val result = getMenuForDate(rota, LocalDate.parse("2026-02-16"))
+
+        assertNotNull(result)
+        result!!
+        assertEquals("Week 1", result.weekId)
+    }
+
+    @Test
     fun `returns null when monday is not registered`() {
         val rota = RotoJsonParser.parse(rotaJson)
         val result = getMenuForDate(rota, LocalDate.parse("2025-10-20"))

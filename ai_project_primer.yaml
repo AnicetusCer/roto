@@ -27,7 +27,7 @@ project_primer:
       - key: choose_any_date
         description: "Allow quick selection of any date to view the corresponding rota entry."
       - key: rotation_awareness
-        description: "Map real calendar dates to Week 1/2/3 style cycles via configured week_commencing Mondays, while honouring per-date overrides."
+        description: "Map real calendar dates to Week 1/2/3 style cycles via configured week_commencing Mondays, honour per-date overrides, and loop indefinitely when a repeat anchor is provided."
       - key: offline_persistence
         description: "Persist the rota JSON locally so data survives app restarts and works offline."
       - key: human_editable_data
@@ -52,6 +52,7 @@ project_primer:
       - "school_name string (display header) and optional notes[] for global messages."
       - "cycle.weeks[] with week_id, week_commencing[] (ISO Mondays), and days{} mapping weekday names or ISO dates to DayDefinition."
       - "DayDefinition provides slots[] (ordered {label, text, tags[]}) plus optional notes[]."
+      - "Optional cycle.repeat{start_date, start_week_id} enables the rota to loop indefinitely without enumerating future Mondays."
       - "overrides{} maps ISO dates to OverrideDay with closed/reason/slots/notes for one-off changes."
     design_rationale: "Supports any repeating rota (meals, clubs, duties) while staying human-editable for families and organisers."
 
@@ -60,6 +61,7 @@ project_primer:
       - "Check overrides{} for the target date; if found and closed=true, surface a polite closed message."
       - "If no override (or override supplies slots), find monday_of_week for the target date."
       - "Match monday_of_week against any cycle.weeks[].week_commencing entry."
+      - "If nothing explicit matches and cycle.repeat is set, compute the week by looping from repeat.start_date onward."
       - "Resolve the day's slots by weekday key (monday…sunday) or ISO-specific key."
       - "If nothing matches, show a friendly 'No rota found for this date' message."
 

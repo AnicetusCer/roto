@@ -15,7 +15,14 @@ data class RotoData(
 
 @Serializable
 data class CycleData(
-    val weeks: List<WeekEntry> = emptyList()
+    val weeks: List<WeekEntry> = emptyList(),
+    val repeat: CycleRepeat? = null
+)
+
+@Serializable
+data class CycleRepeat(
+    @SerialName("start_date") val startDate: String,
+    @SerialName("start_week_id") val startWeekId: String? = null
 )
 
 @Serializable

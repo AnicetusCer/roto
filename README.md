@@ -7,6 +7,7 @@ Roto is an offline, privacy-first Android app that answers one simple question: 
 - **Tomorrow-first** – Launch straight into tomorrow’s rota with day-specific notes, tags, and override reasons.
 - **Browse any day** – Pick any calendar date (weekends included) to see its slots or a friendly “No rota found” message.
 - **Flexible slots** – Schema 0.3 stores labelled slots (Option 1, Grab & Go, Duty, etc.) plus optional tags for allergens or year groups.
+- **Looping cycles** – Supply a repeat anchor once and the app keeps the rota cycling forever without duplicating dates.
 - **Offline JSON import** – Load your rota via **Load rota (JSON)** or by placing `RotoRota.json` in the app’s scoped Downloads directory.
 - **AI helper prompt** – The setup screen’s **Copy AI Instructions** button gives parents/carers a ready-made prompt to turn a PDF/photo into valid JSON with their own assistant.
 - **Privacy by default** – No analytics, tracking, or proprietary dependencies; the app runs happily offline and is F-Droid friendly.
@@ -34,6 +35,10 @@ Roto is an offline, privacy-first Android app that answers one simple question: 
   "school_name": "Example Primary School",
   "notes": ["Optional global notes"],
   "cycle": {
+    "repeat": {
+      "start_date": "2025-11-03",
+      "start_week_id": "Week 1"
+    },
     "weeks": [
       {
         "week_id": "Week 1",
@@ -68,6 +73,7 @@ Roto is an offline, privacy-first Android app that answers one simple question: 
 
 - `week_commencing` entries must be Mondays (ISO `YYYY-MM-DD`).
 - Each day contains ordered `slots[]` objects with required `label` and `text`, plus optional `tags[]` and `notes[]`.
+- Optional `cycle.repeat` lets the rota loop indefinitely from `start_date`, beginning with `start_week_id` (defaults to the first listed week).
 - Use `overrides{}` for one-off closures or special days rather than editing the base cycle.
 
 The full AI helper prompt lives in `app/src/main/assets/ai_llm_instructions.txt`.

@@ -19,6 +19,7 @@ WORKFLOW
    - Every `week_commencing` entry is an ISO Monday (`YYYY-MM-DD`).
    - Each day definition contains a `slots` array with objects that have `label` and `text`. Include `tags` only when supplied (dietary markers, year groups, etc.).
    - `overrides` keys are ISO dates. Set `"closed": true` when nothing runs that day.
+   - If the rota repeats indefinitely, include `cycle.repeat` with a Monday `start_date` and the `start_week_id` that begins the pattern.
 5. Return ONLY the final JSON wrapped in ```json fenced code.
 6. After the code block, add: “Save this as RotoRota.json in your Downloads folder so the app can import it.”
 
@@ -30,6 +31,10 @@ JSON SCHEMA (VERSION 0.3)
   "school_name": "Shown on the home screen header",
   "notes": ["Optional global notes"],
   "cycle": {
+    "repeat": {
+      "start_date": "2025-11-03",
+      "start_week_id": "Week 1"
+    },
     "weeks": [
       {
         "week_id": "Week 1",
@@ -73,5 +78,6 @@ NOTES FOR THE AI
 - Preserve the source wording, dietary markers, and timing notes. Place short markers in `tags[]` when helpful.
 - Include every published day: Monday–Friday, weekends, or specific ISO dates. Omit days with no information.
 - Use `overrides` for closures or special one-off schedules instead of editing the base cycle.
+- Use `cycle.repeat` when the rota should loop forever after the anchor date instead of duplicating future Mondays manually.
 - Ask the user to clarify missing details (week numbers, labels, Monday anchors) rather than inventing information.
 - Never fabricate meals or activities that are not in the supplied rota.

@@ -5,7 +5,9 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.temporal.TemporalAdjusters
+import java.time.temporal.ChronoUnit
 import java.util.Locale
+import org.roto.data.CycleData
 import org.roto.data.DayDefinition
 import org.roto.data.OverrideDay
 import org.roto.data.RotoData
@@ -40,11 +42,7 @@ private val displayFormatter: DateTimeFormatter =
 fun getMenuForDate(rotaData: RotoData, targetDate: LocalDate): DayResult? {
     val mondayOfWeek = targetDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
 
-    val matchingWeek = rotaData.cycle.weeks.firstOrNull { week ->
-        week.weekCommencing.any { dateString ->
-            parseIsoDateOrNull(dateString) == mondayOfWeek
-        }
-    }
+    val matchingWeek = findMatchingWeek(rotaData.cycle, mondayOfWeek)
 
     val baseDay = matchingWeek?.resolveDayDefinition(targetDate)
     val overrideDay = rotaData.overrides[targetDate.toString()]
@@ -69,6 +67,33 @@ fun getMenuForDate(rotaData: RotoData, targetDate: LocalDate): DayResult? {
         weekCommencing = resolved.weekCommencing,
         source = resolved.source
     )
+}
+
+private fun findMatchingWeek(cycle: CycleData, mondayOfWeek: LocalDate): WeekEntry? {
+    cycle.weeks.firstOrNull { week ->
+        week.weekCommencing.any { dateString ->
+            parseIsoDateOrNull(dateString) == mondayOfWeek
+        }
+    }?.let { return it }
+
+    val repeat = cycle.repeat ?: return null
+    val weeks = cycle.weeks
+    if (weeks.isEmpty()) return null
+
+    val anchorDate = parseIsoDateOrNull(repeat.startDate)?.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        ?: return null
+
+    val weeksBetween = ChronoUnit.WEEKS.between(anchorDate, mondayOfWeek)
+    if (weeksBetween < 0) return null
+
+    val anchorIndex = repeat.startWeekId?.let { id ->
+        weeks.indexOfFirst { it.weekId == id }
+    }?.takeIf { it >= 0 } ?: 0
+
+    val weekCount = weeks.size
+    val offset = (weeksBetween % weekCount.toLong()).toInt()
+    val normalizedIndex = (anchorIndex + offset) % weekCount
+    return weeks[normalizedIndex]
 }
 
 private data class ResolvedDay(

@@ -9,9 +9,9 @@
    ```
 3. In another windows terminal, build the new app .\gradlew.bat assembleDebug ; .\gradlew.bat testDebugUnitTest
 4. In another PowerShell window run Gradle builds or install APKs with `adb install -r app\build\outputs\apk\debug\app-debug.apk`
-5. Upload any files you need to the emulator like so `adb push C:\Users\Mile\Downloads\SchoolNomNomsMenu.json /sdcard/Download/SchoolNomNomsMenu.jso`
-6. List any file you need on the emulator like so `adb shell ls /sdcard/Android/data/org.schooldinners/files/Download`
-7. Remove any file you need on the emulator like so `adb shell rm /sdcard/Android/data/org.schooldinners/files/Download/somefile`
+5. Upload any files you need to the emulator like so `adb push C:\Users\Mile\Downloads\RotoRota.json /sdcard/Download/RotoRota.json`
+6. List any file you need on the emulator like so `adb shell ls /sdcard/Android/data/org.roto/files/Download`
+7. Remove any file you need on the emulator like so `adb shell rm /sdcard/Android/data/org.roto/files/Download/somefile`
 
 ## Useful Commands
 
@@ -28,8 +28,8 @@ avdmanager create avd \`
 | Launch with cold boot | `emulator -avd PixelLikeApi34 -no-snapshot-load` |
 | Verify device online | `adb devices` |
 | Install latest debug APK | `adb install -r app\build\outputs\apk\debug\app-debug.apk` |
-| Clear app data | `adb shell pm clear org.schooldinners` |
-| Push menu JSON into app scope | `adb push SchoolNomNomsMenu.json /sdcard/Android/data/org.schooldinners/files/Download/` |
+| Clear app data | `adb shell pm clear org.roto` |
+| Push rota JSON into app scope | `adb push RotoRota.json /sdcard/Android/data/org.roto/files/Download/` |
 | Pull crash logs | `adb logcat -d > logcat.txt` |
 | Kill emulator | Close its window or run `adb emu kill` |
 
@@ -37,5 +37,5 @@ avdmanager create avd \`
 
 - If PowerShell can’t find `emulator` or `adb`, use the full paths (e.g. `"C:\Android\sdk\emulator\emulator.exe"`).
 - Change the emulator date/time to match the week you’re testing (Settings → System → Date & time).
-- Use the in-app **Clear menu** button or `adb shell pm clear org.schooldinners` before importing a new JSON.
+- Use the in-app **Clear rota** button or `adb shell pm clear org.roto` before importing a new JSON.
 - When returning from WSL, re-run `emulator -avd PixelLikeApi34` if the emulator isn’t already running.

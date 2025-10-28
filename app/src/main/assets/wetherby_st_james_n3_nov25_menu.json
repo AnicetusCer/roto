@@ -7,6 +7,10 @@
     "(V) Vegetarian, (VE) Vegan, (H) Halal designations are provided by the caterer."
   ],
   "cycle": {
+    "repeat": {
+      "start_date": "2025-11-03",
+      "start_week_id": "Week 1"
+    },
     "weeks": [
       {
         "week_id": "Week 1",

@@ -28,7 +28,7 @@ class MenuRotationTest {
 
         assertNotNull(result)
         result!!
-        assertEquals("Week ONE", result.weekId)
+        assertEquals("Week 1", result.weekId)
         assertEquals(DayDataSource.ROTATION, result.source)
         assertEquals("Mains", result.slots.first().label)
         assertTrue(result.slots.first().text.contains("Margherita Pizza"))
@@ -40,7 +40,7 @@ class MenuRotationTest {
 
         assertNotNull(result)
         result!!
-        assertEquals("Week TWO", result.weekId)
+        assertEquals("Week 2", result.weekId)
         assertEquals(DayDataSource.ROTATION, result.source)
         assertTrue(result.slots.any { it.text.contains("Fish Fingers") })
     }

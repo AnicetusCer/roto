@@ -22,7 +22,7 @@ class RotoJsonParserTest {
         val rotaData = RotoJsonParser.parse(menuSample)
 
         assertEquals("0.3", rotaData.schemaVersion)
-        assertEquals("Wetherby St James C of E Primary", rotaData.rotaName)
+        assertEquals("Riverdale Primary School", rotaData.rotaName)
         assertEquals(3, rotaData.notes.size)
         assertNull(rotaData.cycle.repeat)
 
@@ -30,7 +30,7 @@ class RotoJsonParserTest {
         assertEquals(3, weeks.size)
 
         val weekOne = weeks.first()
-        assertEquals("Week ONE", weekOne.weekId)
+        assertEquals("Week 1", weekOne.weekId)
         assertEquals(listOf("2025-11-03", "2025-12-15", "2026-01-05", "2026-01-26"), weekOne.weekCommencing)
         val monday = requireNotNull(weekOne.days["monday"])
         assertEquals("Mains", monday.slots.first().label)
@@ -41,7 +41,7 @@ class RotoJsonParserTest {
     fun `parse school menu rota`() {
         val rota = RotoJsonParser.parse(menuSample)
 
-        assertEquals("Wetherby St James C of E Primary", rota.rotaName)
+        assertEquals("Riverdale Primary School", rota.rotaName)
         assertEquals(3, rota.cycle.weeks.size)
         assertNull(rota.cycle.repeat)
 

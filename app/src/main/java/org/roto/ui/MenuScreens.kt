@@ -157,7 +157,7 @@ private fun SetupState(
 ) {
     val context = LocalContext.current
     val sampleFiles = remember(context) {
-        context.assets.list("sample_rotas")?.sorted()?.toList() ?: emptyList()
+        context.assets.list("sample_rotas")?.toList()?.filter { it.endsWith(".json") }?.sorted() ?: emptyList()
     }
     var showInstructions by remember { mutableStateOf(false) }
 
@@ -452,11 +452,12 @@ private fun InstructionsDialog(
                 if (sampleFiles.isNotEmpty()) {
                     Text("Need a head start? Copy one of these sample rotas to your Downloads folder and load it in the app.")
                     sampleFiles.forEach { name ->
+                        val display = name.removeSuffix(".json").replace('_', ' ').replace('-', ' ')
                         Button(
                             onClick = { onCopySample(name) },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Copy $name")
+                            Text("Copy $display")
                         }
                     }
                     Text(

@@ -297,15 +297,6 @@ private fun MenuContent(
 
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(
-                text = "Tomorrow's Rota",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            state.tomorrowMenu?.let {
-                MenuCard(title = friendlyDate(it), menu = it)
-            } ?: Text("No rota recorded for tomorrow.")
-
-            Text(
                 text = "Today's Rota",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
@@ -313,6 +304,15 @@ private fun MenuContent(
             state.todayMenu?.let {
                 MenuCard(title = friendlyDate(it), menu = it)
             } ?: Text("No rota recorded for today.")
+
+            Text(
+                text = "Tomorrow's Rota",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            state.tomorrowMenu?.let {
+                MenuCard(title = friendlyDate(it), menu = it)
+            } ?: Text("No rota recorded for tomorrow.")
         }
 
         if (state.globalNotes.isNotEmpty()) {

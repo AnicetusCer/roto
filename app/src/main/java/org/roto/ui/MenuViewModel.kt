@@ -7,8 +7,8 @@ import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
-import android.provider.MediaStore
 import android.provider.OpenableColumns
+import android.provider.MediaStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import java.io.File
@@ -33,9 +33,12 @@ import org.roto.domain.getMenuForDate
 
 data class SetupMessage(val text: String, val isError: Boolean)
 
+data class SampleCopyPrompt(val locationHint: String)
+
 data class MenuUiState(
     val isLoading: Boolean = false,
     val setupMessage: SetupMessage? = null,
+    val sampleCopyPrompt: SampleCopyPrompt? = null,
     val hasMenuData: Boolean = false,
     val rotaName: String = "",
     val todayMenu: DayResult? = null,
@@ -76,6 +79,7 @@ class MenuViewModel(
     private val aiInstructionsText: String =
         application.assets.open("ai_llm_instructions.txt").bufferedReader().use { it.readText() }
 
+
     private val _uiState = MutableStateFlow(MenuUiState())
     val uiState: StateFlow<MenuUiState> = _uiState
 
@@ -114,18 +118,19 @@ class MenuViewModel(
             val result = withContext(Dispatchers.IO) {
                 runCatching {
                     val targetName = sampleName.substringAfterLast('/')
+                    val relativePath = Environment.DIRECTORY_DOWNLOADS + "/Roto/"
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                         val resolver = app.contentResolver
                         // Remove any previous copy with the same display name inside our relative path.
                         resolver.delete(
                             MediaStore.Downloads.EXTERNAL_CONTENT_URI,
                             "${MediaStore.MediaColumns.DISPLAY_NAME}=? AND ${MediaStore.MediaColumns.RELATIVE_PATH}=?",
-                            arrayOf(targetName, Environment.DIRECTORY_DOWNLOADS + "/Roto/")
+                            arrayOf(targetName, relativePath)
                         )
                         val contentValues = ContentValues().apply {
                             put(MediaStore.Downloads.DISPLAY_NAME, targetName)
                             put(MediaStore.Downloads.MIME_TYPE, "application/json")
-                            put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Roto")
+                            put(MediaStore.Downloads.RELATIVE_PATH, relativePath)
                         }
                         val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
                             ?: throw IllegalStateException("Unable to create entry in Downloads.")
@@ -150,16 +155,29 @@ class MenuViewModel(
             }
             result.onSuccess { location ->
                 _uiState.update { state ->
-                    state.copy(setupMessage = SetupMessage("Copied sample to $location. Tap 'Load rota file' to open it.", false))
+                    state.copy(
+                        setupMessage = SetupMessage("Copied sample to $location. Tap 'Load rota file' to open it.", false),
+                        sampleCopyPrompt = SampleCopyPrompt(location)
+                    )
                 }
                 Toast.makeText(app, "Sample copied to $location", Toast.LENGTH_SHORT).show()
             }.onFailure { throwable ->
                 val reason = throwable.localizedMessage ?: "Unknown error"
                 _uiState.update { state ->
-                    state.copy(setupMessage = SetupMessage("Couldn't copy sample: $reason", true))
+                    state.copy(
+                        setupMessage = SetupMessage("Couldn't copy sample: $reason", true),
+                        sampleCopyPrompt = null
+                    )
                 }
                 Toast.makeText(app, "Couldn't copy sample: $reason", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+
+    fun dismissSampleCopyPrompt() {
+        _uiState.update { state ->
+            if (state.sampleCopyPrompt == null) state else state.copy(sampleCopyPrompt = null)
         }
     }
 

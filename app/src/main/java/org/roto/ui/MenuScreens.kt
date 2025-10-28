@@ -84,6 +84,7 @@ fun MenuRoot(
             clipboard.setText(AnnotatedString(viewModel.getAiInstructions()))
         },
         onCopySample = viewModel::copySampleToDownloads,
+        onDismissSamplePrompt = viewModel::dismissSampleCopyPrompt,
         onClearMenu = viewModel::clearMenuSelection,
         onSelectWeek = viewModel::selectWeek,
         onClearWeek = viewModel::clearSelectedWeek,
@@ -98,6 +99,7 @@ fun MenuScreen(
     onChooseFile: () -> Unit,
     onCopyInstructions: () -> Unit,
     onCopySample: (String) -> Unit,
+    onDismissSamplePrompt: () -> Unit,
     onClearMenu: () -> Unit,
     onSelectWeek: (String) -> Unit,
     onClearWeek: () -> Unit,
@@ -120,10 +122,12 @@ fun MenuScreen(
             onChooseFile = onChooseFile,
             onCopyInstructions = onCopyInstructions,
             onCopySample = onCopySample,
+            onDismissSamplePrompt = onDismissSamplePrompt,
             showClear = hasSelection,
             onClearMenu = onClearMenu,
             sourceLabel = state.selectedSourceLabel,
             message = state.setupMessage,
+            sampleCopyPrompt = state.sampleCopyPrompt,
             modifier = modifier
         )
     }
@@ -149,10 +153,12 @@ private fun SetupState(
     onChooseFile: () -> Unit,
     onCopyInstructions: () -> Unit,
     onCopySample: (String) -> Unit,
+    onDismissSamplePrompt: () -> Unit,
     showClear: Boolean,
     onClearMenu: () -> Unit,
     sourceLabel: String,
     message: SetupMessage?,
+    sampleCopyPrompt: SampleCopyPrompt?,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -160,6 +166,25 @@ private fun SetupState(
         context.assets.list("sample_rotas")?.toList()?.filter { it.endsWith(".json") }?.sorted() ?: emptyList()
     }
     var showInstructions by remember { mutableStateOf(false) }
+
+    sampleCopyPrompt?.let { prompt ->
+        AlertDialog(
+            onDismissRequest = onDismissSamplePrompt,
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDismissSamplePrompt()
+                        onChooseFile()
+                    }
+                ) { Text("Load now") }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismissSamplePrompt) { Text("Later") }
+            },
+            title = { Text("Sample copied") },
+            text = { Text("Open ${prompt.locationHint} now?") }
+        )
+    }
 
     if (showInstructions) {
         InstructionsDialog(

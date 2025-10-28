@@ -10,8 +10,12 @@ import org.junit.Test
 class RotoJsonParserTest {
 
     private fun readAsset(name: String): String {
-        val path = File("src/main/assets/$name")
-        require(path.exists()) { "Expected asset not found at ${path.absolutePath}" }
+        val candidates = listOf(
+            File("src/main/assets/$name"),
+            File("app/src/main/assets/$name")
+        )
+        val path = candidates.firstOrNull(File::exists)
+            ?: error("Expected asset not found in src/main/assets or app/src/main/assets for $name")
         return path.readText()
     }
 

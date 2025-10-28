@@ -9,49 +9,96 @@
     "weeks": [
       {
         "week_id": "Week 1: General Waste",
-        "week_commencing": ["2026-03-02", "2026-03-23"],
+        "week_commencing": [
+          "2026-03-02",
+          "2026-03-23"
+        ],
         "days": {
           "monday": {
             "slots": [
-              { "label": "Collection Type", "text": "Black Bin (General Waste)", "tags": ["Weekly"] }
+              {
+                "label": "Collection Type",
+                "text": "Black Bin (General Waste)",
+                "tags": [
+                  "Weekly"
+                ]
+              }
             ]
           },
           "thursday": {
             "slots": [
-              { "label": "Collection Type", "text": "Food Waste Caddy", "tags": ["Weekly"] }
-            ]
-          }
-          /* All other days show no collection, or are omitted */
-        }
-      },
-      {
-        "week_id": "Week 2: Mixed Recycling",
-        "week_commencing": ["2026-03-09", "2026-03-30"],
-        "days": {
-          "monday": {
-            "slots": [
-              { "label": "Collection Type", "text": "Blue Bin (Mixed Recycling)", "tags": ["Fortnightly"] }
-            ]
-          },
-          "thursday": {
-            "slots": [
-              { "label": "Collection Type", "text": "Food Waste Caddy", "tags": ["Weekly"] }
+              {
+                "label": "Collection Type",
+                "text": "Food Waste Caddy",
+                "tags": [
+                  "Weekly"
+                ]
+              }
             ]
           }
         }
       },
       {
-        "week_id": "Week 3: Garden & Food",
-        "week_commencing": ["2026-03-16", "2026-04-06"],
+        "week_id": "Week 2: Recycling",
+        "week_commencing": [
+          "2026-03-09",
+          "2026-03-30"
+        ],
         "days": {
-          "monday": {
+          "wednesday": {
             "slots": [
-              { "label": "Collection Type", "text": "Brown Bin (Garden Waste)", "tags": ["Monthly"] }
+              {
+                "label": "Collection Type",
+                "text": "Blue Bin (Mixed Recycling)",
+                "tags": [
+                  "Fortnightly"
+                ]
+              }
             ]
           },
-          "thursday": {
+          "friday": {
             "slots": [
-              { "label": "Collection Type", "text": "Food Waste Caddy", "tags": ["Weekly"] }
+              {
+                "label": "Collection Type",
+                "text": "Garden Waste",
+                "tags": [
+                  "Seasonal"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "week_id": "Week 3: Glass & Bulky",
+        "week_commencing": [
+          "2026-03-16",
+          "2026-04-06"
+        ],
+        "days": {
+          "tuesday": {
+            "slots": [
+              {
+                "label": "Collection Type",
+                "text": "Glass Crates",
+                "tags": [
+                  "Monthly"
+                ]
+              }
+            ]
+          },
+          "saturday": {
+            "slots": [
+              {
+                "label": "Special Collection",
+                "text": "Pre-booked Bulky Waste",
+                "tags": [
+                  "Appointment"
+                ]
+              }
+            ],
+            "notes": [
+              "Residents must book by Thursday noon."
             ]
           }
         }
@@ -59,17 +106,10 @@
     ]
   },
   "overrides": {
-    "2026-04-06": {
-      "reason": "Easter Monday Bank Holiday (Normal collection day)",
-      "slots": [
-        { "label": "Collection Type", "text": "Black Bin (General Waste)" }
-      ],
-      "notes": ["Collection has been DELAYED by one day. It will now occur on Tuesday, April 7th."]
-    },
-    "2026-04-07": {
+    "2026-03-29": {
       "reason": "Bank Holiday Delay",
-      "slots": [
-        { "label": "Collection Type", "text": "Black Bin (General Waste) - Delayed from April 6th", "tags": ["Override"] }
+      "notes": [
+        "All collections move to the following day this week."
       ]
     }
   }

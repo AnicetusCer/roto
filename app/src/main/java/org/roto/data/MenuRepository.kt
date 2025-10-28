@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Environment
 import androidx.annotation.VisibleForTesting
 import java.io.File
+import kotlinx.serialization.SerializationException
 
 enum class MenuSourceType {
     EXTERNAL_SELECTION,
@@ -27,10 +28,27 @@ class MenuRepository(
                 preferredUri != null -> readExternalFile(preferredUri)?.let { it to MenuSourceType.EXTERNAL_SELECTION }
                     ?: throw IllegalStateException("Unable to read the selected rota file.")
                 else -> readDownloadsMenu()?.let { it to MenuSourceType.SCOPED_DOWNLOADS }
-                    ?: throw IllegalStateException("No rota file found. Save it as $downloadsFileName in the app downloads folder or choose a file manually.")
+                    ?: throw IllegalStateException("No rota file found. Choose a file manually or place one in the app's downloads folder.")
+            }
+            val parsed = try {
+                RotoJsonParser.parse(rawJson)
+            } catch (e: SerializationException) {
+                throw IllegalStateException(
+                    "That file couldn't be understood. Make sure it matches the rota JSON examples or regenerate it with the helper prompt.",
+                    e
+                )
+            } catch (e: IllegalArgumentException) {
+                throw IllegalStateException(e.message ?: "Unsupported rota schema. Please regenerate the file.", e)
+            }
+            val validationIssues = RotoValidator.validate(parsed)
+            if (validationIssues.isNotEmpty()) {
+                val bulletList = validationIssues.joinToString(separator = "\n• ", prefix = "• ")
+                throw IllegalStateException(
+                    "The rota file is missing some required details:\n$bulletList\nPlease fix these and try again."
+                )
             }
             MenuLoadResult(
-                data = RotoJsonParser.parse(rawJson),
+                data = parsed,
                 sourceType = sourceType
             )
         }

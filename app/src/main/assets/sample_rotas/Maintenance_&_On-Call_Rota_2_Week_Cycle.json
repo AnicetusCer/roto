@@ -10,61 +10,212 @@
     "weeks": [
       {
         "week_id": "Team 1 Primary",
-        "week_commencing": ["2026-03-02", "2026-03-16", "2026-03-30"],
+        "week_commencing": [
+          "2026-03-02",
+          "2026-03-16",
+          "2026-03-30"
+        ],
         "days": {
           "monday": {
             "slots": [
-              { "label": "Preventative Maintenance", "text": "H. Smith (Plumbing)", "tags": ["Location: B-Wing"] },
-              { "label": "Emergency On-Call (Day)", "text": "J. Evans (IT Support)" },
-              { "label": "Emergency On-Call (Night)", "text": "L. Chen (Facilities)" }
+              {
+                "label": "Preventative Maintenance",
+                "text": "H. Smith (Plumbing)",
+                "tags": [
+                  "Location: B-Wing"
+                ]
+              },
+              {
+                "label": "Emergency On-Call (Day)",
+                "text": "J. Evans (IT Support)"
+              },
+              {
+                "label": "Emergency On-Call (Night)",
+                "text": "L. Chen (Facilities)"
+              }
             ]
           },
           "tuesday": {
             "slots": [
-              { "label": "Preventative Maintenance", "text": "K. Patel (Electrical)", "tags": ["Location: Main Server"] },
-              { "label": "Emergency On-Call (Day)", "text": "J. Evans (IT Support)" },
-              { "label": "Emergency On-Call (Night)", "text": "L. Chen (Facilities)" }
+              {
+                "label": "Preventative Maintenance",
+                "text": "K. Patel (Electrical)",
+                "tags": [
+                  "Location: Main Server"
+                ]
+              },
+              {
+                "label": "Emergency On-Call (Day)",
+                "text": "J. Evans (IT Support)"
+              },
+              {
+                "label": "Emergency On-Call (Night)",
+                "text": "L. Chen (Facilities)"
+              }
             ]
           },
-          /* ... Wednesday through Friday would follow the same pattern ... */
-          "saturday": {
+          "wednesday": {
             "slots": [
-              { "label": "Emergency On-Call (Weekend)", "text": "K. Patel (Primary), H. Smith (Backup)" }
+              {
+                "label": "Preventative Maintenance",
+                "text": "R. Singh (Carpentry)",
+                "tags": [
+                  "Location: Auditorium"
+                ]
+              },
+              {
+                "label": "Emergency On-Call (Day)",
+                "text": "J. Evans (IT Support)"
+              },
+              {
+                "label": "Emergency On-Call (Night)",
+                "text": "L. Chen (Facilities)"
+              }
             ]
           },
-          "sunday": {
+          "thursday": {
             "slots": [
-              { "label": "Emergency On-Call (Weekend)", "text": "K. Patel (Primary), H. Smith (Backup)" }
+              {
+                "label": "Preventative Maintenance",
+                "text": "M. O'Neil (HVAC)",
+                "tags": [
+                  "Location: A-Wing"
+                ]
+              },
+              {
+                "label": "Emergency On-Call (Day)",
+                "text": "J. Evans (IT Support)"
+              },
+              {
+                "label": "Emergency On-Call (Night)",
+                "text": "L. Chen (Facilities)"
+              }
+            ]
+          },
+          "friday": {
+            "slots": [
+              {
+                "label": "Preventative Maintenance",
+                "text": "G. Carter (IT Infrastructure)",
+                "tags": [
+                  "Location: Data Centre"
+                ]
+              },
+              {
+                "label": "Emergency On-Call (Day)",
+                "text": "J. Evans (IT Support)"
+              },
+              {
+                "label": "Emergency On-Call (Night)",
+                "text": "L. Chen (Facilities)"
+              }
             ]
           }
-        }
+        },
+        "notes": [
+          "Weekend cover: K. Patel (Primary), H. Smith (Backup)"
+        ]
       },
       {
         "week_id": "Team 2 Primary",
-        "week_commencing": ["2026-03-09", "2026-03-23"],
+        "week_commencing": [
+          "2026-03-09",
+          "2026-03-23"
+        ],
         "days": {
           "monday": {
             "slots": [
-              { "label": "Preventative Maintenance", "text": "M. O'Neil (HVAC)", "tags": ["Location: A-Wing"] },
-              { "label": "Emergency On-Call (Day)", "text": "S. Rodriguez (IT Support)" },
-              { "label": "Emergency On-Call (Night)", "text": "P. Jones (Facilities)" }
+              {
+                "label": "Preventative Maintenance",
+                "text": "C. Wright (Security Systems)",
+                "tags": [
+                  "Location: Main Lobby"
+                ]
+              },
+              {
+                "label": "Emergency On-Call (Day)",
+                "text": "M. O'Neil (HVAC)"
+              },
+              {
+                "label": "Emergency On-Call (Night)",
+                "text": "K. Patel (Electrical)"
+              }
             ]
           },
           "tuesday": {
             "slots": [
-              { "label": "Preventative Maintenance", "text": "R. Green (Grounds)", "tags": ["Location: North Lot"] },
-              { "label": "Emergency On-Call (Day)", "text": "S. Rodriguez (IT Support)" },
-              { "label": "Emergency On-Call (Night)", "text": "P. Jones (Facilities)" }
+              {
+                "label": "Preventative Maintenance",
+                "text": "D. Brooks (Grounds)",
+                "tags": [
+                  "Location: Exterior Campus"
+                ]
+              },
+              {
+                "label": "Emergency On-Call (Day)",
+                "text": "M. O'Neil (HVAC)"
+              },
+              {
+                "label": "Emergency On-Call (Night)",
+                "text": "K. Patel (Electrical)"
+              }
             ]
           },
-          "saturday": {
+          "wednesday": {
             "slots": [
-              { "label": "Emergency On-Call (Weekend)", "text": "M. O'Neil (Primary), R. Green (Backup)" }
+              {
+                "label": "Preventative Maintenance",
+                "text": "E. Hughes (Elevators)",
+                "tags": [
+                  "Location: Tower Block"
+                ]
+              },
+              {
+                "label": "Emergency On-Call (Day)",
+                "text": "M. O'Neil (HVAC)"
+              },
+              {
+                "label": "Emergency On-Call (Night)",
+                "text": "K. Patel (Electrical)"
+              }
             ]
           },
-          "sunday": {
+          "thursday": {
             "slots": [
-              { "label": "Emergency On-Call (Weekend)", "text": "M. O'Neil (Primary), R. Green (Backup)" }
+              {
+                "label": "Preventative Maintenance",
+                "text": "F. Jordan (Lighting)",
+                "tags": [
+                  "Location: Sports Hall"
+                ]
+              },
+              {
+                "label": "Emergency On-Call (Day)",
+                "text": "M. O'Neil (HVAC)"
+              },
+              {
+                "label": "Emergency On-Call (Night)",
+                "text": "K. Patel (Electrical)"
+              }
+            ]
+          },
+          "friday": {
+            "slots": [
+              {
+                "label": "Preventative Maintenance",
+                "text": "G. Carter (IT Infrastructure)",
+                "tags": [
+                  "Location: Data Centre"
+                ]
+              },
+              {
+                "label": "Emergency On-Call (Day)",
+                "text": "M. O'Neil (HVAC)"
+              },
+              {
+                "label": "Emergency On-Call (Night)",
+                "text": "K. Patel (Electrical)"
+              }
             ]
           }
         }
@@ -72,13 +223,16 @@
     ]
   },
   "overrides": {
-    "2026-05-04": {
-      "reason": "Bank Holiday - Early May",
+    "2026-03-18": {
       "slots": [
-        { "label": "Holiday On-Call Primary", "text": "L. Chen (24 Hours)" },
-        { "label": "Holiday On-Call Backup", "text": "S. Rodriguez" }
+        {
+          "label": "Emergency Shutdown Response",
+          "text": "All hands to Main Server room"
+        }
       ],
-      "notes": ["All non-emergency preventative maintenance is suspended. Critical coverage only."]
+      "notes": [
+        "Triggered drill for power management training."
+      ]
     }
   }
 }

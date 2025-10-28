@@ -14,85 +14,309 @@
     "weeks": [
       {
         "week_id": "Team Alpha (Week ONE)",
-        "week_commencing": ["2025-11-03", "2025-11-24", "2025-12-15"],
+        "week_commencing": [
+          "2025-11-03",
+          "2025-11-24",
+          "2025-12-15"
+        ],
         "days": {
           "monday": {
             "slots": [
-              { "label": "Primary Decon (06:00)", "text": "Containment Area 1 Scrape & Vacuum", "tags": ["High Rad"] },
-              { "label": "Secondary Decon (14:00)", "text": "Reactor Coolant Loop 1 Decon (Chemical Flush)" },
-              { "label": "QA/Survey (22:00)", "text": "Post-Decon Radiation Survey (Area 1)" }
+              {
+                "label": "Primary Decon (06:00)",
+                "text": "Containment Area 1 Scrape & Vacuum",
+                "tags": [
+                  "High Rad"
+                ]
+              },
+              {
+                "label": "Secondary Decon (14:00)",
+                "text": "Reactor Coolant Loop 1 Decon (Chemical Flush)"
+              },
+              {
+                "label": "QA/Survey (22:00)",
+                "text": "Post-Decon Radiation Survey (Area 1)"
+              }
             ]
           },
           "tuesday": {
             "slots": [
-              { "label": "Primary Decon (06:00)", "text": "Water Storage Tank T1 Decon", "tags": ["Level 3 PPE"] },
-              { "label": "Secondary Decon (14:00)", "text": "Ventilation Filters Swap-out (Unit 3)" },
-              { "label": "QA/Survey (22:00)", "text": "Airlock Seal Integrity Check" }
+              {
+                "label": "Primary Decon (06:00)",
+                "text": "Water Storage Tank T1 Decon",
+                "tags": [
+                  "Level 3 PPE"
+                ]
+              },
+              {
+                "label": "Secondary Decon (14:00)",
+                "text": "Ventilation Filters Swap-out (Unit 3)"
+              },
+              {
+                "label": "QA/Survey (22:00)",
+                "text": "Airlock Seal Integrity Check"
+              }
             ]
           },
           "wednesday": {
             "slots": [
-              { "label": "Primary Decon (06:00)", "text": "Pump Housing P2 Cleanup" },
-              { "label": "Secondary Decon (14:00)", "text": "Used Fuel Bay Area Scrape" },
-              { "label": "QA/Survey (22:00)", "text": "Waste Segregation Audit" }
+              {
+                "label": "Primary Decon (06:00)",
+                "text": "Pump Housing P2 Cleanup",
+                "tags": [
+                  "Level 3 PPE"
+                ]
+              },
+              {
+                "label": "Secondary Decon (14:00)",
+                "text": "Used Fuel Bay Area Scrape"
+              },
+              {
+                "label": "QA/Survey (22:00)",
+                "text": "Waste Segregation Audit"
+              }
             ]
           },
           "thursday": {
             "slots": [
-              { "label": "Primary Decon (06:00)", "text": "Control Rod Drive Mechanism Cleanup" },
-              { "label": "Secondary Decon (14:00)", "text": "Reactor Coolant Loop 2 Decon (Chemical Flush)" },
-              { "label": "QA/Survey (22:00)", "text": "Post-Decon Radiation Survey (Area 2)" }
+              {
+                "label": "Primary Decon (06:00)",
+                "text": "Control Rod Drive Mechanism Cleanup",
+                "tags": [
+                  "Level 3 PPE"
+                ]
+              },
+              {
+                "label": "Secondary Decon (14:00)",
+                "text": "Reactor Coolant Loop 2 Decon (Chemical Flush)"
+              },
+              {
+                "label": "QA/Survey (22:00)",
+                "text": "Post-Decon Radiation Survey (Area 2)"
+              }
             ]
           },
           "friday": {
             "slots": [
-              { "label": "Primary Decon (06:00)", "text": "Hot Laundry Cycle & Decon Room Wipe Down" },
-              { "label": "Secondary Decon (14:00)", "text": "Transport Cask Scrubbing" },
-              { "label": "QA/Survey (22:00)", "text": "End-of-Week Equipment Calibration Check" }
+              {
+                "label": "Primary Decon (06:00)",
+                "text": "Hot Laundry Cycle & Decon Room Wipe Down",
+                "tags": [
+                  "Level 3 PPE"
+                ]
+              },
+              {
+                "label": "Secondary Decon (14:00)",
+                "text": "Transport Cask Scrubbing"
+              },
+              {
+                "label": "QA/Survey (22:00)",
+                "text": "End-of-Week Equipment Calibration Check"
+              }
             ]
           }
         }
       },
       {
         "week_id": "Team Beta (Week TWO)",
-        "week_commencing": ["2025-11-10", "2025-12-01", "2025-12-22"],
+        "week_commencing": [
+          "2025-11-10",
+          "2025-12-01",
+          "2025-12-22"
+        ],
         "days": {
           "monday": {
             "slots": [
-              { "label": "Primary Decon (06:00)", "text": "Ventilation System Scrape & Vacuum", "tags": ["Level 3 PPE"] },
-              { "label": "Secondary Decon (14:00)", "text": "Waste Management Area Wipe Down" },
-              { "label": "QA/Survey (22:00)", "text": "Equipment Inventory & Inspection" }
+              {
+                "label": "Primary Decon (06:00)",
+                "text": "Ventilation System Scrape & Vacuum",
+                "tags": [
+                  "Level 3 PPE"
+                ]
+              },
+              {
+                "label": "Secondary Decon (14:00)",
+                "text": "Waste Management Area Wipe Down"
+              },
+              {
+                "label": "QA/Survey (22:00)",
+                "text": "Equipment Inventory & Inspection"
+              }
             ]
           },
           "tuesday": {
             "slots": [
-              { "label": "Primary Decon (06:00)", "text": "Piping Gallery Decon (North Side)" },
-              { "label": "Secondary Decon (14:00)", "text": "Secondary Containment Wall Wash" },
-              { "label": "QA/Survey (22:00)", "text": "Perimeter Air Sample Collection" }
+              {
+                "label": "Primary Decon (06:00)",
+                "text": "Piping Gallery Decon (North Side)",
+                "tags": []
+              },
+              {
+                "label": "Secondary Decon (14:00)",
+                "text": "Secondary Containment Wall Wash"
+              },
+              {
+                "label": "QA/Survey (22:00)",
+                "text": "Perimeter Air Sample Collection"
+              }
+            ]
+          },
+          "wednesday": {
+            "slots": [
+              {
+                "label": "Primary Decon (06:00)",
+                "text": "Spent Resin Tank Flush",
+                "tags": [
+                  "Level 3 PPE"
+                ]
+              },
+              {
+                "label": "Secondary Decon (14:00)",
+                "text": "Decon Chemical Prep & Restock"
+              },
+              {
+                "label": "QA/Survey (22:00)",
+                "text": "Dosimeter Calibration"
+              }
+            ]
+          },
+          "thursday": {
+            "slots": [
+              {
+                "label": "Primary Decon (06:00)",
+                "text": "Cooling Tower Surface Decon",
+                "tags": []
+              },
+              {
+                "label": "Secondary Decon (14:00)",
+                "text": "Tool Crib Decon"
+              },
+              {
+                "label": "QA/Survey (22:00)",
+                "text": "Mobile Survey Unit Maintenance"
+              }
+            ]
+          },
+          "friday": {
+            "slots": [
+              {
+                "label": "Primary Decon (06:00)",
+                "text": "Containment Area 3 Floor Scrub",
+                "tags": []
+              },
+              {
+                "label": "Secondary Decon (14:00)",
+                "text": "Laundry Room Filter Change"
+              },
+              {
+                "label": "QA/Survey (22:00)",
+                "text": "Weekly Safety Brief Compilation"
+              }
             ]
           }
-          /* ... Rest of week follows Team Beta duties ... */
         }
       },
       {
         "week_id": "Team Gamma (Week THREE)",
-        "week_commencing": ["2025-11-17", "2025-12-08", "2025-12-29"],
+        "week_commencing": [
+          "2025-11-17",
+          "2025-12-08",
+          "2025-12-29"
+        ],
         "days": {
           "monday": {
             "slots": [
-              { "label": "Primary Decon (06:00)", "text": "Emergency Water Tank T2 Decon", "tags": ["Level 3 PPE"] },
-              { "label": "Secondary Decon (14:00)", "text": "Control Room Shielding Clean" },
-              { "label": "QA/Survey (22:00)", "text": "Emergency Kit Inspection" }
+              {
+                "label": "Primary Decon (06:00)",
+                "text": "Emergency Water Tank T2 Decon",
+                "tags": [
+                  "Level 3 PPE"
+                ]
+              },
+              {
+                "label": "Secondary Decon (14:00)",
+                "text": "Control Room Shielding Clean"
+              },
+              {
+                "label": "QA/Survey (22:00)",
+                "text": "Emergency Kit Inspection"
+              }
             ]
           },
           "tuesday": {
             "slots": [
-              { "label": "Primary Decon (06:00)", "text": "Piping Gallery Decon (South Side)" },
-              { "label": "Secondary Decon (14:00)", "text": "Containment Area 2 Scrape & Vacuum" },
-              { "label": "QA/Survey (22:00)", "text": "Decon Fluid Disposal Check" }
+              {
+                "label": "Primary Decon (06:00)",
+                "text": "Piping Gallery Decon (South Side)",
+                "tags": []
+              },
+              {
+                "label": "Secondary Decon (14:00)",
+                "text": "Containment Area 2 Scrape & Vacuum"
+              },
+              {
+                "label": "QA/Survey (22:00)",
+                "text": "Decon Fluid Disposal Check"
+              }
+            ]
+          },
+          "wednesday": {
+            "slots": [
+              {
+                "label": "Primary Decon (06:00)",
+                "text": "Hot Cell Glove Replacement",
+                "tags": [
+                  "Level 3 PPE"
+                ]
+              },
+              {
+                "label": "Secondary Decon (14:00)",
+                "text": "Spent Filter Packaging"
+              },
+              {
+                "label": "QA/Survey (22:00)",
+                "text": "Drum Label Verification"
+              }
+            ]
+          },
+          "thursday": {
+            "slots": [
+              {
+                "label": "Primary Decon (06:00)",
+                "text": "Inspection Tunnel Washdown",
+                "tags": [
+                  "Level 3 PPE"
+                ]
+              },
+              {
+                "label": "Secondary Decon (14:00)",
+                "text": "Sump Pump Maintenance"
+              },
+              {
+                "label": "QA/Survey (22:00)",
+                "text": "Survey Map Updates"
+              }
+            ]
+          },
+          "friday": {
+            "slots": [
+              {
+                "label": "Primary Decon (06:00)",
+                "text": "Vehicle Decon Bay Deep Clean",
+                "tags": [
+                  "Level 3 PPE"
+                ]
+              },
+              {
+                "label": "Secondary Decon (14:00)",
+                "text": "Emergency Shower Sanitation"
+              },
+              {
+                "label": "QA/Survey (22:00)",
+                "text": "Weekly QA Summary Report"
+              }
             ]
           }
-          /* ... Rest of week follows Team Gamma duties ... */
         }
       }
     ]

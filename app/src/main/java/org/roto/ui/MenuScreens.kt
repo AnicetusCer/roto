@@ -3,6 +3,7 @@ package org.roto.ui
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,9 +13,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
@@ -34,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.time.format.TextStyle
 import java.util.Locale
+import org.roto.R
 import org.roto.domain.DayDataSource
 import org.roto.domain.DayResult
 import org.roto.domain.SlotEntry
@@ -171,6 +175,11 @@ private fun SetupState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Image(
+            painter = painterResource(id = R.drawable.logo_roto),
+            contentDescription = null,
+            modifier = Modifier.size(96.dp)
+        )
         SourceControls(
             selectedSourceLabel = sourceLabel,
             onChooseFile = onChooseFile,
@@ -261,6 +270,13 @@ private fun MenuContent(
             text = appTitle,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
+        )
+        Image(
+            painter = painterResource(id = R.drawable.logo_roto),
+            contentDescription = null,
+            modifier = Modifier
+                .size(96.dp)
+                .align(Alignment.CenterHorizontally)
         )
 
         SourceControls(

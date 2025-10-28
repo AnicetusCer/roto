@@ -9,62 +9,173 @@
     "weeks": [
       {
         "week_id": "Duty Team Alpha",
-        "week_commencing": ["2026-04-06", "2026-04-27"],
+        "week_commencing": [
+          "2026-04-06",
+          "2026-04-27"
+        ],
         "days": {
           "monday": {
             "slots": [
-              { "label": "TOD (Morning)", "text": "Mr. Davies" },
-              { "label": "Break Supervision", "text": "Ms. Lin, Mr. Chen (C Block)" },
-              { "label": "Lunch Supervision", "text": "Mr. Evans (Canteen), Ms. Lin (Yard)" }
+              {
+                "label": "TOD (Morning)",
+                "text": "Mr. Davies"
+              },
+              {
+                "label": "Break Supervision",
+                "text": "Ms. Lin, Mr. Chen (C Block)"
+              },
+              {
+                "label": "Lunch Supervision",
+                "text": "Mr. Evans (Canteen), Ms. Lin (Yard)"
+              }
+            ]
+          },
+          "wednesday": {
+            "slots": [
+              {
+                "label": "TOD (Morning)",
+                "text": "Ms. Lin"
+              },
+              {
+                "label": "Break Supervision",
+                "text": "Mr. Davies, Mr. Chen (C Block)"
+              },
+              {
+                "label": "Lunch Supervision",
+                "text": "Mr. Evans (Canteen), Mr. Davies (Yard)"
+              }
             ]
           },
           "friday": {
             "slots": [
-              { "label": "TOD (Full Day)", "text": "Ms. Lin" },
-              { "label": "Break Supervision", "text": "Mr. Davies, Mr. Evans (C Block)" },
-              { "label": "Lunch Supervision", "text": "Mr. Chen (Canteen), Mr. Davies (Yard)" }
+              {
+                "label": "TOD (Full Day)",
+                "text": "Ms. Lin"
+              },
+              {
+                "label": "Break Supervision",
+                "text": "Mr. Davies, Mr. Evans (C Block)"
+              },
+              {
+                "label": "Lunch Supervision",
+                "text": "Mr. Chen (Canteen), Mr. Davies (Yard)"
+              }
             ]
           },
           "saturday": {
             "slots": [
-              { "label": "Morning Sports Duty (9:00 - 12:00)", "text": "Mr. Evans" },
-              { "label": "Weekend Admin Support (10:00 - 14:00)", "text": "Ms. Lin" }
+              {
+                "label": "Morning Sports Duty (9:00 - 12:00)",
+                "text": "Mr. Evans"
+              },
+              {
+                "label": "Weekend Admin Support (10:00 - 14:00)",
+                "text": "Ms. Lin"
+              }
             ]
           },
           "sunday": {
             "slots": [
-              { "label": "Morning Quiet Study Supervision (10:00)", "text": "Mr. Davies" },
-              { "label": "Evening Boarding Check-in (20:00)", "text": "Mr. Chen" }
+              {
+                "label": "Morning Quiet Study Supervision (10:00)",
+                "text": "Mr. Davies"
+              },
+              {
+                "label": "Evening Boarding Check-in (20:00)",
+                "text": "Mr. Chen"
+              }
             ],
-            "notes": ["Only required for boarding students."]
+            "notes": [
+              "Only required for boarding students."
+            ]
           }
         }
       },
       {
-        "week_id": "Duty Team Bravo",
-        "week_commencing": ["2026-04-13", "2026-05-04"],
+        "week_id": "Duty Team Beta",
+        "week_commencing": [
+          "2026-04-13",
+          "2026-05-04"
+        ],
         "days": {
           "monday": {
             "slots": [
-              { "label": "TOD (Morning)", "text": "Ms. Lin" },
-              { "label": "Break Supervision", "text": "Mr. Davies, Mr. Evans (C Block)" },
-              { "label": "Lunch Supervision", "text": "Mr. Chen (Canteen), Mr. Davies (Yard)" }
+              {
+                "label": "TOD (Morning)",
+                "text": "Ms. Hughes"
+              },
+              {
+                "label": "Break Supervision",
+                "text": "Mr. Patel, Ms. Hughes (Science Link)"
+              },
+              {
+                "label": "Lunch Supervision",
+                "text": "Mr. O'Brien (Canteen), Ms. Hughes (Yard)"
+              }
+            ]
+          },
+          "wednesday": {
+            "slots": [
+              {
+                "label": "TOD (Morning)",
+                "text": "Mr. Patel"
+              },
+              {
+                "label": "Break Supervision",
+                "text": "Ms. Hughes, Mr. O'Brien (Science Link)"
+              },
+              {
+                "label": "Lunch Supervision",
+                "text": "Mr. Patel (Canteen), Ms. Hughes (Yard)"
+              }
+            ]
+          },
+          "friday": {
+            "slots": [
+              {
+                "label": "TOD (Full Day)",
+                "text": "Mr. O'Brien"
+              },
+              {
+                "label": "Break Supervision",
+                "text": "Ms. Hughes, Mr. Patel (Science Link)"
+              },
+              {
+                "label": "Lunch Supervision",
+                "text": "Mr. O'Brien (Canteen), Mr. Patel (Yard)"
+              }
+            ]
+          },
+          "saturday": {
+            "slots": [
+              {
+                "label": "Morning Sports Duty (9:00 - 12:00)",
+                "text": "Mr. Patel"
+              },
+              {
+                "label": "Weekend Admin Support (10:00 - 14:00)",
+                "text": "Ms. Hughes"
+              }
             ]
           }
         }
       }
-      /* Other weeks omitted for clarity */
     ]
   },
   "overrides": {
-    "2026-04-16": {
-      "reason": "Parent-Teacher Interviews (Half Day Schedule)",
+    "2026-04-19": {
       "slots": [
-        { "label": "Morning Supervision", "text": "Normal Team Bravo Break Duty (Mr. Davies, Mr. Evans)" },
-        { "label": "Early Finish Duty (12:30)", "text": "Mr. Chen (Main Exit), Ms. Lin (Bus Loop)" },
-        { "label": "Afternoon Duty", "text": "No afternoon duty - Staff are conducting interviews." }
+        {
+          "label": "Partial Day Duty",
+          "text": "11:00 - 14:00 Study Hall Supervision",
+          "tags": [
+            "Shortened"
+          ]
+        }
       ],
-      "notes": ["Lunch service is grab-and-go only. All students dismissed at 12:30 PM."]
+      "notes": [
+        "Weekend schedule shortened due to open day."
+      ]
     }
   }
 }

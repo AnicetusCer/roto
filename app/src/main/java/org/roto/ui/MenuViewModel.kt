@@ -1,4 +1,4 @@
-package org.schooldinners.ui
+package org.roto.ui
 
 import android.app.Application
 import android.content.Context
@@ -6,31 +6,33 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
+import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.schooldinners.data.MenuData
-import org.schooldinners.data.MenuPreferencesDataSource
-import org.schooldinners.data.MenuRepository
-import org.schooldinners.data.MenuSelection
-import org.schooldinners.domain.DayMenuResult
-import org.schooldinners.domain.getMenuForDate
+import org.roto.data.MenuPreferencesDataSource
+import org.roto.data.MenuRepository
+import org.roto.data.MenuSelection
+import org.roto.data.RotoData
+import org.roto.domain.getMenuForDate
+import org.roto.domain.DayResult
 
 data class MenuUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val hasMenuData: Boolean = false,
-    val todayMenu: DayMenuResult? = null,
-    val tomorrowMenu: DayMenuResult? = null,
-    val selectedSourceLabel: String = "No menu selected",
+    val rotaName: String = "",
+    val todayMenu: DayResult? = null,
+    val tomorrowMenu: DayResult? = null,
+    val selectedSourceLabel: String = "No rota selected",
     val coverageStatus: CoverageStatus? = null,
     val weekMenus: List<WeekMenu> = emptyList(),
-    val selectedWeekMenu: WeekMenu? = null
+    val selectedWeekMenu: WeekMenu? = null,
+    val globalNotes: List<String> = emptyList()
 )
 
 data class CoverageStatus(
@@ -44,13 +46,13 @@ data class WeekMenu(
     val id: String,
     val title: String,
     val startDate: LocalDate,
+    val endDate: LocalDate,
     val days: List<WeekMenuDay>
 )
 
 data class WeekMenuDay(
-    val dayOfWeek: DayOfWeek,
     val date: LocalDate,
-    val menu: DayMenuResult?
+    val menu: DayResult?
 )
 
 class MenuViewModel(
@@ -66,7 +68,7 @@ class MenuViewModel(
     val uiState: StateFlow<MenuUiState> = _uiState
 
     private var currentSelection: MenuSelection? = null
-    private var currentMenuData: MenuData? = null
+    private var currentRotoData: RotoData? = null
     private var selectedWeekId: String? = null
 
     init {
@@ -98,7 +100,7 @@ class MenuViewModel(
         viewModelScope.launch {
             preferences.clearMenuSelection()
             currentSelection = null
-            currentMenuData = null
+            currentRotoData = null
             selectedWeekId = null
             _uiState.emit(MenuUiState())
         }
@@ -157,22 +159,22 @@ class MenuViewModel(
                                 today = today,
                                 tomorrow = tomorrow,
                                 messageOverride = primaryError.message
-                                    ?: "Couldn't read the selected file. Showing the app downloads menu instead."
+                                    ?: "Couldn't read the selected file. Showing the app downloads rota instead."
                             )
                         }
                         .onFailure { fallbackError ->
                             emitLoadError(
                                 message = fallbackError.message
                                     ?: primaryError.message
-                                    ?: "Failed to load menu data.",
-                                selectionLabel = preferredLabel ?: "Custom menu"
+                                    ?: "Failed to load rota data.",
+                                selectionLabel = preferredLabel ?: "Custom rota"
                             )
                         }
                 } else {
                     emitLoadError(
                         message = primaryError.message
-                            ?: "Pick the most recent menu JSON. If you need one, copy the AI instructions and ask your favourite assistant to build it.",
-                        selectionLabel = "No menu selected"
+                            ?: "Pick the most recent rota JSON. If you need one, copy the AI instructions and ask your favourite assistant to build it.",
+                        selectionLabel = "No rota selected"
                     )
                 }
             }
@@ -182,7 +184,7 @@ class MenuViewModel(
         message: String,
         selectionLabel: String
     ) {
-        currentMenuData = null
+        currentRotoData = null
         selectedWeekId = null
         _uiState.emit(
             MenuUiState(
@@ -195,14 +197,14 @@ class MenuViewModel(
     }
 
     private suspend fun updateStateWithMenu(
-        menuData: MenuData,
+        menuData: RotoData,
         selectionUri: Uri?,
         selectionLabel: String?,
         today: LocalDate,
         tomorrow: LocalDate,
         messageOverride: String?
     ) {
-        currentMenuData = menuData
+        currentRotoData = menuData
 
         val todayMenu = getMenuForDate(menuData, today)
         val tomorrowMenu = getMenuForDate(menuData, tomorrow)
@@ -215,7 +217,7 @@ class MenuViewModel(
             selectedWeekId = null
         }
 
-        val label = selectionLabel ?: selectionUri?.lastPathSegment ?: "Chosen menu"
+        val label = selectionLabel ?: selectionUri?.lastPathSegment ?: "Chosen rota"
 
         val errorMessage = messageOverride
 
@@ -224,37 +226,41 @@ class MenuViewModel(
                 isLoading = false,
                 error = errorMessage,
                 hasMenuData = true,
+                rotaName = menuData.rotaName,
                 todayMenu = todayMenu,
                 tomorrowMenu = tomorrowMenu,
                 selectedSourceLabel = label,
                 coverageStatus = coverageStatus,
                 weekMenus = weekMenus,
-                selectedWeekMenu = activeWeek
+                selectedWeekMenu = activeWeek,
+                globalNotes = menuData.notes
             )
         )
     }
 
-    private fun buildWeekMenus(menuData: MenuData): List<WeekMenu> {
+    private fun buildWeekMenus(menuData: RotoData): List<WeekMenu> {
         val weeks = mutableListOf<WeekMenu>()
         menuData.cycle.weeks.forEach { week ->
             week.weekCommencing.mapNotNull(::parseIsoDateOrNull).forEach { monday ->
-                val days = (0..4).map { offset ->
-                    val date = monday.plusDays(offset.toLong())
-                    val dayOfWeek = DayOfWeek.MONDAY.plus(offset.toLong())
+                val days = week.days.entries.mapNotNull { (key, _) ->
+                    val date = resolveDateForDayKey(monday, key) ?: return@mapNotNull null
                     WeekMenuDay(
-                        dayOfWeek = dayOfWeek,
                         date = date,
                         menu = getMenuForDate(menuData, date)
                     )
+                }.sortedBy { it.date }
+                if (days.isNotEmpty()) {
+                    val id = "${week.weekId}_${monday}"
+                    val title = "${week.weekId} · WC $monday"
+                    val endDate = days.maxOf { it.date }
+                    weeks += WeekMenu(
+                        id = id,
+                        title = title,
+                        startDate = monday,
+                        endDate = endDate,
+                        days = days
+                    )
                 }
-                val id = "${week.weekId}_${monday}"
-                val title = "${week.weekId} · WC $monday"
-                weeks += WeekMenu(
-                    id = id,
-                    title = title,
-                    startDate = monday,
-                    days = days
-                )
             }
         }
         return weeks.sortedBy { it.startDate }
@@ -267,20 +273,32 @@ class MenuViewModel(
     ): CoverageStatus? {
         if (weekMenus.isEmpty()) return null
         val earliest = weekMenus.first().startDate
-        val latest = weekMenus.last().startDate.plusDays(4)
+        val latest = weekMenus.maxOf { it.endDate }
 
         return when {
             today.isBefore(earliest) -> CoverageStatus(
                 type = CoverageType.FUTURE,
-                message = "New menu begins on $earliest. Browse upcoming weeks below."
+                message = "New rota begins on $earliest. Browse upcoming weeks below."
             )
             tomorrow.isAfter(latest) -> CoverageStatus(
                 type = CoverageType.PAST,
-                message = "This menu is old. Menus ran until $latest. They can still be browsed below."
+                message = "This rota is old. Rotas ran until $latest. They can still be browsed below."
             )
             else -> null
         }
     }
+
+    private fun resolveDateForDayKey(monday: LocalDate, key: String): LocalDate? =
+        when (key.lowercase(Locale.ROOT)) {
+            "monday" -> monday
+            "tuesday" -> monday.plusDays(1)
+            "wednesday" -> monday.plusDays(2)
+            "thursday" -> monday.plusDays(3)
+            "friday" -> monday.plusDays(4)
+            "saturday" -> monday.plusDays(5)
+            "sunday" -> monday.plusDays(6)
+            else -> parseIsoDateOrNull(key)
+        }
 
     private fun parseIsoDateOrNull(value: String): LocalDate? =
         try {

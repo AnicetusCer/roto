@@ -1,0 +1,140 @@
+package org.roto.domain
+
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+import java.time.temporal.TemporalAdjusters
+import java.util.Locale
+import org.roto.data.DayDefinition
+import org.roto.data.OverrideDay
+import org.roto.data.RotoData
+import org.roto.data.SlotItem
+import org.roto.data.WeekEntry
+
+data class SlotEntry(
+    val label: String,
+    val text: String,
+    val tags: List<String>
+)
+
+enum class DayDataSource { ROTATION, OVERRIDE }
+
+data class DayResult(
+    val date: LocalDate,
+    val dayOfWeek: DayOfWeek,
+    val formattedDate: String,
+    val slots: List<SlotEntry>,
+    val notes: List<String>,
+    val globalNotes: List<String>,
+    val isClosed: Boolean,
+    val closedReason: String?,
+    val weekId: String?,
+    val weekCommencing: LocalDate?,
+    val source: DayDataSource
+)
+
+private val displayFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("EEEE d MMM yyyy", Locale.getDefault())
+
+fun getMenuForDate(rotaData: RotoData, targetDate: LocalDate): DayResult? {
+    val mondayOfWeek = targetDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+
+    val matchingWeek = rotaData.cycle.weeks.firstOrNull { week ->
+        week.weekCommencing.any { dateString ->
+            parseIsoDateOrNull(dateString) == mondayOfWeek
+        }
+    }
+
+    val baseDay = matchingWeek?.resolveDayDefinition(targetDate)
+    val overrideDay = rotaData.overrides[targetDate.toString()]
+
+    val resolved = resolveDay(
+        base = baseDay,
+        override = overrideDay,
+        week = matchingWeek,
+        mondayOfWeek = mondayOfWeek
+    ) ?: return null
+
+    return DayResult(
+        date = targetDate,
+        dayOfWeek = targetDate.dayOfWeek,
+        formattedDate = displayFormatter.format(targetDate),
+        slots = resolved.slots,
+        notes = resolved.notes,
+        globalNotes = rotaData.notes,
+        isClosed = resolved.isClosed,
+        closedReason = resolved.reason,
+        weekId = resolved.weekId,
+        weekCommencing = resolved.weekCommencing,
+        source = resolved.source
+    )
+}
+
+private data class ResolvedDay(
+    val slots: List<SlotEntry>,
+    val notes: List<String>,
+    val isClosed: Boolean,
+    val reason: String?,
+    val weekId: String?,
+    val weekCommencing: LocalDate?,
+    val source: DayDataSource
+)
+
+private fun resolveDay(
+    base: DayDefinition?,
+    override: OverrideDay?,
+    week: WeekEntry?,
+    mondayOfWeek: LocalDate
+): ResolvedDay? {
+    if (override == null && base == null) return null
+
+    val isClosed = override?.closed == true
+    val reason = override?.reason
+    val selectedSlots = when {
+        isClosed -> emptyList()
+        override?.slots != null -> override.slots.map { it.toSlotEntry() }
+        base != null -> base.slots.map { it.toSlotEntry() }
+        else -> emptyList()
+    }
+
+    val selectedNotes = buildList {
+        base?.notes?.let { addAll(it) }
+        override?.notes?.let { addAll(it) }
+    }
+
+    val weekId = week?.weekId
+    val weekCommencing = week?.let { mondayOfWeek }
+
+    val source = if (override != null) DayDataSource.OVERRIDE else DayDataSource.ROTATION
+
+    return ResolvedDay(
+        slots = selectedSlots,
+        notes = selectedNotes,
+        isClosed = isClosed,
+        reason = reason,
+        weekId = weekId,
+        weekCommencing = weekCommencing,
+        source = source
+    )
+}
+
+private fun WeekEntry.resolveDayDefinition(targetDate: LocalDate): DayDefinition? {
+    val weekdayKey = targetDate.dayOfWeek.name.lowercase(Locale.ROOT)
+    return days[weekdayKey]
+        ?: days[targetDate.toString()]
+}
+
+private fun SlotItem.toSlotEntry(): SlotEntry =
+    SlotEntry(
+        label = label,
+        text = text,
+        tags = tags
+    )
+
+private fun parseIsoDateOrNull(value: String): LocalDate? =
+    try {
+        LocalDate.parse(value)
+    } catch (e: DateTimeParseException) {
+        null
+    }

@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "org.schooldinners"
+    namespace = "org.roto"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "org.schooldinners"
+        applicationId = "org.roto"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

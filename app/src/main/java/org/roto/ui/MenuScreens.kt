@@ -1,4 +1,4 @@
-package org.schooldinners.ui
+package org.roto.ui
 
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -41,8 +40,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.time.format.TextStyle
 import java.util.Locale
-import org.schooldinners.domain.DayMenuResult
-import org.schooldinners.data.MenuRepository
+import org.roto.domain.DayDataSource
+import org.roto.domain.DayResult
+import org.roto.domain.SlotEntry
 
 @Composable
 fun MenuRoot(
@@ -92,7 +92,8 @@ fun MenuScreen(
     onClearWeek: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val introText = "You need to provide this app with your school's menu in a json formated file."
+    val introText = "Roto needs your rota data. Paste JSON if you already have it, or tap 'Copy AI Instructions' to build it from a PDF or photo. Roto never uploads anything."
+    val hasSelection = state.selectedSourceLabel != "No rota selected"
 
     when {
         state.isLoading -> LoadingState(modifier)
@@ -100,7 +101,7 @@ fun MenuScreen(
             instructionsIntro = introText,
             onChooseFile = onChooseFile,
             onCopyInstructions = onCopyInstructions,
-            showClear = state.selectedSourceLabel != "No menu selected",
+            showClear = hasSelection,
             onClearMenu = onClearMenu,
             sourceLabel = state.selectedSourceLabel,
             extraMessage = state.error,
@@ -119,7 +120,7 @@ fun MenuScreen(
             instructionsIntro = introText,
             onChooseFile = onChooseFile,
             onCopyInstructions = onCopyInstructions,
-            showClear = state.selectedSourceLabel != "No menu selected",
+            showClear = hasSelection,
             onClearMenu = onClearMenu,
             sourceLabel = state.selectedSourceLabel,
             extraMessage = null,
@@ -139,7 +140,7 @@ private fun LoadingState(modifier: Modifier = Modifier) {
     ) {
         CircularProgressIndicator()
         Spacer(modifier = Modifier.height(12.dp))
-        Text("Loading menu…")
+        Text("Loading rota…")
     }
 }
 
@@ -175,12 +176,7 @@ private fun SetupState(
             textAlign = TextAlign.Center
         )
         Text(
-            text = "Don't worry! we're going to get AI to make the file for you.",
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center
-        )
-        Text(
-            text = "Simpily copy the AI prompt below, paste it into your favourite AI provider, your AI should then ask you to provide your current school menu (in any format it can read; PDF, photo, text etc). The AI will read it and produce a JSON formatted version of your menu that this app can then read.",
+            text = "Copy the AI prompt below, paste it into your preferred assistant, and share your rota (PDF, photo, or text). The AI turns it into JSON for Roto.",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center
         )
@@ -188,7 +184,7 @@ private fun SetupState(
             Text("Copy AI Instructions")
         }
         Text(
-            text = "When the AI gives you the JSON formated file, save it to your phones download folder, open the app and then select it as the current menu. Repeat these steps when a new menu is released.",
+            text = "When the AI replies with JSON, save it to your phone (Downloads is ideal) and load it with the button above. Repeat whenever the rota changes.",
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center
         )
@@ -219,6 +215,7 @@ private fun MenuContent(
     onClearWeek: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val appTitle = state.rotaName.ifBlank { "Roto" }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -227,7 +224,7 @@ private fun MenuContent(
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         Text(
-            text = "School Nom Noms",
+            text = appTitle,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
@@ -235,7 +232,7 @@ private fun MenuContent(
         SourceControls(
             selectedSourceLabel = state.selectedSourceLabel,
             onChooseFile = onChooseFile,
-            showClear = true,
+            showClear = state.selectedSourceLabel != "No rota selected",
             onClearMenu = onClearMenu
         )
 
@@ -243,24 +240,28 @@ private fun MenuContent(
             InfoCard(it.message)
         }
 
+        if (state.globalNotes.isNotEmpty()) {
+            NotesColumn(title = "Notes", notes = state.globalNotes)
+        }
+
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(
-                text = "Tomorrow",
+                text = "Tomorrow's Rota",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
             state.tomorrowMenu?.let {
                 MenuCard(title = friendlyDate(it), menu = it)
-            } ?: Text("No menu recorded for tomorrow.")
+            } ?: Text("No rota recorded for tomorrow.")
 
             Text(
-                text = "Today",
+                text = "Today's Rota",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
             state.todayMenu?.let {
                 MenuCard(title = friendlyDate(it), menu = it)
-            } ?: Text("No menu recorded for today.")
+            } ?: Text("No rota recorded for today.")
         }
 
         if (state.weekMenus.isNotEmpty()) {
@@ -273,7 +274,7 @@ private fun MenuContent(
         }
 
         Button(onClick = onRefresh) {
-            Text("Refresh")
+            Text("Refresh rota")
         }
     }
 }
@@ -287,13 +288,13 @@ private fun SourceControls(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            text = "Menu source: $selectedSourceLabel",
+            text = "Rota source: $selectedSourceLabel",
             style = MaterialTheme.typography.bodySmall
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = onChooseFile) { Text("Upload menu (JSON)") }
+            Button(onClick = onChooseFile) { Text("Load rota (JSON)") }
             if (showClear) {
-                TextButton(onClick = onClearMenu) { Text("Clear menu") }
+                TextButton(onClick = onClearMenu) { Text("Clear rota") }
             }
         }
     }
@@ -319,6 +320,30 @@ private fun InfoCard(message: String) {
 }
 
 @Composable
+private fun NotesColumn(title: String, notes: List<String>) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            notes.forEach { note ->
+                Text("• $note", style = MaterialTheme.typography.bodySmall)
+            }
+        }
+    }
+}
+
+@Composable
 private fun FormatInfoCard() {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -331,14 +356,17 @@ private fun FormatInfoCard() {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text("JSON structure overview", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            Text("• schema_version: \"0.2\"", style = MaterialTheme.typography.bodySmall)
-            Text("• school_name: your school name", style = MaterialTheme.typography.bodySmall)
-            Text("• notes: optional list of text lines", style = MaterialTheme.typography.bodySmall)
-            Text("• cycle.weeks: list of week objects", style = MaterialTheme.typography.bodySmall)
-            Text("  – week_id: label such as Week 1", style = MaterialTheme.typography.bodySmall)
-            Text("  – week_commencing: list of Monday dates (YYYY-MM-DD)", style = MaterialTheme.typography.bodySmall)
-            Text("  – days: entries for monday…friday with main/alt_hot/deli_option/dessert", style = MaterialTheme.typography.bodySmall)
-            Text("Save the file exactly as the AI returns it (with braces and quotes) and upload it using the button above.", style = MaterialTheme.typography.bodySmall)
+            Text("• schema_version: \"0.3\"", style = MaterialTheme.typography.bodySmall)
+            Text("• school_name: label shown on the home screen (e.g. your school name)", style = MaterialTheme.typography.bodySmall)
+            Text("• notes: optional list of global messages", style = MaterialTheme.typography.bodySmall)
+            Text("• cycle.weeks[]: repeating week patterns", style = MaterialTheme.typography.bodySmall)
+            Text("  – week_id: label such as \"Week 1\" or \"Red Week\"", style = MaterialTheme.typography.bodySmall)
+            Text("  – week_commencing: Monday dates (YYYY-MM-DD) when this pattern starts", style = MaterialTheme.typography.bodySmall)
+            Text("  – days: keys like monday…sunday (or ISO dates) with a day definition", style = MaterialTheme.typography.bodySmall)
+            Text("    • day.slots[] → { label, text, tags[] } listed top to bottom", style = MaterialTheme.typography.bodySmall)
+            Text("    • day.notes[] → optional extra lines for that day", style = MaterialTheme.typography.bodySmall)
+            Text("• overrides{\"2025-03-01\"}: optional single-day changes with closed/reason/slots/notes", style = MaterialTheme.typography.bodySmall)
+            Text("Save the JSON exactly as returned and load it via the button above.", style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -346,7 +374,7 @@ private fun FormatInfoCard() {
 @Composable
 private fun MenuCard(
     title: String,
-    menu: DayMenuResult,
+    menu: DayResult,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -360,37 +388,91 @@ private fun MenuCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            MealRow(label = "Main", value = menu.menu.main)
-            MealRow(label = "Alt / Veg", value = menu.menu.altHot)
-            MealRow(label = "Deli", value = menu.menu.deliOption)
-            MealRow(label = "Dessert", value = menu.menu.dessert)
-            if (menu.notes.isNotEmpty()) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Notes", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
-                    menu.notes.forEach { note ->
-                        Text("• $note", style = MaterialTheme.typography.bodySmall)
-                    }
-                }
-            }
-            Text(
-                text = "Week ${menu.weekId} · WC ${menu.weekCommencing}",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
+            DayDetails(menu = menu, showWeekMetadata = true)
         }
     }
 }
 
 @Composable
-private fun MealRow(label: String, value: String, modifier: Modifier = Modifier) {
+private fun DayDetails(
+    menu: DayResult,
+    showWeekMetadata: Boolean,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(text = label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
-        Text(text = value, style = MaterialTheme.typography.bodyMedium)
+        if (menu.isClosed) {
+            Text(
+                text = "Closed",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.error
+            )
+            menu.closedReason?.let {
+                Text(it, style = MaterialTheme.typography.bodyMedium)
+            }
+        } else {
+            menu.closedReason?.let {
+                Text(it, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+            }
+            if (menu.slots.isNotEmpty()) {
+                menu.slots.forEach { slot -> SlotRow(slot) }
+            } else {
+                Text("No rota slots recorded.", style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+
+        if (menu.notes.isNotEmpty()) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Notes", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                menu.notes.forEach { note ->
+                    Text("• $note", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+
+        if (showWeekMetadata) {
+            val metadata = buildList {
+                menu.weekId?.let { add("Pattern: $it") }
+                menu.weekCommencing?.let { add("WC $it") }
+                add("Source: ${formatSource(menu.source)}")
+            }
+            if (metadata.isNotEmpty()) {
+                Text(
+                    text = metadata.joinToString(" · "),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
     }
 }
+
+@Composable
+private fun SlotRow(slot: SlotEntry, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(text = slot.label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+        Text(text = slot.text, style = MaterialTheme.typography.bodyMedium)
+        if (slot.tags.isNotEmpty()) {
+            Text(
+                text = "Tags: ${slot.tags.joinToString()}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        }
+    }
+}
+
+private fun formatSource(source: DayDataSource): String =
+    when (source) {
+        DayDataSource.ROTATION -> "Rotation"
+        DayDataSource.OVERRIDE -> "Override"
+    }
 
 @Composable
 private fun BrowseWeeksSection(
@@ -401,7 +483,7 @@ private fun BrowseWeeksSection(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            text = "Browse weeks",
+            text = "Browse rota weeks",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold
         )
@@ -434,27 +516,27 @@ private fun WeekMenuCard(weekMenu: WeekMenu) {
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
-            weekMenu.days.forEach { day ->
+            weekMenu.days.forEachIndexed { index, day ->
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    val dayName = day.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
+                    val headerText = day.menu?.formattedDate ?: run {
+                        val dayName = day.date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
+                        "$dayName · ${day.date}"
+                    }
                     Text(
-                        text = "$dayName · ${day.date}",
+                        text = headerText,
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold
                     )
-                    day.menu?.let { menu ->
-                        MealRow(label = "Main", value = menu.menu.main)
-                        MealRow(label = "Alt / Veg", value = menu.menu.altHot)
-                        MealRow(label = "Deli", value = menu.menu.deliOption)
-                        MealRow(label = "Dessert", value = menu.menu.dessert)
-                    } ?: Text("No menu recorded for this day.")
+                    day.menu?.let {
+                        DayDetails(menu = it, showWeekMetadata = false)
+                    } ?: Text("No rota recorded for this day.", style = MaterialTheme.typography.bodyMedium)
+                }
+                if (index != weekMenu.days.lastIndex) {
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }
     }
 }
 
-private fun friendlyDate(result: DayMenuResult): String {
-    val dayName = result.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
-    return "$dayName ${result.date}"
-}
+private fun friendlyDate(result: DayResult): String = result.formattedDate

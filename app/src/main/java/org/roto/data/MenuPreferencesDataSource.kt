@@ -1,4 +1,4 @@
-package org.schooldinners.data
+package org.roto.data
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit

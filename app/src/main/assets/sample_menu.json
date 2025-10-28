@@ -1,9 +1,9 @@
 {
-  "schema_version": "0.2",
+  "schema_version": "0.3",
   "school_name": "Example Primary School",
   "notes": [
-    "Yoghurt and fresh fruit available daily.",
-    "Allergen info available on request."
+    "Fresh fruit and yoghurt offered daily.",
+    "Allergen lists available on request."
   ],
   "cycle": {
     "weeks": [
@@ -15,16 +15,54 @@
         ],
         "days": {
           "monday": {
-            "main": "Chicken Pie, Mash, Veg, Gravy",
-            "alt_hot": "Creamy Cajun Pasta Bake (V)",
-            "deli_option": "Jacket Potato / Wrap Option",
-            "dessert": "Jam & Coconut Sponge + Custard"
+            "slots": [
+              {
+                "label": "Option 1",
+                "text": "Chicken Pie, Mash, Veg, Gravy"
+              },
+              {
+                "label": "Option 2",
+                "text": "Creamy Cajun Pasta Bake (V)",
+                "tags": [
+                  "vegetarian"
+                ]
+              },
+              {
+                "label": "Grab & Go",
+                "text": "Jacket Potato or Wrap"
+              },
+              {
+                "label": "Treat",
+                "text": "Jam & Coconut Sponge with Custard"
+              }
+            ],
+            "notes": [
+              "Fruit cup alternative available."
+            ]
           },
           "tuesday": {
-            "main": "Beef Chilli, Rice, Peas & Carrots",
-            "alt_hot": "Veggie Sausage (VE), Mash, Gravy",
-            "deli_option": "Tuna Mayo Wrap / Jacket Potato",
-            "dessert": "Melon Slices & Shortbread"
+            "slots": [
+              {
+                "label": "Option 1",
+                "text": "Beef Chilli, Rice, Peas & Carrots"
+              },
+              {
+                "label": "Option 2",
+                "text": "Veggie Sausage, Mash & Gravy",
+                "tags": [
+                  "vegan",
+                  "halal-friendly"
+                ]
+              },
+              {
+                "label": "Grab & Go",
+                "text": "Tuna Mayo Wrap or Jacket Potato"
+              },
+              {
+                "label": "Treat",
+                "text": "Melon Slices & Shortbread"
+              }
+            ]
           }
         }
       },
@@ -36,19 +74,89 @@
         ],
         "days": {
           "monday": {
-            "main": "Veggie Lasagne (V) with Garlic Bread",
-            "alt_hot": "Tomato Soup & Crusty Roll",
-            "deli_option": "Cheese & Salad Wrap",
-            "dessert": "Fruit Salad"
+            "slots": [
+              {
+                "label": "Option 1",
+                "text": "Veggie Lasagne (V) with Garlic Bread",
+                "tags": [
+                  "vegetarian"
+                ]
+              },
+              {
+                "label": "Option 2",
+                "text": "Tomato Soup & Crusty Roll"
+              },
+              {
+                "label": "Grab & Go",
+                "text": "Cheese & Salad Wrap"
+              },
+              {
+                "label": "Treat",
+                "text": "Fruit Salad"
+              }
+            ]
           },
           "friday": {
-            "main": "Battered Fish, Chips & Peas",
-            "alt_hot": "Veggie Burger (V) & Chips",
-            "deli_option": "Beans on Jacket Potato",
-            "dessert": "Ice Cream Tub"
+            "slots": [
+              {
+                "label": "Option 1",
+                "text": "Battered Fish, Chips & Peas"
+              },
+              {
+                "label": "Option 2",
+                "text": "Veggie Burger (V) & Chips",
+                "tags": [
+                  "vegetarian"
+                ]
+              },
+              {
+                "label": "Grab & Go",
+                "text": "Beans on Jacket Potato"
+              },
+              {
+                "label": "Treat",
+                "text": "Ice Cream Tub"
+              }
+            ]
+          },
+          "saturday": {
+            "slots": [
+              {
+                "label": "Trip Pack",
+                "text": "Packed lunch hamper for weekend clubs"
+              }
+            ],
+            "notes": [
+              "Only provided for sports-club attendees."
+            ]
           }
         }
       }
     ]
+  },
+  "overrides": {
+    "2025-11-14": {
+      "reason": "Children in Need Theme Day",
+      "slots": [
+        {
+          "label": "Option 1",
+          "text": "Spotty Cake Sale"
+        },
+        {
+          "label": "Option 2",
+          "text": "Fancy Dress Parade"
+        }
+      ],
+      "notes": [
+        "Bring £1 donation."
+      ]
+    },
+    "2025-12-19": {
+      "closed": true,
+      "reason": "Term ends – school closed",
+      "notes": [
+        "Wrap pack lunches available on request."
+      ]
+    }
   }
 }

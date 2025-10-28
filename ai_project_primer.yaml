@@ -1,65 +1,67 @@
 project_primer:
   project_identity:
-    name: "School NomNoms"
+    name: "Roto"
     mission_summary: >
-      Offline, privacy-respecting Android app (F-Droid friendly) that tells parents
-      and carers what tomorrow's school dinner options are, while supporting lookups
-      for any other day.
-    core_question: "What's for lunch tomorrow at school?"
-    status: "Interactive Compose app in place with JSON import, tomorrow/today view, and week browser."
+      Offline, privacy-first Android app (F-Droid friendly) that tells parents,
+      carers, and organisers what is scheduled on any given date using rotating week
+      patterns (Week 1 / Week 2 / Week 3 …).
+    core_question: "What's on the rota tomorrow?"
+    status: "Interactive Compose app in place with JSON import, tomorrow/today view, week browser, and override-aware domain logic."
     audience:
       primary:
         - parents
         - carers
         - school-age children
       stretch:
-        - parents who prefer glanceable home screen widgets
+        - anyone managing repeating school/club/meal rotas
     principles:
-      - offline_first: "All data and logic stay on device; no servers or logins."
+      - offline_first: "All rota data and logic stay on device; no servers or logins."
       - privacy: "No analytics, tracking, or ads; F-Droid-friendly dependencies only."
-      - simple_input: "Parents can paste and edit a human-readable JSON rota."
-      - predictable: "App shows exactly the published school menu without guessing."
+      - human_editable_data: "Parents/carers can paste and edit a human-readable JSON rota."
+      - predictable: "If there is no rota for a date, surface a clear 'No rota found' message."
 
   product_scope:
     core_features:
       - key: show_tomorrow_default
-        description: "Launch straight into tomorrow's menu with main, alt_hot, deli_option, dessert, and notes."
+        description: "Launch straight into tomorrow's rota with ordered slots, notes, and any override reason."
       - key: choose_any_date
-        description: "Allow quick selection of any date to view the corresponding menu."
+        description: "Allow quick selection of any date to view the corresponding rota entry."
       - key: rotation_awareness
-        description: "Map real calendar dates to Week 1/2/3 style cycles via configured week_commencing Mondays."
+        description: "Map real calendar dates to Week 1/2/3 style cycles via configured week_commencing Mondays, while honouring per-date overrides."
       - key: offline_persistence
-        description: "Persist the menu JSON locally so data survives app restarts and works offline."
+        description: "Persist the rota JSON locally so data survives app restarts and works offline."
       - key: human_editable_data
         description: "Support pasting or importing JSON that parents can tweak or regenerate with an AI."
-      - key: browse_week_menu
-        description: "Allow parents to open any published week and view all weekday meals."
+      - key: browse_week_rota
+        description: "Allow families to open any published week pattern and inspect all configured days (weekday or weekend)."
     stretch_goals:
       - key: home_screen_widget
-        description: "Android widget showing tomorrow's menu summary."
+        description: "Android widget showing tomorrow's rota summary."
       - key: multiple_profiles
-        description: "Optional ability to store menus for more than one school."
+        description: "Optional ability to store rotas for more than one school or club."
       - key: holiday_exceptions
-        description: "Parents can mark no-school days to avoid confusing menus."
+        description: "Parents can mark closed days or special events without editing the base rotation."
       - key: allergen_filtering
         description: "Surface dietary tags supplied by the school as display-only info."
       - key: export_import_share
         description: "One-tap share of the stored JSON to help other families."
 
   data_model:
-    schema_version: "0.2"
+    schema_version: "0.3"
     structure_highlights:
-      - "school_name string and optional notes array."
-      - "cycle.weeks[] with week_id, week_commencing[] (ISO Mondays), and days.monday..friday entries."
-      - "Each day provides main, alt_hot, deli_option, dessert; weekend entries optional or omitted."
-    design_rationale: "Mirrors UK primary school rotating menus, allows repeated Mondays per week_id, and keeps data parent-editable."
+      - "school_name string (display header) and optional notes[] for global messages."
+      - "cycle.weeks[] with week_id, week_commencing[] (ISO Mondays), and days{} mapping weekday names or ISO dates to DayDefinition."
+      - "DayDefinition provides slots[] (ordered {label, text, tags[]}) plus optional notes[]."
+      - "overrides{} maps ISO dates to OverrideDay with closed/reason/slots/notes for one-off changes."
+    design_rationale: "Supports any repeating rota (meals, clubs, duties) while staying human-editable for families and organisers."
 
   rotation_logic:
     steps:
-      - "Find monday_of_week for the target date."
+      - "Check overrides{} for the target date; if found and closed=true, surface a polite closed message."
+      - "If no override (or override supplies slots), find monday_of_week for the target date."
       - "Match monday_of_week against any cycle.weeks[].week_commencing entry."
-      - "If matched, select the weekday's meal set; otherwise show a friendly 'No menu found' message."
-      - "Render meals plus global notes for UI and widget consumption."
+      - "Resolve the day's slots by weekday key (monday…sunday) or ISO-specific key."
+      - "If nothing matches, show a friendly 'No rota found for this date' message."
 
   tech_foundation:
     platform: "Android (minSdk 24, Kotlin, Jetpack Compose)."
@@ -72,13 +74,13 @@ project_primer:
     layers:
       - name: data_layer
         responsibilities:
-          - load_saved_menu_json
-          - save_menu_json
-          - parse_json_to_models
+          - load_saved_rota_json
+          - save_rota_json
+          - parse_json_to_models (schema 0.3)
       - name: domain_layer
         responsibilities:
-          - get_menu_for_date
-          - format_data_for_presentation
+          - get_rota_for_date (override + rotation lookup)
+          - format_slots_and_notes_for_presentation
       - name: ui_layer
         responsibilities:
           - Compose screens for home, pick-a-day, and setup
@@ -88,15 +90,15 @@ project_primer:
           - Provide a glanceable tomorrow summary using the same domain logic
     screens:
       - home_screen:
-          purpose: "Default landing page for tomorrow's menu."
+          purpose: "Default landing page for tomorrow's rota."
           key_elements:
             - heading
             - formatted_date
-            - meal_sections (main, alt_hot, deli_option, dessert)
-            - optional_notes
+            - slot_list (ordered slots with tags)
+            - reason_or_notes (override/day/global notes)
             - button_view_other_day
       - pick_a_day_screen:
-          purpose: "Browse any date's menu via date picker or next/prev controls."
+          purpose: "Browse any date's rota via date picker or next/prev controls."
       - setup_screen:
           purpose: "Initial and repeat JSON import/edit experience with validation."
     orientation:
@@ -157,32 +159,32 @@ project_primer:
         - "Adjust date/time to simulate rota changes."
         - "Rotate orientation via emulator toolbar."
     project_location_strategy:
-      preferred_path_windows: "C:\\dev\\schooldinners-app"
-      preferred_path_wsl: "/mnt/c/dev/schooldinners-app"
+      preferred_path_windows: "C:\\dev\\roto-app"
+      preferred_path_wsl: "/mnt/c/dev/roto-app"
       rationale:
         - "Single shared workspace for Gradle builds and Windows-side adb installs."
         - "No need to copy APKs between environments."
     dev_loop:
       - step: build_apk_in_wsl
         commands:
-          - 'cd /mnt/c/dev/schooldinners-app'
+          - 'cd /mnt/c/dev/roto-app'
           - './gradlew assembleDebug'
-        output: "/mnt/c/dev/schooldinners-app/app/build/outputs/apk/debug/app-debug.apk"
+        output: "/mnt/c/dev/roto-app/app/build/outputs/apk/debug/app-debug.apk"
       - step: run_emulator_on_windows
         command: 'emulator -avd PixelLikeApi34'
       - step: install_apk_from_windows
         commands:
           - 'adb devices'
-          - 'adb install -r C:\\dev\\schooldinners-app\\app\\build\\outputs\\apk\\debug\\app-debug.apk'
+          - 'adb install -r C:\\dev\\roto-app\\app\\build\\outputs\\apk\\debug\\app-debug.apk'
       - step: manual_validation
         checks:
-          - "Tomorrow's Menu populated with all meal sections."
+          - "Tomorrow's rota populated with the correct slots/notes (including overrides)."
           - "Changing emulator date updates the displayed rota."
-          - "Weekends or unmatched dates show a polite no-menu message."
+          - "Weekends or unmatched dates show a polite no-rota message."
 
   execution_plan:
     immediate_next_steps:
-      - "Harden JSON validation and surface friendly error messages when required fields are missing."
+      - "Harden schema 0.3 validation and surface friendly error messages when required fields are missing."
       - "Remember last-opened week/tab state for faster browsing."
       - "Polish accessibility copy and consider larger text spacing for the setup instructions."
     upcoming_milestones:
@@ -192,9 +194,9 @@ project_primer:
 
   definition_of_done:
     - "App installs and runs offline without proprietary services."
-    - "First launch prompts for menu JSON; saved data persists across restarts."
-    - "Tomorrow view and pick-a-day both display accurate meals or graceful no-menu messaging."
-    - "Invalid dates and weekends are handled without crashes."
+    - "First launch prompts for rota JSON; saved data persists across restarts."
+    - "Tomorrow view and pick-a-day both display accurate slots or graceful no-rota messaging."
+    - "Invalid dates, overrides, and weekends are handled without crashes."
     - "Project remains F-Droid friendly (no analytics, ads, or Play Services)."
 
   collaboration_notes:
@@ -206,15 +208,15 @@ project_primer:
     validation_habits:
       - "Run Gradle builds from WSL when code changes land."
       - "Exercise emulator scenarios listed above after significant UI or logic updates."
-      - "Keep sample JSON assets in sync with the documented schema."
+      - "Keep sample JSON assets in sync with the documented schema (0.3)."
   parent_prompt_strategy:
-    goal: "Let parents convert their school PDF into the required JSON without embedding OCR logic in-app."
+    goal: "Let parents convert their rota PDF/photo into schema 0.3 JSON without embedding OCR logic in-app."
     ai_helper_asset: "app/src/main/assets/ai_llm_instructions.txt"
     workflow_summary:
-      - "The setup screen now leads with plain-language instructions and a 'Copy AI Instructions' button (copies the asset text to the clipboard)."
-      - "Parents paste the prompt into any AI assistant, supply their current school-menu PDF/photo/text, and request the JSON conversion."
-      - "AI output should be saved as a `.json` file (the app suggests `SchoolNomNomsMenu.json` but any chosen file can be uploaded)."
-      - "Parents either upload the file through the app or drop it into the app-scoped Downloads folder; the app remembers the selection and can be cleared to return to setup."
+      - "The setup screen leads with plain-language instructions and a 'Copy AI Instructions' button (copies the asset text to the clipboard)."
+      - "Parents paste the prompt into any AI assistant, supply their current rota PDF/photo/text, and request the JSON conversion."
+      - "AI output should be saved as a `.json` file (the app suggests `RotoRota.json`, but any filename works)."
+      - "Parents either load the file through the app or drop it into the app-scoped Downloads folder; the app remembers the selection and can be cleared to return to setup."
 
   references:
     source_documents:

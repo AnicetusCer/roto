@@ -1,4 +1,4 @@
-package org.schooldinners.data
+package org.roto.data
 
 import android.content.Context
 import android.net.Uri
@@ -12,7 +12,7 @@ enum class MenuSourceType {
 }
 
 data class MenuLoadResult(
-    val data: MenuData,
+    val data: RotoData,
     val sourceType: MenuSourceType
 )
 
@@ -25,12 +25,12 @@ class MenuRepository(
         runCatching {
             val (rawJson, sourceType) = when {
                 preferredUri != null -> readExternalFile(preferredUri)?.let { it to MenuSourceType.EXTERNAL_SELECTION }
-                    ?: throw IllegalStateException("Unable to read the selected menu file.")
+                    ?: throw IllegalStateException("Unable to read the selected rota file.")
                 else -> readDownloadsMenu()?.let { it to MenuSourceType.SCOPED_DOWNLOADS }
-                    ?: throw IllegalStateException("No menu JSON found. Save it as $downloadsFileName in the app downloads folder or choose a file manually.")
+                    ?: throw IllegalStateException("No rota JSON found. Save it as $downloadsFileName in the app downloads folder or choose a file manually.")
             }
             MenuLoadResult(
-                data = MenuJsonParser.parse(rawJson),
+                data = RotoJsonParser.parse(rawJson),
                 sourceType = sourceType
             )
         }
@@ -53,7 +53,7 @@ class MenuRepository(
     }
 
     companion object {
-        const val DEFAULT_DOWNLOADS_FILE_NAME = "SchoolNomNomsMenu.json"
+        const val DEFAULT_DOWNLOADS_FILE_NAME = "RotoRota.json"
     }
 }
 

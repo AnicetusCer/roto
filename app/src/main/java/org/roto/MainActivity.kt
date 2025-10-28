@@ -1,4 +1,4 @@
-package org.schooldinners
+package org.roto
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -10,8 +10,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import org.schooldinners.ui.MenuRoot
-import org.schooldinners.ui.MenuViewModel
+import org.roto.ui.MenuRoot
+import org.roto.ui.MenuViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            SchoolDinnersTheme {
+            RotoTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun SchoolDinnersTheme(content: @Composable () -> Unit) {
+fun RotoTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = lightColorScheme(),
         typography = MaterialTheme.typography,

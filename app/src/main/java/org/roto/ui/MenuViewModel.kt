@@ -3,28 +3,35 @@ package org.roto.ui
 import android.app.Application
 import android.content.Context
 import android.net.Uri
+import android.os.Environment
 import android.provider.OpenableColumns
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import java.io.File
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 import java.time.temporal.TemporalAdjusters
+import java.util.Locale
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.roto.data.MenuPreferencesDataSource
 import org.roto.data.MenuRepository
 import org.roto.data.MenuSelection
 import org.roto.data.RotoData
-import org.roto.domain.getMenuForDate
 import org.roto.domain.DayResult
+import org.roto.domain.getMenuForDate
+
+data class SetupMessage(val text: String, val isError: Boolean)
 
 data class MenuUiState(
     val isLoading: Boolean = false,
-    val error: String? = null,
+    val setupMessage: SetupMessage? = null,
     val hasMenuData: Boolean = false,
     val rotaName: String = "",
     val todayMenu: DayResult? = null,
@@ -97,6 +104,34 @@ class MenuViewModel(
 
     fun getAiInstructions(): String = aiInstructionsText
 
+    fun copySampleToDownloads(sampleName: String) {
+        viewModelScope.launch {
+            val app = getApplication<Application>()
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    app.assets.open("sample_rotas/$sampleName").use { input ->
+                        val downloadsDir = app.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+                            ?: app.getExternalFilesDir(null)
+                            ?: app.filesDir
+                        val target = File(downloadsDir, sampleName)
+                        target.outputStream().use { output -> input.copyTo(output) }
+                        target
+                    }
+                }
+            }
+            result.onSuccess { file ->
+                _uiState.update { state ->
+                    state.copy(setupMessage = SetupMessage("Copied ${file.name} to Downloads.", false))
+                }
+            }.onFailure { throwable ->
+                val reason = throwable.localizedMessage ?: "Unknown error"
+                _uiState.update { state ->
+                    state.copy(setupMessage = SetupMessage("Couldn't copy sample: $reason", true))
+                }
+            }
+        }
+    }
+
     fun clearMenuSelection() {
         viewModelScope.launch {
             preferences.clearMenuSelection()
@@ -129,7 +164,7 @@ class MenuViewModel(
         _uiState.emit(
             _uiState.value.copy(
                 isLoading = true,
-                error = if (isManualRefresh) null else _uiState.value.error
+                setupMessage = if (isManualRefresh) null else _uiState.value.setupMessage
             )
         )
 
@@ -190,7 +225,7 @@ class MenuViewModel(
         _uiState.emit(
             MenuUiState(
                 isLoading = false,
-                error = message,
+                setupMessage = SetupMessage(message, true),
                 hasMenuData = false,
                 selectedSourceLabel = selectionLabel
             )
@@ -220,12 +255,12 @@ class MenuViewModel(
 
         val label = selectionLabel ?: selectionUri?.lastPathSegment ?: "Chosen rota"
 
-        val errorMessage = messageOverride
+        val message = messageOverride?.let { SetupMessage(it, true) }
 
         _uiState.emit(
             MenuUiState(
                 isLoading = false,
-                error = errorMessage,
+                setupMessage = message,
                 hasMenuData = true,
                 rotaName = menuData.rotaName,
                 todayMenu = todayMenu,

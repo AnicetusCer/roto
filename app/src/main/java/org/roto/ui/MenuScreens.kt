@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -19,6 +20,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -81,6 +83,7 @@ fun MenuRoot(
         onCopyInstructions = {
             clipboard.setText(AnnotatedString(viewModel.getAiInstructions()))
         },
+        onCopySample = viewModel::copySampleToDownloads,
         onClearMenu = viewModel::clearMenuSelection,
         onSelectWeek = viewModel::selectWeek,
         onClearWeek = viewModel::clearSelectedWeek,
@@ -94,26 +97,16 @@ fun MenuScreen(
     onRefresh: () -> Unit,
     onChooseFile: () -> Unit,
     onCopyInstructions: () -> Unit,
+    onCopySample: (String) -> Unit,
     onClearMenu: () -> Unit,
     onSelectWeek: (String) -> Unit,
     onClearWeek: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val introText = "Add your rota so Roto can show what’s happening each day. If you already have the file, load it below. Otherwise, use the helper prompt to create one from an existing schedule, for example a photo, pdf, spreadsheet etc."
     val hasSelection = state.selectedSourceLabel != "No rota selected"
 
     when {
         state.isLoading -> LoadingState(modifier)
-        state.error != null -> SetupState(
-            instructionsIntro = introText,
-            onChooseFile = onChooseFile,
-            onCopyInstructions = onCopyInstructions,
-            showClear = hasSelection,
-            onClearMenu = onClearMenu,
-            sourceLabel = state.selectedSourceLabel,
-            extraMessage = state.error,
-            modifier = modifier
-        )
         state.hasMenuData -> MenuContent(
             state = state,
             onRefresh = onRefresh,
@@ -124,13 +117,13 @@ fun MenuScreen(
             modifier = modifier
         )
         else -> SetupState(
-            instructionsIntro = introText,
             onChooseFile = onChooseFile,
             onCopyInstructions = onCopyInstructions,
+            onCopySample = onCopySample,
             showClear = hasSelection,
             onClearMenu = onClearMenu,
             sourceLabel = state.selectedSourceLabel,
-            extraMessage = null,
+            message = state.setupMessage,
             modifier = modifier
         )
     }
@@ -153,105 +146,88 @@ private fun LoadingState(modifier: Modifier = Modifier) {
 
 @Composable
 private fun SetupState(
-    instructionsIntro: String,
     onChooseFile: () -> Unit,
     onCopyInstructions: () -> Unit,
+    onCopySample: (String) -> Unit,
     showClear: Boolean,
     onClearMenu: () -> Unit,
     sourceLabel: String,
-    extraMessage: String?,
+    message: SetupMessage?,
     modifier: Modifier = Modifier
 ) {
-    var showFormatDetails by remember { mutableStateOf(false) }
-    var showSamples by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val sampleFiles = remember(context) {
         context.assets.list("sample_rotas")?.sorted()?.toList() ?: emptyList()
     }
-    val scrollState = rememberScrollState()
+    var showInstructions by remember { mutableStateOf(false) }
+
+    if (showInstructions) {
+        InstructionsDialog(
+            sampleFiles = sampleFiles,
+            onCopyHelperPrompt = onCopyInstructions,
+            onCopySample = onCopySample,
+            onDismiss = { showInstructions = false }
+        )
+    }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(scrollState)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         Image(
             painter = painterResource(id = R.drawable.logo_roto),
             contentDescription = null,
-            modifier = Modifier.size(96.dp)
+            modifier = Modifier.size(120.dp)
         )
-        SourceControls(
-            selectedSourceLabel = sourceLabel,
-            onChooseFile = onChooseFile,
-            showClear = showClear,
-            onClearMenu = onClearMenu
-        )
+
+        val sourceText = if (sourceLabel == "No rota selected") {
+            "No rota loaded yet"
+        } else {
+            "Current rota: $sourceLabel"
+        }
+
         Text(
-            text = instructionsIntro,
+            text = sourceText,
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center
         )
-        Text(
-            text = "Don’t have a file yet? Copy the helper prompt, paste it into your favourite AI assistant, and share your existing schedule file or a clear photo AI can read. It will hand you back a little rota file you can save.",
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center
-        )
-        Button(onClick = onCopyInstructions) {
-            Text("Copy helper prompt")
+
+        Button(
+            onClick = onChooseFile,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Load rota file")
         }
-        Text(
-            text = "When the assistant replies, save the file (Downloads is ideal) and tap “Load rota file” above. You can replace or clear it whenever plans change.",
-            style = MaterialTheme.typography.bodySmall,
-            textAlign = TextAlign.Center
-        )
-        Text(
-            text = "Try it in Roto and, if anything looks off, tell the assistant what needs fixing – it will happily iterate until the rota looks right.",
-            style = MaterialTheme.typography.bodySmall,
-            textAlign = TextAlign.Center
-        )
-        TextButton(onClick = { showFormatDetails = !showFormatDetails }) {
-            Text(if (showFormatDetails) "Hide JSON Schema" else "Show JSON Schema")
-        }
-        if (showFormatDetails) {
-            FormatInfoCard()
-        }
-        if (sampleFiles.isNotEmpty()) {
-            TextButton(onClick = { showSamples = !showSamples }) {
-                Text(if (showSamples) "Hide sample rota names" else "Show sample rota names")
-            }
-            if (showSamples) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            text = "Need an example? Try one of these files bundled with the app:",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        sampleFiles.forEach { name ->
-                            Text("• $name", style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                }
+
+        if (showClear) {
+            TextButton(onClick = onClearMenu) {
+                Text("Clear saved rota")
             }
         }
-        extraMessage?.let {
-            Text(
-                text = it,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-                textAlign = TextAlign.Center
-            )
+
+        Button(
+            onClick = { showInstructions = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Instructions & sample rotas")
+        }
+
+        message?.let {
+            val color = if (it.isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+            Card(
+                colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = it.text,
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = color
+                )
+            }
         }
     }
 }
@@ -302,6 +278,18 @@ private fun MenuContent(
             showClear = state.selectedSourceLabel != "No rota selected",
             onClearMenu = onClearMenu
         )
+
+        state.setupMessage?.let { msg ->
+            val color = if (msg.isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+            Card(colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f))) {
+                Text(
+                    text = msg.text,
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = color
+                )
+            }
+        }
 
         state.coverageStatus?.let {
             InfoCard(it.message)
@@ -424,6 +412,61 @@ private fun NotesColumn(title: String, notes: List<String>) {
             }
         }
     }
+}
+
+@Composable
+private fun InstructionsDialog(
+    sampleFiles: List<String>,
+    onCopyHelperPrompt: () -> Unit,
+    onCopySample: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var showSchema by remember { mutableStateOf(false) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Done") }
+        },
+        title = { Text("Get a rota file") },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 520.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text("1. Tap \"Copy helper prompt\" to copy the text into your clipboard.")
+                Text("2. Paste it into your preferred AI assistant and share the rota — PDFs, spreadsheets, and clear photos all work.")
+                Text("3. Ask the assistant for the JSON output, save it somewhere you can find it, and load it in Roto.")
+                Text("If Roto shows anything unexpected, describe the fix to the assistant and request an updated JSON. Iterate until it looks right.")
+                Button(onClick = onCopyHelperPrompt, modifier = Modifier.fillMaxWidth()) {
+                    Text("Copy helper prompt")
+                }
+                TextButton(onClick = { showSchema = !showSchema }) {
+                    Text(if (showSchema) "Hide JSON schema" else "Show JSON schema")
+                }
+                if (showSchema) {
+                    FormatInfoCard()
+                }
+                if (sampleFiles.isNotEmpty()) {
+                    Text("Need a head start? Copy one of these sample rotas to your Downloads folder and load it in the app.")
+                    sampleFiles.forEach { name ->
+                        Button(
+                            onClick = { onCopySample(name) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Copy $name")
+                        }
+                    }
+                    Text(
+                        text = "Roto stores samples in the app's Downloads area so you can try them immediately.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        }
+    )
 }
 
 @Composable
@@ -612,7 +655,7 @@ private fun BrowseWeeksSection(
         }
         selectedWeekMenu?.let { week ->
             WeekMenuCard(week)
-            TextButton(onClick = onClearWeek) { Text("Hide week view") }
+            TextButton(onClick = onClearWeek) { Text("Clear selection") }
         }
     }
 }

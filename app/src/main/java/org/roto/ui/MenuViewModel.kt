@@ -2,8 +2,12 @@ package org.roto.ui
 
 import android.app.Application
 import android.content.Context
+import android.content.ContentValues
+import android.media.MediaScannerConnection
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
+import android.provider.MediaStore
 import android.provider.OpenableColumns
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,7 +16,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 import java.time.temporal.TemporalAdjusters
-import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -109,19 +112,44 @@ class MenuViewModel(
             val app = getApplication<Application>()
             val result = withContext(Dispatchers.IO) {
                 runCatching {
-                    app.assets.open("sample_rotas/$sampleName").use { input ->
-                        val downloadsDir = app.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-                            ?: app.getExternalFilesDir(null)
-                            ?: app.filesDir
-                        val target = File(downloadsDir, sampleName)
-                        target.outputStream().use { output -> input.copyTo(output) }
-                        target
+                    val targetName = sampleName.substringAfterLast('/')
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        val resolver = app.contentResolver
+                        // Remove any previous copy with the same display name inside our relative path.
+                        resolver.delete(
+                            MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                            "${MediaStore.MediaColumns.DISPLAY_NAME}=? AND ${MediaStore.MediaColumns.RELATIVE_PATH}=?",
+                            arrayOf(targetName, Environment.DIRECTORY_DOWNLOADS + "/Roto/")
+                        )
+                        val contentValues = ContentValues().apply {
+                            put(MediaStore.Downloads.DISPLAY_NAME, targetName)
+                            put(MediaStore.Downloads.MIME_TYPE, "application/json")
+                            put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Roto")
+                        }
+                        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                            ?: throw IllegalStateException("Unable to create entry in Downloads.")
+                        app.assets.open("sample_rotas/$sampleName").use { input ->
+                            resolver.openOutputStream(uri)?.use { output ->
+                                input.copyTo(output)
+                            } ?: throw IllegalStateException("Unable to open Downloads output stream.")
+                        }
+                        "Downloads/Roto/$targetName"
+                    } else {
+                        val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                            ?: throw IllegalStateException("Public Downloads directory unavailable.")
+                        val rotoDir = File(downloadsDir, "Roto").apply { if (!exists()) mkdirs() }
+                        val target = File(rotoDir, targetName)
+                        app.assets.open("sample_rotas/$sampleName").use { input ->
+                            target.outputStream().use { output -> input.copyTo(output) }
+                        }
+                        MediaScannerConnection.scanFile(app, arrayOf(target.absolutePath), arrayOf("application/json"), null)
+                        target.absolutePath
                     }
                 }
             }
-            result.onSuccess { file ->
+            result.onSuccess { location ->
                 _uiState.update { state ->
-                    state.copy(setupMessage = SetupMessage("Copied ${file.name} to Downloads. Use 'Load rota file' to open it.", false))
+                    state.copy(setupMessage = SetupMessage("Copied sample to $location. Tap 'Load rota file' to open it.", false))
                 }
             }.onFailure { throwable ->
                 val reason = throwable.localizedMessage ?: "Unknown error"

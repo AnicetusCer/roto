@@ -460,7 +460,7 @@ private fun InstructionsDialog(
                         }
                     }
                     Text(
-                        text = "Roto stores samples in the app's Downloads area so you can try them immediately.",
+                        text = "Samples are copied into Downloads/Roto. After copying, tap 'Load rota file' and browse to that folder to open it.",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }

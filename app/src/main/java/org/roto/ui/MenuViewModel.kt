@@ -121,7 +121,7 @@ class MenuViewModel(
             }
             result.onSuccess { file ->
                 _uiState.update { state ->
-                    state.copy(setupMessage = SetupMessage("Copied ${file.name} to Downloads.", false))
+                    state.copy(setupMessage = SetupMessage("Copied ${file.name} to Downloads. Use 'Load rota file' to open it.", false))
                 }
             }.onFailure { throwable ->
                 val reason = throwable.localizedMessage ?: "Unknown error"

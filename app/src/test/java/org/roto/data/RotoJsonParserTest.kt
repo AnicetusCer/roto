@@ -16,7 +16,6 @@ class RotoJsonParserTest {
     }
 
     private val menuSample by lazy { readAsset("sample_rotas/School_Menu_Rota_with_Closure_and_Theme_Day.json") }
-    private val stJamesSample by lazy { readAsset("sample_rotas/StJamesMenu-Nov-v3.json") }
 
     @Test
     fun `parse returns rota data with weeks notes and slots`() {
@@ -39,8 +38,8 @@ class RotoJsonParserTest {
     }
 
     @Test
-    fun `parse st james rota`() {
-        val rota = RotoJsonParser.parse(stJamesSample)
+    fun `parse school menu rota`() {
+        val rota = RotoJsonParser.parse(menuSample)
 
         assertEquals("Wetherby St James C of E Primary", rota.rotaName)
         assertEquals(3, rota.cycle.weeks.size)

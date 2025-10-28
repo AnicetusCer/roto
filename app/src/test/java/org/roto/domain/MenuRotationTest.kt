@@ -17,7 +17,7 @@ class MenuRotationTest {
 
     @Before
     fun loadRota() {
-        val path = File("src/main/assets/sample_rotas/StJamesMenu-Nov-v3.json")
+        val path = File("src/main/assets/sample_rotas/School_Menu_Rota_with_Closure_and_Theme_Day.json")
         require(path.exists()) { "Expected rota asset at ${path.absolutePath}" }
         rotaData = RotoJsonParser.parse(path.readText())
     }

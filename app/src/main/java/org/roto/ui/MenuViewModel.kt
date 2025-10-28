@@ -174,7 +174,7 @@ class MenuViewModel(
                 } else {
                     emitLoadError(
                         message = primaryError.message
-                            ?: "Pick the most recent rota JSON. If you need one, copy the AI instructions and ask your favourite assistant to build it.",
+                            ?: "Pick the latest rota file. If you need one, copy the helper prompt and ask your favourite assistant to build it.",
                         selectionLabel = "No rota selected"
                     )
                 }

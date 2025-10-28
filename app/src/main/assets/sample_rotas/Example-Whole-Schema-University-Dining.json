@@ -1,0 +1,124 @@
+{
+  "schema_version": "0.3",
+  "school_name": "University Hall Dining Rota - Spring Term 2026",
+  "notes": [
+    "Dinner Service: 6:00 PM to 8:00 PM, Monday to Friday.",
+    "The Salad Bar and Vegan Soup of the Day are available as standard alternatives.",
+    "All main dishes are served with seasonal vegetables."
+  ],
+  "cycle": {
+    "weeks": [
+      {
+        "week_id": "Week A",
+        "week_commencing": ["2026-03-09", "2026-03-23", "2026-04-06"],
+        "days": {
+          "monday": {
+            "slots": [
+              { "label": "Main Course", "text": "Classic Beef Lasagna" },
+              { "label": "Vegetarian Option", "text": "Lentil Shepherd's Pie", "tags": ["vegetarian", "low-fat"] },
+              { "label": "Sides", "text": "Garlic Bread and House Salad" },
+              { "label": "Dessert", "text": "Tiramisu or Fresh Fruit" }
+            ]
+          },
+          "tuesday": {
+            "slots": [
+              { "label": "Main Course", "text": "Roast Chicken Dinner with Yorkshire Puddings" },
+              { "label": "Vegetarian Option", "text": "Cauliflower Cheese Bake", "tags": ["vegetarian"] },
+              { "label": "Sides", "text": "Roast Potatoes and Mixed Greens" },
+              { "label": "Dessert", "text": "Sticky Toffee Pudding with Custard" }
+            ]
+          },
+          "wednesday": {
+            "slots": [
+              { "label": "Main Course", "text": "Pork Sausages, Mash and Onion Gravy" },
+              { "label": "Vegetarian Option", "text": "Beyond Meat Sausages, Mash and Veggie Gravy", "tags": ["vegan"] },
+              { "label": "Sides", "text": "Sweetcorn and Peas" },
+              { "label": "Dessert", "text": "Chocolate Sponge Cake" }
+            ]
+          },
+          "thursday": {
+            "slots": [
+              { "label": "Main Course", "text": "Pasta Carbonara" },
+              { "label": "Vegetarian Option", "text": "Mushroom & Spinach Ravioli", "tags": ["vegetarian"] },
+              { "label": "Sides", "text": "Crusty Bread" },
+              { "label": "Dessert", "text": "Fruit Salad and Ice Cream" }
+            ]
+          },
+          "friday": {
+            "slots": [
+              { "label": "Main Course", "text": "Traditional Fish & Chips" },
+              { "label": "Vegetarian Option", "text": "Halloumi Burger with Fries and Coleslaw", "tags": ["vegetarian"] },
+              { "label": "Sides", "text": "Mushy Peas" },
+              { "label": "Dessert", "text": "Apple Crumble" }
+            ],
+            "notes": ["Gluten-free fish is available on request."]
+          }
+        }
+      },
+      {
+        "week_id": "Week B",
+        "week_commencing": ["2026-03-16", "2026-03-30", "2026-04-13"],
+        "days": {
+          "monday": {
+            "slots": [
+              { "label": "Main Course", "text": "Chicken Fajitas (Build your own)" },
+              { "label": "Vegetarian Option", "text": "Black Bean and Corn Chilli with Rice", "tags": ["vegan"] },
+              { "label": "Sides", "text": "Salsa, Guacamole, Sour Cream" },
+              { "label": "Dessert", "text": "Churros with Chocolate Sauce" }
+            ]
+          },
+          "tuesday": {
+            "slots": [
+              { "label": "Main Course", "text": "Pork Chops with Creamy Mustard Sauce" },
+              { "label": "Vegetarian Option", "text": "Mushroom Wellington", "tags": ["vegetarian"] },
+              { "label": "Sides", "text": "Mashed Potatoes and Asparagus" },
+              { "label": "Dessert", "text": "Lemon Tart" }
+            ]
+          },
+          "wednesday": {
+            "slots": [
+              { "label": "Main Course", "text": "BBQ Pulled Chicken Burger" },
+              { "label": "Vegetarian Option", "text": "Veggie Dog with Toppings Bar", "tags": ["vegan"] },
+              { "label": "Sides", "text": "Wedges and Onion Rings" },
+              { "label": "Dessert", "text": "Milkshake Bar" }
+            ]
+          },
+          "thursday": {
+            "slots": [
+              { "label": "Main Course", "text": "Turkey Meatballs in Marinara Sauce" },
+              { "label": "Vegetarian Option", "text": "Three Cheese Tortellini", "tags": ["vegetarian"] },
+              { "label": "Sides", "text": "Spaghetti" },
+              { "label": "Dessert", "text": "Fresh Fruit Platter" }
+            ]
+          },
+          "friday": {
+            "slots": [
+              { "label": "Main Course", "text": "Chicken Korma" },
+              { "label": "Vegetarian Option", "text": "Potato and Cauliflower Curry", "tags": ["vegan", "halal"] },
+              { "label": "Sides", "text": "Naan Bread and Pilau Rice" },
+              { "label": "Dessert", "text": "Gulab Jamun" }
+            ],
+            "notes": ["Curries available in Mild or Medium spice."]
+          }
+        }
+      }
+    ]
+  },
+  "overrides": {
+    "2026-03-17": {
+      "reason": "St. Patrick's Day Theme Dinner",
+      "slots": [
+        { "label": "Theme Mains", "text": "Traditional Irish Beef and Guinness Stew with Soda Bread" },
+        { "label": "Vegetarian Theme", "text": "Colcannon and Buttered Cabbage", "tags": ["vegetarian"] },
+        { "label": "Dessert", "text": "Mint Chocolate Cheesecake" },
+        { "label": "Activity", "text": "Live Traditional Irish Music in the Common Room" }
+      ],
+      "notes": ["Dinner service is extended until 8:30 PM for the theme night."]
+    },
+    "2026-04-03": {
+      "closed": true,
+      "reason": "Easter Holiday - End of Term Closure",
+      "notes": ["The dining hall is closed. Meal cards can be used at the campus café only."]
+    }
+  }
+}

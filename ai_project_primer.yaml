@@ -219,6 +219,7 @@ project_primer:
       - "Parents paste the prompt into any AI assistant, supply their current rota PDF/photo/text, and request the JSON conversion."
       - "AI output should be saved as a `.json` file (the app suggests `RotoRota.json`, but any filename works)."
       - "Parents either load the file through the app or drop it into the app-scoped Downloads folder; the app remembers the selection and can be cleared to return to setup."
+      - "Sample rotas live in app/src/main/assets/sample_rotas for demos or quick testing; keep them tidy and valid."
 
   references:
     source_documents:

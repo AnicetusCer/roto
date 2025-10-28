@@ -1,0 +1,84 @@
+{
+  "schema_version": "0.3",
+  "school_name": "Facilities & IT Support Rota",
+  "notes": [
+    "Routine Preventative Maintenance (PM) is performed during standard business hours (Mon-Fri).",
+    "Emergency On-Call (OC) provides 24/7 coverage for critical systems.",
+    "All team members should carry their assigned radio/mobile during their shift."
+  ],
+  "cycle": {
+    "weeks": [
+      {
+        "week_id": "Team 1 Primary",
+        "week_commencing": ["2026-03-02", "2026-03-16", "2026-03-30"],
+        "days": {
+          "monday": {
+            "slots": [
+              { "label": "Preventative Maintenance", "text": "H. Smith (Plumbing)", "tags": ["Location: B-Wing"] },
+              { "label": "Emergency On-Call (Day)", "text": "J. Evans (IT Support)" },
+              { "label": "Emergency On-Call (Night)", "text": "L. Chen (Facilities)" }
+            ]
+          },
+          "tuesday": {
+            "slots": [
+              { "label": "Preventative Maintenance", "text": "K. Patel (Electrical)", "tags": ["Location: Main Server"] },
+              { "label": "Emergency On-Call (Day)", "text": "J. Evans (IT Support)" },
+              { "label": "Emergency On-Call (Night)", "text": "L. Chen (Facilities)" }
+            ]
+          },
+          /* ... Wednesday through Friday would follow the same pattern ... */
+          "saturday": {
+            "slots": [
+              { "label": "Emergency On-Call (Weekend)", "text": "K. Patel (Primary), H. Smith (Backup)" }
+            ]
+          },
+          "sunday": {
+            "slots": [
+              { "label": "Emergency On-Call (Weekend)", "text": "K. Patel (Primary), H. Smith (Backup)" }
+            ]
+          }
+        }
+      },
+      {
+        "week_id": "Team 2 Primary",
+        "week_commencing": ["2026-03-09", "2026-03-23"],
+        "days": {
+          "monday": {
+            "slots": [
+              { "label": "Preventative Maintenance", "text": "M. O'Neil (HVAC)", "tags": ["Location: A-Wing"] },
+              { "label": "Emergency On-Call (Day)", "text": "S. Rodriguez (IT Support)" },
+              { "label": "Emergency On-Call (Night)", "text": "P. Jones (Facilities)" }
+            ]
+          },
+          "tuesday": {
+            "slots": [
+              { "label": "Preventative Maintenance", "text": "R. Green (Grounds)", "tags": ["Location: North Lot"] },
+              { "label": "Emergency On-Call (Day)", "text": "S. Rodriguez (IT Support)" },
+              { "label": "Emergency On-Call (Night)", "text": "P. Jones (Facilities)" }
+            ]
+          },
+          "saturday": {
+            "slots": [
+              { "label": "Emergency On-Call (Weekend)", "text": "M. O'Neil (Primary), R. Green (Backup)" }
+            ]
+          },
+          "sunday": {
+            "slots": [
+              { "label": "Emergency On-Call (Weekend)", "text": "M. O'Neil (Primary), R. Green (Backup)" }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "overrides": {
+    "2026-05-04": {
+      "reason": "Bank Holiday - Early May",
+      "slots": [
+        { "label": "Holiday On-Call Primary", "text": "L. Chen (24 Hours)" },
+        { "label": "Holiday On-Call Backup", "text": "S. Rodriguez" }
+      ],
+      "notes": ["All non-emergency preventative maintenance is suspended. Critical coverage only."]
+    }
+  }
+}

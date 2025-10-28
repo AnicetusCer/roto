@@ -1,0 +1,262 @@
+{
+  "schema_version": "0.3",
+  "school_name": "St. Jude's General Ward Rota",
+  "notes": [
+    "This is a standard 4-week rotating shift pattern.",
+    "Shifts: E (Early 07:00-14:30), L (Late 14:00-21:30), N (Night 21:00-07:30).",
+    "Staffing Minimum: Charge Nurse (1), Staff Nurses (3), Health Care Assistants (2)."
+  ],
+  "cycle": {
+    "weeks": [
+      {
+        "week_id": "Week 1",
+        "week_commencing": ["2026-03-02", "2026-03-30", "2026-04-27"],
+        "days": {
+          "monday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "A. Chen (E)" },
+              { "label": "Early Shift", "text": "J. Singh, K. Davies" },
+              { "label": "Late Shift", "text": "M. O'Neil, T. Evans" },
+              { "label": "Night Shift", "text": "S. Khan" }
+            ]
+          },
+          "tuesday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "A. Chen (E)" },
+              { "label": "Early Shift", "text": "J. Singh, K. Davies" },
+              { "label": "Late Shift", "text": "M. O'Neil, T. Evans" },
+              { "label": "Night Shift", "text": "S. Khan" }
+            ]
+          },
+          "wednesday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "J. Singh (L)" },
+              { "label": "Early Shift", "text": "K. Davies, T. Evans" },
+              { "label": "Late Shift", "text": "A. Chen, M. O'Neil" },
+              { "label": "Night Shift", "text": "B. West" }
+            ]
+          },
+          "thursday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "J. Singh (L)" },
+              { "label": "Early Shift", "text": "K. Davies, T. Evans" },
+              { "label": "Late Shift", "text": "A. Chen, M. O'Neil" },
+              { "label": "Night Shift", "text": "B. West" }
+            ]
+          },
+          "friday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "K. Davies (E)" },
+              { "label": "Early Shift", "text": "T. Evans, S. Khan" },
+              { "label": "Late Shift", "text": "J. Singh, A. Chen" },
+              { "label": "Night Shift", "text": "P. Jones" }
+            ]
+          },
+          "saturday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "M. O'Neil (L)" },
+              { "label": "Early Shift", "text": "A. Chen, B. West" },
+              { "label": "Late Shift", "text": "K. Davies, S. Khan" },
+              { "label": "Night Shift", "text": "J. Singh" }
+            ]
+          },
+          "sunday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "T. Evans (E)" },
+              { "label": "Early Shift", "text": "M. O'Neil, P. Jones" },
+              { "label": "Late Shift", "text": "B. West, A. Chen" },
+              { "label": "Night Shift", "text": "K. Davies" }
+            ]
+          }
+        }
+      },
+      {
+        "week_id": "Week 2",
+        "week_commencing": ["2026-03-09", "2026-04-06"],
+        "days": {
+          "monday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "J. Singh (L)" },
+              { "label": "Early Shift", "text": "M. O'Neil, T. Evans" },
+              { "label": "Late Shift", "text": "A. Chen, K. Davies" },
+              { "label": "Night Shift", "text": "B. West" }
+            ]
+          },
+          "tuesday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "J. Singh (L)" },
+              { "label": "Early Shift", "text": "M. O'Neil, T. Evans" },
+              { "label": "Late Shift", "text": "A. Chen, K. Davies" },
+              { "label": "Night Shift", "text": "B. West" }
+            ]
+          },
+          "wednesday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "K. Davies (E)" },
+              { "label": "Early Shift", "text": "T. Evans, S. Khan" },
+              { "label": "Late Shift", "text": "J. Singh, A. Chen" },
+              { "label": "Night Shift", "text": "P. Jones" }
+            ]
+          },
+          "thursday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "K. Davies (E)" },
+              { "label": "Early Shift", "text": "T. Evans, S. Khan" },
+              { "label": "Late Shift", "text": "J. Singh, A. Chen" },
+              { "label": "Night Shift", "text": "P. Jones" }
+            ]
+          },
+          "friday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "M. O'Neil (L)" },
+              { "label": "Early Shift", "text": "A. Chen, B. West" },
+              { "label": "Late Shift", "text": "K. Davies, S. Khan" },
+              { "label": "Night Shift", "text": "J. Singh" }
+            ]
+          },
+          "saturday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "T. Evans (E)" },
+              { "label": "Early Shift", "text": "M. O'Neil, P. Jones" },
+              { "label": "Late Shift", "text": "B. West, A. Chen" },
+              { "label": "Night Shift", "text": "K. Davies" }
+            ]
+          },
+          "sunday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "A. Chen (L)" },
+              { "label": "Early Shift", "text": "J. Singh, K. Davies" },
+              { "label": "Late Shift", "text": "M. O'Neil, T. Evans" },
+              { "label": "Night Shift", "text": "S. Khan" }
+            ]
+          }
+        }
+      },
+      {
+        "week_id": "Week 3",
+        "week_commencing": ["2026-03-16", "2026-04-13"],
+        "days": {
+          "monday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "K. Davies (E)" },
+              { "label": "Early Shift", "text": "T. Evans, S. Khan" },
+              { "label": "Late Shift", "text": "J. Singh, A. Chen" },
+              { "label": "Night Shift", "text": "P. Jones" }
+            ]
+          },
+          "tuesday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "K. Davies (E)" },
+              { "label": "Early Shift", "text": "T. Evans, S. Khan" },
+              { "label": "Late Shift", "text": "J. Singh, A. Chen" },
+              { "label": "Night Shift", "text": "P. Jones" }
+            ]
+          },
+          "wednesday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "M. O'Neil (L)" },
+              { "label": "Early Shift", "text": "A. Chen, B. West" },
+              { "label": "Late Shift", "text": "K. Davies, S. Khan" },
+              { "label": "Night Shift", "text": "J. Singh" }
+            ]
+          },
+          "thursday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "M. O'Neil (L)" },
+              { "label": "Early Shift", "text": "A. Chen, B. West" },
+              { "label": "Late Shift", "text": "K. Davies, S. Khan" },
+              { "label": "Night Shift", "text": "J. Singh" }
+            ]
+          },
+          "friday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "T. Evans (E)" },
+              { "label": "Early Shift", "text": "M. O'Neil, P. Jones" },
+              { "label": "Late Shift", "text": "B. West, A. Chen" },
+              { "label": "Night Shift", "text": "K. Davies" }
+            ]
+          },
+          "saturday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "A. Chen (L)" },
+              { "label": "Early Shift", "text": "J. Singh, K. Davies" },
+              { "label": "Late Shift", "text": "M. O'Neil, T. Evans" },
+              { "label": "Night Shift", "text": "S. Khan" }
+            ]
+          },
+          "sunday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "J. Singh (E)" },
+              { "label": "Early Shift", "text": "K. Davies, T. Evans" },
+              { "label": "Late Shift", "text": "A. Chen, M. O'Neil" },
+              { "label": "Night Shift", "text": "B. West" }
+            ]
+          }
+        }
+      },
+      {
+        "week_id": "Week 4",
+        "week_commencing": ["2026-03-23", "2026-04-20"],
+        "days": {
+          "monday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "M. O'Neil (L)" },
+              { "label": "Early Shift", "text": "A. Chen, B. West" },
+              { "label": "Late Shift", "text": "K. Davies, S. Khan" },
+              { "label": "Night Shift", "text": "J. Singh" }
+            ]
+          },
+          "tuesday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "M. O'Neil (L)" },
+              { "label": "Early Shift", "text": "A. Chen, B. West" },
+              { "label": "Late Shift", "text": "K. Davies, S. Khan" },
+              { "label": "Night Shift", "text": "J. Singh" }
+            ]
+          },
+          "wednesday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "T. Evans (E)" },
+              { "label": "Early Shift", "text": "M. O'Neil, P. Jones" },
+              { "label": "Late Shift", "text": "B. West, A. Chen" },
+              { "label": "Night Shift", "text": "K. Davies" }
+            ]
+          },
+          "thursday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "T. Evans (E)" },
+              { "label": "Early Shift", "text": "M. O'Neil, P. Jones" },
+              { "label": "Late Shift", "text": "B. West, A. Chen" },
+              { "label": "Night Shift", "text": "K. Davies" }
+            ]
+          },
+          "friday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "A. Chen (L)" },
+              { "label": "Early Shift", "text": "J. Singh, K. Davies" },
+              { "label": "Late Shift", "text": "M. O'Neil, T. Evans" },
+              { "label": "Night Shift", "text": "S. Khan" }
+            ]
+          },
+          "saturday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "J. Singh (E)" },
+              { "label": "Early Shift", "text": "K. Davies, T. Evans" },
+              { "label": "Late Shift", "text": "A. Chen, M. O'Neil" },
+              { "label": "Night Shift", "text": "B. West" }
+            ]
+          },
+          "sunday": {
+            "slots": [
+              { "label": "Charge Nurse", "text": "K. Davies (L)" },
+              { "label": "Early Shift", "text": "T. Evans, S. Khan" },
+              { "label": "Late Shift", "text": "J. Singh, A. Chen" },
+              { "label": "Night Shift", "text": "P. Jones" }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "overrides": {}
+}

@@ -27,7 +27,7 @@ class MenuRepository(
                 preferredUri != null -> readExternalFile(preferredUri)?.let { it to MenuSourceType.EXTERNAL_SELECTION }
                     ?: throw IllegalStateException("Unable to read the selected rota file.")
                 else -> readDownloadsMenu()?.let { it to MenuSourceType.SCOPED_DOWNLOADS }
-                    ?: throw IllegalStateException("No rota JSON found. Save it as $downloadsFileName in the app downloads folder or choose a file manually.")
+                    ?: throw IllegalStateException("No rota file found. Save it as $downloadsFileName in the app downloads folder or choose a file manually.")
             }
             MenuLoadResult(
                 data = RotoJsonParser.parse(rawJson),

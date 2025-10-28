@@ -8,6 +8,7 @@ Roto is an offline, privacy-first Android app that answers one simple question: 
 - **Browse any day** – Pick any calendar date (weekends included) to see its slots or a friendly “No rota found” message.
 - **Flexible slots** – Schema 0.3 stores labelled slots (Option 1, Grab & Go, Duty, etc.) plus optional tags for allergens or year groups.
 - **Looping cycles** – Supply a repeat anchor once and the app keeps the rota cycling forever without duplicating dates.
+- **Ready-made samples** – A library of example rotas ships in `app/src/main/assets/sample_rotas` so you can see working files or share starters with families.
 - **Offline JSON import** – Load your rota via **Load rota (JSON)** or by placing `RotoRota.json` in the app’s scoped Downloads directory.
 - **AI helper prompt** – The setup screen’s **Copy AI Instructions** button gives parents/carers a ready-made prompt to turn a PDF/photo into valid JSON with their own assistant.
 - **Privacy by default** – No analytics, tracking, or proprietary dependencies; the app runs happily offline and is F-Droid friendly.
@@ -19,9 +20,10 @@ Roto is an offline, privacy-first Android app that answers one simple question: 
    - On the setup screen tap **Copy AI Instructions**.
    - Paste the prompt into your preferred assistant (ChatGPT, Claude, Copilot, etc.) and share the rota PDF/photo/text.
    - The AI replies with JSON matching schema 0.3.
-3. **Load the JSON**
-   - Save the AI output as a `.json` file (for example `RotoRota.json`).
-   - In the app tap **Load rota (JSON)** and choose the file, or place it at `Android/data/org.roto/files/Download/RotoRota.json` via `adb`.
+3. **Load the rota file**
+   - Save the helper’s reply (for example `RotoRota.json`).
+   - In the app tap **Load rota file** and choose it, or place it at `Android/data/org.roto/files/Download/RotoRota.json` via `adb`.
+   - Want a head start? Copy any of the example rotas in `app/src/main/assets/sample_rotas` to your device and try them out.
 4. **Browse the rota**
    - The home screen shows tomorrow and today.
    - Use **Browse rota weeks** to open any week pattern and inspect its days.

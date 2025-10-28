@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
@@ -34,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -92,7 +94,7 @@ fun MenuScreen(
     onClearWeek: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val introText = "Roto needs your rota data. Paste JSON if you already have it, or tap 'Copy AI Instructions' to build it from a PDF or photo. Roto never uploads anything."
+    val introText = "Add your rota so Roto can show what’s happening each day. If you already have the file, load it below. Otherwise, use the helper prompt to create one from an existing schedule, for example a photo, pdf, spreadsheet etc."
     val hasSelection = state.selectedSourceLabel != "No rota selected"
 
     when {
@@ -156,6 +158,11 @@ private fun SetupState(
     modifier: Modifier = Modifier
 ) {
     var showFormatDetails by remember { mutableStateOf(false) }
+    var showSamples by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val sampleFiles = remember(context) {
+        context.assets.list("sample_rotas")?.sorted()?.toList() ?: emptyList()
+    }
 
     Column(
         modifier = modifier
@@ -176,15 +183,15 @@ private fun SetupState(
             textAlign = TextAlign.Center
         )
         Text(
-            text = "Copy the AI prompt below, paste it into your preferred assistant, and share your rota (PDF, photo, or text). The AI turns it into JSON for Roto.",
+            text = "Don’t have a file yet? Copy the helper prompt, paste it into your favourite AI assistant, and share your existing schedule file or a clear photo AI can read. It will hand you back a little rota file you can save.",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center
         )
         Button(onClick = onCopyInstructions) {
-            Text("Copy AI Instructions")
+            Text("Copy helper prompt")
         }
         Text(
-            text = "When the AI replies with JSON, save it to your phone (Downloads is ideal) and load it with the button above. Repeat whenever the rota changes.",
+            text = "When the assistant replies, save the file (Downloads is ideal) and tap “Load rota file” above. You can replace or clear it whenever plans change.",
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center
         )
@@ -193,6 +200,33 @@ private fun SetupState(
         }
         if (showFormatDetails) {
             FormatInfoCard()
+        }
+        if (sampleFiles.isNotEmpty()) {
+            TextButton(onClick = { showSamples = !showSamples }) {
+                Text(if (showSamples) "Hide sample rota names" else "Show sample rota names")
+            }
+            if (showSamples) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "Need an example? Try one of these files bundled with the app:",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        sampleFiles.forEach { name ->
+                            Text("• $name", style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            }
         }
         extraMessage?.let {
             Text(
@@ -292,7 +326,7 @@ private fun SourceControls(
             style = MaterialTheme.typography.bodySmall
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = onChooseFile) { Text("Load rota (JSON)") }
+            Button(onClick = onChooseFile) { Text("Load rota file") }
             if (showClear) {
                 TextButton(onClick = onClearMenu) { Text("Clear rota") }
             }
@@ -345,6 +379,41 @@ private fun NotesColumn(title: String, notes: List<String>) {
 
 @Composable
 private fun FormatInfoCard() {
+    val exampleJson = """
+        {
+          "schema_version": "0.3",
+          "school_name": "Your Rota Name",
+          "notes": ["Optional reminders"],
+          "cycle": {
+            "repeat": {
+              "start_date": "2025-09-01",
+              "start_week_id": "Week 1"
+            },
+            "weeks": [
+              {
+                "week_id": "Week 1",
+                "week_commencing": ["2025-09-01"],
+                "days": {
+                  "monday": {
+                    "slots": [
+                      { "label": "Option 1", "text": "Activity or meal name" },
+                      { "label": "Option 2", "text": "Alternative option", "tags": ["optional tag"] }
+                    ],
+                    "notes": ["Optional day-specific note"]
+                  }
+                }
+              }
+            ]
+          },
+          "overrides": {
+            "2025-10-20": {
+              "closed": true,
+              "reason": "No rota today (holiday)"
+            }
+          }
+        }
+    """.trimIndent()
+
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         modifier = Modifier.fillMaxWidth()
@@ -355,18 +424,18 @@ private fun FormatInfoCard() {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("JSON structure overview", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            Text("• schema_version: \"0.3\"", style = MaterialTheme.typography.bodySmall)
-            Text("• school_name: label shown on the home screen (e.g. your school name)", style = MaterialTheme.typography.bodySmall)
-            Text("• notes: optional list of global messages", style = MaterialTheme.typography.bodySmall)
-            Text("• cycle.weeks[]: repeating week patterns", style = MaterialTheme.typography.bodySmall)
-            Text("  – week_id: label such as \"Week 1\" or \"Red Week\"", style = MaterialTheme.typography.bodySmall)
-            Text("  – week_commencing: Monday dates (YYYY-MM-DD) when this pattern starts", style = MaterialTheme.typography.bodySmall)
-            Text("  – days: keys like monday…sunday (or ISO dates) with a day definition", style = MaterialTheme.typography.bodySmall)
-            Text("    • day.slots[] → { label, text, tags[] } listed top to bottom", style = MaterialTheme.typography.bodySmall)
-            Text("    • day.notes[] → optional extra lines for that day", style = MaterialTheme.typography.bodySmall)
-            Text("• overrides{\"2025-03-01\"}: optional single-day changes with closed/reason/slots/notes", style = MaterialTheme.typography.bodySmall)
-            Text("Save the JSON exactly as returned and load it via the button above.", style = MaterialTheme.typography.bodySmall)
+            Text("What the rota file looks like", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            SelectionContainer {
+                Text(
+                    text = exampleJson,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = FontFamily.Monospace
+                )
+            }
+            Text(
+                text = "Save the file exactly as shown (tech folks call it JSON) and load it with the button above.",
+                style = MaterialTheme.typography.bodySmall
+            )
         }
     }
 }

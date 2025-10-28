@@ -7,7 +7,11 @@
    ```powershell
    emulator -avd PixelLikeApi34
    ```
-3. In another PowerShell window run Gradle builds or install APKs with `adb install -r`.
+3. In another windows terminal, build the new app .\gradlew.bat assembleDebug ; .\gradlew.bat testDebugUnitTest
+4. In another PowerShell window run Gradle builds or install APKs with `adb install -r app\build\outputs\apk\debug\app-debug.apk`
+5. Upload any files you need to the emulator like so `adb push C:\Users\Mile\Downloads\SchoolNomNomsMenu.json /sdcard/Download/SchoolNomNomsMenu.jso`
+6. List any file you need on the emulator like so `adb shell ls /sdcard/Android/data/org.schooldinners/files/Download`
+7. Remove any file you need on the emulator like so `adb shell rm /sdcard/Android/data/org.schooldinners/files/Download/somefile`
 
 ## Useful Commands
 

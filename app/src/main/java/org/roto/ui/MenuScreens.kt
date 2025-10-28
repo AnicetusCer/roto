@@ -28,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -167,10 +168,12 @@ private fun SetupState(
     val sampleFiles = remember(context) {
         context.assets.list("sample_rotas")?.sorted()?.toList() ?: emptyList()
     }
+    val scrollState = rememberScrollState()
 
     Column(
         modifier = modifier
             .fillMaxSize()
+            .verticalScroll(scrollState)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -201,6 +204,11 @@ private fun SetupState(
         }
         Text(
             text = "When the assistant replies, save the file (Downloads is ideal) and tap “Load rota file” above. You can replace or clear it whenever plans change.",
+            style = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Center
+        )
+        Text(
+            text = "Try it in Roto and, if anything looks off, tell the assistant what needs fixing – it will happily iterate until the rota looks right.",
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center
         )
@@ -259,10 +267,19 @@ private fun MenuContent(
     modifier: Modifier = Modifier
 ) {
     val appTitle = state.rotaName.ifBlank { "Roto" }
+    val scrollState = rememberScrollState()
+    var showBrowse by remember { mutableStateOf(false) }
+
+    LaunchedEffect(state.weekMenus.size) {
+        if (state.weekMenus.isEmpty()) {
+            showBrowse = false
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(horizontal = 16.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
@@ -290,10 +307,6 @@ private fun MenuContent(
             InfoCard(it.message)
         }
 
-        if (state.globalNotes.isNotEmpty()) {
-            NotesColumn(title = "Notes", notes = state.globalNotes)
-        }
-
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(
                 text = "Tomorrow's Rota",
@@ -314,13 +327,33 @@ private fun MenuContent(
             } ?: Text("No rota recorded for today.")
         }
 
+        if (state.globalNotes.isNotEmpty()) {
+            NotesColumn(title = "Notes", notes = state.globalNotes)
+        }
+
         if (state.weekMenus.isNotEmpty()) {
-            BrowseWeeksSection(
-                weekMenus = state.weekMenus,
-                selectedWeekMenu = state.selectedWeekMenu,
-                onSelectWeek = onSelectWeek,
-                onClearWeek = onClearWeek
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Button(onClick = {
+                    showBrowse = !showBrowse
+                    if (!showBrowse) {
+                        onClearWeek()
+                    }
+                }) {
+                    Text(if (showBrowse) "Hide full rota" else "Browse full rota")
+                }
+            }
+            if (showBrowse) {
+                Spacer(modifier = Modifier.height(12.dp))
+                BrowseWeeksSection(
+                    weekMenus = state.weekMenus,
+                    selectedWeekMenu = state.selectedWeekMenu,
+                    onSelectWeek = onSelectWeek,
+                    onClearWeek = onClearWeek
+                )
+            }
         }
 
         Button(onClick = onRefresh) {

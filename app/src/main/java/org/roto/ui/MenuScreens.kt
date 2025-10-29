@@ -53,6 +53,7 @@ import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 import org.roto.R
+import org.roto.data.MenuSelection
 import org.roto.domain.DayDataSource
 import org.roto.domain.DayResult
 import org.roto.domain.SlotEntry
@@ -88,6 +89,7 @@ fun MenuRoot(
             clipboard.setText(AnnotatedString(viewModel.getAiInstructions()))
         },
         onCopySample = viewModel::copySampleToDownloads,
+        onApplySampleSelection = viewModel::applySampleSelection,
         onDismissSamplePrompt = viewModel::dismissSampleCopyPrompt,
         onClearMenu = viewModel::clearMenuSelection,
         onSelectWeek = viewModel::selectWeek,
@@ -103,6 +105,7 @@ fun MenuScreen(
     onChooseFile: () -> Unit,
     onCopyInstructions: () -> Unit,
     onCopySample: (String) -> Unit,
+    onApplySampleSelection: (MenuSelection) -> Unit,
     onDismissSamplePrompt: () -> Unit,
     onClearMenu: () -> Unit,
     onSelectWeek: (String) -> Unit,
@@ -126,6 +129,7 @@ fun MenuScreen(
             onChooseFile = onChooseFile,
             onCopyInstructions = onCopyInstructions,
             onCopySample = onCopySample,
+            onApplySampleSelection = onApplySampleSelection,
             onDismissSamplePrompt = onDismissSamplePrompt,
             showClear = hasSelection,
             onClearMenu = onClearMenu,
@@ -157,6 +161,7 @@ private fun SetupState(
     onChooseFile: () -> Unit,
     onCopyInstructions: () -> Unit,
     onCopySample: (String) -> Unit,
+    onApplySampleSelection: (MenuSelection) -> Unit,
     onDismissSamplePrompt: () -> Unit,
     showClear: Boolean,
     onClearMenu: () -> Unit,
@@ -177,8 +182,14 @@ private fun SetupState(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onDismissSamplePrompt()
-                        onChooseFile()
+                        val selection = prompt.pendingSelection
+                        if (selection != null) {
+                            onApplySampleSelection(selection)
+                            onDismissSamplePrompt()
+                        } else {
+                            onDismissSamplePrompt()
+                            onChooseFile()
+                        }
                     }
                 ) { Text("Load now") }
             },
@@ -509,7 +520,7 @@ private fun InstructionsDialog(
                         }
                     }
                     Text(
-                        text = "Samples are copied into Downloads/Roto. After copying, tap 'Load rota file' and browse to that folder to open it.",
+                        text = "Samples are copied into Downloads/Roto. After copying, you can load it right away or tap 'Load rota file' later to pick it manually.",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }

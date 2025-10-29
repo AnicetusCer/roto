@@ -33,7 +33,15 @@ import org.roto.domain.getMenuForDate
 
 data class SetupMessage(val text: String, val isError: Boolean)
 
-data class SampleCopyPrompt(val locationHint: String)
+data class SampleCopyPrompt(
+    val locationHint: String,
+    val pendingSelection: MenuSelection?
+)
+
+private data class SampleCopyOutcome(
+    val locationHint: String,
+    val selection: MenuSelection?
+)
 
 data class MenuUiState(
     val isLoading: Boolean = false,
@@ -97,6 +105,55 @@ class MenuViewModel(
         }
     }
 
+    fun applySampleSelection(selection: MenuSelection) {
+        viewModelScope.launch {
+            preferences.saveMenuSelection(selection.uriString, selection.displayName)
+        }
+    }
+
+    private fun copySample(app: Application, sampleName: String): SampleCopyOutcome {
+        val targetName = sampleName.substringAfterLast('/')
+        val relativePath = Environment.DIRECTORY_DOWNLOADS + "/Roto/"
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val resolver = app.contentResolver
+            resolver.delete(
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                "${MediaStore.MediaColumns.DISPLAY_NAME}=? AND ${MediaStore.MediaColumns.RELATIVE_PATH}=?",
+                arrayOf(targetName, relativePath)
+            )
+            val contentValues = ContentValues().apply {
+                put(MediaStore.Downloads.DISPLAY_NAME, targetName)
+                put(MediaStore.Downloads.MIME_TYPE, "application/json")
+                put(MediaStore.Downloads.RELATIVE_PATH, relativePath)
+            }
+            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                ?: throw IllegalStateException("Unable to create entry in Downloads.")
+            app.assets.open("sample_rotas/$sampleName").use { input ->
+                resolver.openOutputStream(uri)?.use { output ->
+                    input.copyTo(output)
+                } ?: throw IllegalStateException("Unable to open Downloads output stream.")
+            }
+            SampleCopyOutcome(
+                locationHint = "Downloads/Roto/$targetName",
+                selection = MenuSelection(uri.toString(), targetName)
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                ?: throw IllegalStateException("Public Downloads directory unavailable.")
+            val rotoDir = File(downloadsDir, "Roto").apply { if (!exists()) mkdirs() }
+            val target = File(rotoDir, targetName)
+            app.assets.open("sample_rotas/$sampleName").use { input ->
+                target.outputStream().use { output -> input.copyTo(output) }
+            }
+            MediaScannerConnection.scanFile(app, arrayOf(target.absolutePath), arrayOf("application/json"), null)
+            SampleCopyOutcome(
+                locationHint = "Downloads/Roto/$targetName",
+                selection = MenuSelection(Uri.fromFile(target).toString(), targetName)
+            )
+        }
+    }
+
     fun refresh() {
         viewModelScope.launch {
             performLoad(currentSelection, isManualRefresh = true)
@@ -117,50 +174,20 @@ class MenuViewModel(
             val app = getApplication<Application>()
             val result = withContext(Dispatchers.IO) {
                 runCatching {
-                    val targetName = sampleName.substringAfterLast('/')
-                    val relativePath = Environment.DIRECTORY_DOWNLOADS + "/Roto/"
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        val resolver = app.contentResolver
-                        // Remove any previous copy with the same display name inside our relative path.
-                        resolver.delete(
-                            MediaStore.Downloads.EXTERNAL_CONTENT_URI,
-                            "${MediaStore.MediaColumns.DISPLAY_NAME}=? AND ${MediaStore.MediaColumns.RELATIVE_PATH}=?",
-                            arrayOf(targetName, relativePath)
-                        )
-                        val contentValues = ContentValues().apply {
-                            put(MediaStore.Downloads.DISPLAY_NAME, targetName)
-                            put(MediaStore.Downloads.MIME_TYPE, "application/json")
-                            put(MediaStore.Downloads.RELATIVE_PATH, relativePath)
-                        }
-                        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
-                            ?: throw IllegalStateException("Unable to create entry in Downloads.")
-                        app.assets.open("sample_rotas/$sampleName").use { input ->
-                            resolver.openOutputStream(uri)?.use { output ->
-                                input.copyTo(output)
-                            } ?: throw IllegalStateException("Unable to open Downloads output stream.")
-                        }
-                        "Downloads/Roto/$targetName"
-                    } else {
-                        val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                            ?: throw IllegalStateException("Public Downloads directory unavailable.")
-                        val rotoDir = File(downloadsDir, "Roto").apply { if (!exists()) mkdirs() }
-                        val target = File(rotoDir, targetName)
-                        app.assets.open("sample_rotas/$sampleName").use { input ->
-                            target.outputStream().use { output -> input.copyTo(output) }
-                        }
-                        MediaScannerConnection.scanFile(app, arrayOf(target.absolutePath), arrayOf("application/json"), null)
-                        target.absolutePath
-                    }
+                    copySample(app, sampleName)
                 }
             }
-            result.onSuccess { location ->
+            result.onSuccess { outcome ->
                 _uiState.update { state ->
                     state.copy(
-                        setupMessage = SetupMessage("Copied sample to $location. Tap 'Load rota file' to open it.", false),
-                        sampleCopyPrompt = SampleCopyPrompt(location)
+                        setupMessage = SetupMessage("Copied sample to ${outcome.locationHint}. Load it now or pick it later.", false),
+                        sampleCopyPrompt = SampleCopyPrompt(
+                            locationHint = outcome.locationHint,
+                            pendingSelection = outcome.selection
+                        )
                     )
                 }
-                Toast.makeText(app, "Sample copied to $location", Toast.LENGTH_SHORT).show()
+                Toast.makeText(app, "Sample copied to ${outcome.locationHint}", Toast.LENGTH_SHORT).show()
             }.onFailure { throwable ->
                 val reason = throwable.localizedMessage ?: "Unknown error"
                 _uiState.update { state ->

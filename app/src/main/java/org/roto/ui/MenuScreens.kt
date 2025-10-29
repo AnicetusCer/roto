@@ -1,7 +1,6 @@
 package org.roto.ui
 
 import android.content.Intent
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -40,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
@@ -669,15 +669,10 @@ private fun formatSource(source: DayDataSource): String =
 
 @Composable
 private fun TipJarLinks(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    val onOpenLink: (String) -> Unit = remember(context) {
+    val uriHandler = LocalUriHandler.current
+    val onOpenLink: (String) -> Unit = remember(uriHandler) {
         { url ->
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            if (intent.resolveActivity(context.packageManager) != null) {
-                context.startActivity(intent)
-            }
+            runCatching { uriHandler.openUri(url) }
         }
     }
 
@@ -687,9 +682,10 @@ private fun TipJarLinks(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
-            text = "Tip the project",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            text = "One-person spare-time project; a tip tells me it helped.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
         )
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),

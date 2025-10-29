@@ -3,6 +3,7 @@ package org.roto.ui
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -45,6 +46,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.time.format.TextStyle
@@ -331,7 +333,13 @@ private fun MenuContent(
                 fontWeight = FontWeight.SemiBold
             )
             state.todayMenu?.let {
-                MenuCard(title = friendlyDate(it), menu = it)
+                MenuCard(
+                    title = friendlyDate(it),
+                    menu = it,
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    borderColor = MaterialTheme.colorScheme.tertiary
+                )
             } ?: Text("No rota recorded for today.")
 
             Text(
@@ -340,7 +348,13 @@ private fun MenuContent(
                 fontWeight = FontWeight.SemiBold
             )
             state.tomorrowMenu?.let {
-                MenuCard(title = friendlyDate(it), menu = it)
+                MenuCard(
+                    title = friendlyDate(it),
+                    menu = it,
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    borderColor = MaterialTheme.colorScheme.secondary
+                )
             } ?: Text("No rota recorded for tomorrow.")
         }
 
@@ -570,11 +584,18 @@ private fun FormatInfoCard() {
 private fun MenuCard(
     title: String,
     menu: DayResult,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    borderColor: Color? = null
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        ),
+        border = borderColor?.let { BorderStroke(1.dp, it) }
     ) {
         Column(
             modifier = Modifier

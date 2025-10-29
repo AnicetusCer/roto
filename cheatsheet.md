@@ -5,7 +5,7 @@
 1. **Open PowerShell** in `C:\Users\Mile\GitHub\roto` (or wherever your repo lives on Windows).
 2. **Start the emulator** and leave the window running while you test:
    ```powershell
-   emulator -avd PixelLikeApi34
+   emulator -avd PixelLikeApi34 -no-snapshot
    ```
 3. In another windows terminal, build the new app .\gradlew.bat assembleDebug ; .\gradlew.bat testDebugUnitTest
 4. In another PowerShell window run Gradle builds or install APKs with `adb install -r app\build\outputs\apk\debug\app-debug.apk`

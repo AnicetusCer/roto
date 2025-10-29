@@ -67,7 +67,7 @@ project_primer:
 
   tech_foundation:
     platform: "Android (minSdk 24, Kotlin, Jetpack Compose)."
-    storage: "Persist raw JSON in SharedPreferences or an internal file."
+    storage: "Keep JSON in user-managed files; remember the chosen URI via Preferences DataStore so the app can reload it."
     dependency_constraints:
       - "Avoid Google Play Services and proprietary analytics for F-Droid compliance."
       - "Keep the build reproducible with FLOSS-friendly tooling."
@@ -76,8 +76,8 @@ project_primer:
     layers:
       - name: data_layer
         responsibilities:
-          - load_saved_rota_json
-          - save_rota_json
+          - load_rota_json_from_selected_source
+          - remember_selected_rota_reference
           - parse_json_to_models (schema 0.3)
       - name: domain_layer
         responsibilities:

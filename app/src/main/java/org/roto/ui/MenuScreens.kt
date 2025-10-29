@@ -1,6 +1,7 @@
 package org.roto.ui
 
 import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -254,6 +255,9 @@ private fun SetupState(
                 )
             }
         }
+
+        Spacer(modifier = Modifier.weight(1f))
+        TipJarLinks()
     }
 }
 
@@ -372,6 +376,8 @@ private fun MenuContent(
         Button(onClick = onRefresh) {
             Text("Refresh rota")
         }
+
+        TipJarLinks(modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -662,6 +668,53 @@ private fun formatSource(source: DayDataSource): String =
     }
 
 @Composable
+private fun TipJarLinks(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val onOpenLink: (String) -> Unit = remember(context) {
+        { url ->
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            if (intent.resolveActivity(context.packageManager) != null) {
+                context.startActivity(intent)
+            }
+        }
+    }
+
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = "Tip the project",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TipJarTextButton(label = "Liberapay", onClick = { onOpenLink("https://liberapay.com/AnicetusCer/donate") })
+            TipJarTextButton(label = "Ko-fi", onClick = { onOpenLink("https://ko-fi.com/U7U21NKZ0Z") })
+        }
+    }
+}
+
+@Composable
+private fun TipJarTextButton(label: String, onClick: () -> Unit) {
+    TextButton(
+        onClick = onClick,
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall
+        )
+    }
+}
+
+@Composable
 private fun BrowseWeeksSection(
     weekMenus: List<WeekMenu>,
     selectedWeekMenu: WeekMenu?,
@@ -683,6 +736,7 @@ private fun BrowseWeeksSection(
             WeekMenuCard(week)
             TextButton(onClick = onClearWeek) { Text("Clear selection") }
         }
+        TipJarLinks(modifier = Modifier.fillMaxWidth())
     }
 }
 

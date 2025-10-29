@@ -687,13 +687,7 @@ private fun TipJarLinks(modifier: Modifier = Modifier) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TipJarTextButton(label = "Liberapay", onClick = { onOpenLink("https://liberapay.com/AnicetusCer/donate") })
-            TipJarTextButton(label = "Ko-fi", onClick = { onOpenLink("https://ko-fi.com/U7U21NKZ0Z") })
-        }
+        TipJarTextButton(label = "Tip via Ko-fi", onClick = { onOpenLink("https://ko-fi.com/U7U21NKZ0Z") })
     }
 }
 

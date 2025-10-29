@@ -468,7 +468,8 @@ private fun InstructionsDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text("1. Tap \"Copy helper prompt\" to copy the text into your clipboard.")
-                Text("2. Paste it into your preferred AI assistant and share the rota — PDFs, spreadsheets, and clear photos all work.")
+                Text("You can start from scratch: paste the helper prompt and chat about what you want to happen and when — the AI can build the rota JSON for you.")
+                Text("2. Paste it into your preferred AI assistant and share the rota — PDFs, spreadsheets, clear photos, or your own description all work.")
                 Text("3. Ask the assistant for the JSON output, save it somewhere you can find it, and load it in Roto.")
                 Text("If Roto shows anything unexpected, describe the fix to the assistant and request an updated JSON. Iterate until it looks right.")
                 Button(onClick = onCopyHelperPrompt, modifier = Modifier.fillMaxWidth()) {

@@ -49,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 import org.roto.R
@@ -587,7 +588,8 @@ private fun MenuCard(
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.surface,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
-    borderColor: Color? = null
+    borderColor: Color? = null,
+    showWeekMetadata: Boolean = true
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -604,7 +606,7 @@ private fun MenuCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            DayDetails(menu = menu, showWeekMetadata = true)
+            DayDetails(menu = menu, showWeekMetadata = showWeekMetadata)
         }
     }
 }
@@ -770,20 +772,60 @@ private fun WeekMenuCard(weekMenu: WeekMenu) {
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
+            val today = LocalDate.now()
+            val tomorrow = today.plusDays(1)
             weekMenu.days.forEachIndexed { index, day ->
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    val headerText = day.menu?.formattedDate ?: run {
-                        val dayName = day.date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
-                        "$dayName · ${day.date}"
-                    }
-                    Text(
-                        text = headerText,
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold
+                val headerText = day.menu?.formattedDate ?: run {
+                    val dayName = day.date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
+                    "$dayName · ${day.date}"
+                }
+                val (containerColor, contentColor, borderColor) = when (day.date) {
+                    today -> Triple(
+                        MaterialTheme.colorScheme.tertiaryContainer,
+                        MaterialTheme.colorScheme.onTertiaryContainer,
+                        MaterialTheme.colorScheme.tertiary
                     )
-                    day.menu?.let {
-                        DayDetails(menu = it, showWeekMetadata = false)
-                    } ?: Text("No rota recorded for this day.", style = MaterialTheme.typography.bodyMedium)
+                    tomorrow -> Triple(
+                        MaterialTheme.colorScheme.secondaryContainer,
+                        MaterialTheme.colorScheme.onSecondaryContainer,
+                        MaterialTheme.colorScheme.secondary
+                    )
+                    else -> Triple(
+                        MaterialTheme.colorScheme.surfaceVariant,
+                        MaterialTheme.colorScheme.onSurfaceVariant,
+                        MaterialTheme.colorScheme.outline
+                    )
+                }
+                day.menu?.let {
+                    MenuCard(
+                        title = headerText,
+                        menu = it,
+                        containerColor = containerColor,
+                        contentColor = contentColor,
+                        borderColor = borderColor,
+                        showWeekMetadata = false
+                    )
+                } ?: Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = containerColor,
+                        contentColor = contentColor
+                    ),
+                    border = BorderStroke(1.dp, borderColor),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = headerText,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text("No rota recorded for this day.", style = MaterialTheme.typography.bodyMedium)
+                    }
                 }
                 if (index != weekMenu.days.lastIndex) {
                     Spacer(modifier = Modifier.height(8.dp))

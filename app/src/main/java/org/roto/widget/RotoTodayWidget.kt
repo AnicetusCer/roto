@@ -162,7 +162,11 @@ private fun RotoWidgetContent(
         Spacer(modifier = GlanceModifier.height(8.dp))
         OpenAppLink(openAppAction)
         Spacer(modifier = GlanceModifier.height(8.dp))
-        ToggleRow(activeFocus = focus, areBothAvailable = alternateAvailable)
+        ToggleRow(
+            activeFocus = focus,
+            todayAvailable = state.today != null,
+            tomorrowAvailable = state.tomorrow != null
+        )
         Spacer(modifier = GlanceModifier.height(8.dp))
         if (summary != null) {
             val background = if (focus == DayFocus.TODAY) TodayBackground else TomorrowBackground
@@ -289,12 +293,13 @@ private enum class DayFocus {
 @Composable
 private fun ToggleRow(
     activeFocus: DayFocus,
-    areBothAvailable: Boolean
+    todayAvailable: Boolean,
+    tomorrowAvailable: Boolean
 ) {
-    val todayAction = if (areBothAvailable && activeFocus != DayFocus.TODAY) {
+    val todayAction = if (todayAvailable && activeFocus != DayFocus.TODAY) {
         actionRunCallback<ShowTodayCallback>()
     } else null
-    val tomorrowAction = if (areBothAvailable && activeFocus != DayFocus.TOMORROW) {
+    val tomorrowAction = if (tomorrowAvailable && activeFocus != DayFocus.TOMORROW) {
         actionRunCallback<ShowTomorrowCallback>()
     } else null
     Row(modifier = GlanceModifier.fillMaxWidth()) {

@@ -9,12 +9,12 @@ import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.action.Action
+import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
-import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.cornerRadius
@@ -23,6 +23,7 @@ import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.Column
+import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
@@ -32,6 +33,7 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import androidx.glance.layout.fillMaxHeight
 import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
@@ -57,16 +59,13 @@ class RotoTodayWidget : GlanceAppWidget() {
         }
         val nextFocus = activeFocus.other()
         val hasAlternate = widgetState.summaryForFocus(nextFocus) != null
-        val toggleAction = if (hasAlternate) actionRunCallback<ToggleDayCallback>() else null
-        val nextLabel = if (hasAlternate) nextFocus.displayLabel() else null
         writeStoredFocus(context, id, activeFocus)
         provideContent {
             RotoWidgetContent(
                 state = widgetState,
                 focus = activeFocus,
                 summary = displaySummary,
-                nextLabel = nextLabel,
-                toggleAction = toggleAction,
+                alternateAvailable = hasAlternate,
                 modifier = GlanceModifier
                     .padding(16.dp)
                     .wrapContentHeight()
@@ -152,8 +151,7 @@ private fun RotoWidgetContent(
     state: WidgetState,
     focus: DayFocus,
     summary: DaySummary?,
-    nextLabel: String?,
-    toggleAction: Action?,
+    alternateAvailable: Boolean,
     modifier: GlanceModifier = GlanceModifier
 ) {
     val openAppAction = actionStartActivity<MainActivity>()
@@ -163,20 +161,20 @@ private fun RotoWidgetContent(
             .background(BackgroundColor)
             .padding(12.dp)
             .cornerRadius(16.dp)
-            .clickable(openAppAction)
     ) {
         Text(
             text = state.rotaName,
             style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TitleColor)
         )
         Spacer(modifier = GlanceModifier.height(8.dp))
+        ToggleRow(activeFocus = focus, areBothAvailable = alternateAvailable)
+        Spacer(modifier = GlanceModifier.height(8.dp))
         if (summary != null) {
             val background = if (focus == DayFocus.TODAY) TodayBackground else TomorrowBackground
             DaySection(
                 summary = summary,
                 background = background,
-                nextLabel = nextLabel,
-                toggleAction = toggleAction
+                openAppAction = openAppAction
             )
         } else {
             state.fallbackMessage?.let { message ->
@@ -193,16 +191,16 @@ private fun RotoWidgetContent(
 private fun DaySection(
     summary: DaySummary,
     background: ColorProvider,
-    nextLabel: String?,
-    toggleAction: Action?
+    openAppAction: Action
 ) {
-    var modifier = GlanceModifier
-        .fillMaxWidth()
-        .background(background)
-        .cornerRadius(12.dp)
-        .padding(horizontal = 12.dp, vertical = 10.dp)
-    toggleAction?.let { modifier = modifier.clickable(it) }
-    Column(modifier = modifier) {
+    Column(
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .background(background)
+            .cornerRadius(12.dp)
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+            .clickable(openAppAction)
+    ) {
         Text(
             text = summary.title,
             style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold, color = PrimaryTextColor)
@@ -218,7 +216,7 @@ private fun DaySection(
                 style = TextStyle(fontSize = 12.sp, color = PrimaryTextColor)
             )
         } else {
-           LazyColumn(
+            LazyColumn(
                 modifier = GlanceModifier
                     .fillMaxWidth()
                     .height(96.dp)
@@ -239,13 +237,6 @@ private fun DaySection(
                     }
                 }
             }
-        }
-        nextLabel?.let {
-            Spacer(modifier = GlanceModifier.height(4.dp))
-            Text(
-                text = "Tap to view $it",
-                style = TextStyle(fontSize = 10.sp, color = SecondaryTextColor)
-            )
         }
     }
 }
@@ -278,11 +269,69 @@ private val TodayBackground = ColorProvider(color = Color(0xFFD7F2EB))
 
 private val TomorrowBackground = ColorProvider(color = Color(0xFFFFF3D6))
 
+private val ChipSelectedBackground = ColorProvider(color = Color(0xFF00BF93))
+private val ChipUnselectedBackground = ColorProvider(color = Color(0xFFE0EEEB))
+private val ChipSelectedText = ColorProvider(color = Color(0xFF00382B))
+private val ChipUnselectedText = ColorProvider(color = Color(0xFF2B4548))
+
 private enum class DayFocus {
     TODAY, TOMORROW;
 
     fun other(): DayFocus = if (this == TODAY) TOMORROW else TODAY
     fun displayLabel(): String = if (this == TODAY) "Tomorrow" else "Today"
+}
+
+@Composable
+private fun ToggleRow(
+    activeFocus: DayFocus,
+    areBothAvailable: Boolean
+) {
+    val todayAction = if (activeFocus != DayFocus.TODAY && areBothAvailable) {
+        actionRunCallback<ShowTodayCallback>()
+    } else null
+    val tomorrowAction = if (activeFocus != DayFocus.TOMORROW && areBothAvailable) {
+        actionRunCallback<ShowTomorrowCallback>()
+    } else null
+    Row(modifier = GlanceModifier.fillMaxWidth()) {
+        ToggleChip(
+            label = "Today",
+            isSelected = activeFocus == DayFocus.TODAY,
+            modifier = GlanceModifier
+                .padding(end = 4.dp),
+            onClick = todayAction
+        )
+        ToggleChip(
+            label = "Tomorrow",
+            isSelected = activeFocus == DayFocus.TOMORROW,
+            modifier = GlanceModifier
+                .padding(start = 4.dp),
+            onClick = tomorrowAction
+        )
+    }
+}
+
+@Composable
+private fun ToggleChip(
+    label: String,
+    isSelected: Boolean,
+    modifier: GlanceModifier,
+    onClick: Action?
+) {
+    val baseModifier = modifier
+        .background(if (isSelected) ChipSelectedBackground else ChipUnselectedBackground)
+        .cornerRadius(12.dp)
+        .padding(horizontal = 8.dp, vertical = 6.dp)
+    val clickableModifier = if (onClick != null) baseModifier.clickable(onClick) else baseModifier
+    Column(modifier = clickableModifier) {
+        Text(
+            text = label,
+            style = TextStyle(
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = if (isSelected) ChipSelectedText else ChipUnselectedText
+            )
+        )
+    }
 }
 
 private const val WIDGET_PREFS_NAME = "roto_widget_prefs"
@@ -316,11 +365,16 @@ private fun WidgetState.defaultFocus(): DayFocus =
         else -> DayFocus.TODAY
     }
 
-private class ToggleDayCallback : ActionCallback {
+private class ShowTodayCallback : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        val current = readStoredFocus(context, glanceId) ?: DayFocus.TODAY
-        val next = current.other()
-        writeStoredFocus(context, glanceId, next)
+        writeStoredFocus(context, glanceId, DayFocus.TODAY)
+        RotoTodayWidget().update(context, glanceId)
+    }
+}
+
+private class ShowTomorrowCallback : ActionCallback {
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        writeStoredFocus(context, glanceId, DayFocus.TOMORROW)
         RotoTodayWidget().update(context, glanceId)
     }
 }

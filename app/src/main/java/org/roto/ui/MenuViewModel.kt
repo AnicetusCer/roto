@@ -109,6 +109,7 @@ class MenuViewModel(
     fun applySampleSelection(selection: MenuSelection) {
         viewModelScope.launch {
             preferences.saveMenuSelection(selection.uriString, selection.displayName)
+            refreshWidgets()
         }
     }
 
@@ -171,6 +172,7 @@ class MenuViewModel(
         viewModelScope.launch {
             val label = resolveDisplayName(context, uri)
             preferences.saveMenuSelection(uri.toString(), label)
+            refreshWidgets()
         }
     }
 

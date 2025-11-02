@@ -257,47 +257,49 @@ class MenuViewModel(
         val preferredUri = selection?.uriString?.let(Uri::parse)
         val preferredLabel = selection?.displayName
 
-        repository.loadMenu(preferredUri)
-            .onSuccess { result ->
-                updateStateWithMenu(
-                    menuData = result.data,
-                    selectionUri = preferredUri,
-                    selectionLabel = preferredLabel,
-                    today = today,
-                    tomorrow = tomorrow,
-                    messageOverride = null
-                )
-            }
-            .onFailure { primaryError ->
-                if (preferredUri != null) {
+        val primaryResult = withContext(Dispatchers.IO) {
+            repository.loadMenu(preferredUri)
+        }
+        primaryResult.onSuccess { result ->
+            updateStateWithMenu(
+                menuData = result.data,
+                selectionUri = preferredUri,
+                selectionLabel = preferredLabel,
+                today = today,
+                tomorrow = tomorrow,
+                messageOverride = null
+            )
+        }.onFailure { primaryError ->
+            if (preferredUri != null) {
+                val fallbackResult = withContext(Dispatchers.IO) {
                     repository.loadMenu(null)
-                        .onSuccess { fallback ->
-                            updateStateWithMenu(
-                                menuData = fallback.data,
-                                selectionUri = null,
-                                selectionLabel = null,
-                                today = today,
-                                tomorrow = tomorrow,
-                                messageOverride = primaryError.message
-                                    ?: "Couldn't read the selected file. Showing the app downloads rota instead."
-                            )
-                        }
-                        .onFailure { fallbackError ->
-                            emitLoadError(
-                                message = fallbackError.message
-                                    ?: primaryError.message
-                                    ?: "Failed to load rota data.",
-                                selectionLabel = preferredLabel ?: "Custom rota"
-                            )
-                        }
-                } else {
+                }
+                fallbackResult.onSuccess { fallback ->
+                    updateStateWithMenu(
+                        menuData = fallback.data,
+                        selectionUri = null,
+                        selectionLabel = null,
+                        today = today,
+                        tomorrow = tomorrow,
+                        messageOverride = primaryError.message
+                            ?: "Couldn't read the selected file. Showing the app downloads rota instead."
+                    )
+                }.onFailure { fallbackError ->
                     emitLoadError(
-                        message = primaryError.message
-                            ?: "Pick the latest rota file. If you need one, copy the helper prompt and ask your favourite assistant to build it.",
-                        selectionLabel = "No rota selected"
+                        message = fallbackError.message
+                            ?: primaryError.message
+                            ?: "Failed to load rota data.",
+                        selectionLabel = preferredLabel ?: "Custom rota"
                     )
                 }
+            } else {
+                emitLoadError(
+                    message = primaryError.message
+                        ?: "Pick the latest rota file. If you need one, copy the helper prompt and ask your favourite assistant to build it.",
+                    selectionLabel = "No rota selected"
+                )
             }
+        }
     }
 
     private suspend fun emitLoadError(

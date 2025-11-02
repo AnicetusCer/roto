@@ -1,0 +1,159 @@
+{
+  "schema_version": "0.3",
+  "school_name": "Infinite Long Form Menu",
+  "notes": [
+    "This sample keeps the cycle looping forever and uses long text entries to stress-test the widget scroll area."
+  ],
+  "cycle": {
+    "repeat": {
+      "start_date": "2025-03-10",
+      "start_week_id": "Week 1"
+    },
+    "weeks": [
+      {
+        "week_id": "Week 1",
+        "week_commencing": ["2025-03-10"],
+        "days": {
+          "monday": {
+            "slots": [
+              {
+                "label": "Breakfast",
+                "text": "Overnight oats with cinnamon, toasted pecans, and a choice of blueberry or blackberry compote that stretches all the way down the serving table for anyone who wants second helpings."
+              },
+              {
+                "label": "Lunch",
+                "text": "Slow-roasted vegetable lasagne with layers of courgette, aubergine, spinach, and extra garlic béchamel; served with a rocket, fennel, and grapefruit salad dressed in a citrus vinaigrette." 
+              },
+              {
+                "label": "Snack",
+                "text": "Create-your-own yoghurt bar featuring thick Greek yoghurt, toasted coconut shards, almond brittle, mango compote, and caramelised pineapple chunks."
+              }
+            ],
+            "notes": [
+              "Remember to bring reusable water bottles; infusions are cucumber-mint, lemon-thyme, and raspberry-basil."
+            ]
+          },
+          "tuesday": {
+            "slots": [
+              {
+                "label": "Breakfast",
+                "text": "Griddled sourdough with whipped ricotta, roasted cherry tomatoes, balsamic glaze, and a cloud of basil oil for dipping."
+              },
+              {
+                "label": "Lunch",
+                "text": "Caramelised onion and thyme tart, roasted cauliflower steaks dusted with smoked paprika, and a three-bean salad tossed in a zingy lime, coriander, and jalapeño dressing." 
+              },
+              {
+                "label": "Dessert",
+                "text": "Mini pavlovas stacked high with lemon curd cream, kiwi slices, passionfruit pulp, and shards of crisp meringue." 
+              }
+            ],
+            "notes": [
+              "Cooking club meets after school to prep sauces for the next day; check the ingredients list in the staff room before leaving."
+            ]
+          },
+          "wednesday": {
+            "slots": [
+              {
+                "label": "Breakfast",
+                "text": "Stacked buckwheat pancakes layered with sticky date caramel, roasted apples, pecans, and maple syrup infused with orange zest." 
+              },
+              {
+                "label": "Lunch",
+                "text": "Fire-baked jacket potatoes with coriander-lime butter, chipotle chickpea chilli, charred corn niblets, pickled red onions, and an avocado crema to drizzle or dunk." 
+              },
+              {
+                "label": "Snack",
+                "text": "An overflowing grazing board with hummus, muhammara, beetroot tzatziki, sumac-crusted pitta shards, seasonal crudités, and rosemary sea-salt crackers." 
+              }
+            ],
+            "notes": [
+              "Library pop-up lunchtime club today; if the rota runs late, redirect anyone waiting for instruments to the music room by 12:45." 
+            ]
+          },
+          "thursday": {
+            "slots": [
+              {
+                "label": "Breakfast",
+                "text": "Coconut chia pudding topped with roasted hazelnuts, poached rhubarb, shaved dark chocolate, and lime zest." 
+              },
+              {
+                "label": "Lunch",
+                "text": "Wholegrain noodle bowls with miso-ginger broth, slow-cooked soy mushrooms, tofu puffs, edamame, shredded greens, quick-pickled carrots, chilli crunch, and crispy shallots." 
+              },
+              {
+                "label": "Snack",
+                "text": "Freshly baked focaccia squares filled with roasted pepper, mozzarella, basil pesto, rocket, and balsamic drizzle." 
+              }
+            ],
+            "notes": [
+              "Drama rehearsals occupy the hall from 15:30; clear down the snack station by 15:15." 
+            ]
+          },
+          "friday": {
+            "slots": [
+              {
+                "label": "Breakfast",
+                "text": "Hearty shakshuka with heritage tomatoes, spiced chickpeas, baked eggs, and warm sourdough wedges alongside honey butter." 
+              },
+              {
+                "label": "Lunch",
+                "text": "Feast platters with slow-cooked harissa jackfruit, zesty couscous with roasted apricots, maple-roasted sprouts, citrus-dressed slaw, and tahini yoghurt." 
+              },
+              {
+                "label": "Dessert",
+                "text": "An endless layered trifle of vanilla sponge, raspberry jam, thick custard, whipped mascarpone, macerated berries, and honeycomb pieces." 
+              }
+            ],
+            "notes": [
+              "Friday celebrations extend into the evening—expect a second wave around 18:30 for the board-games club." 
+            ]
+          }
+        }
+      },
+      {
+        "week_id": "Week 2",
+        "week_commencing": ["2025-03-17"],
+        "days": {
+          "monday": {
+            "slots": [
+              {
+                "label": "Breakfast",
+                "text": "Granola sundae tower with layers of toasted walnut granola, vanilla yoghurt, roasted cherries, pomegranate arils, and citrus curd." 
+              },
+              {
+                "label": "Lunch",
+                "text": "Cedar-plank roasted salmon (or maple tempeh) with dill yoghurt, crispy smashed potatoes, fennel orange salad, and buttered green beans showered in lemon zest." 
+              },
+              {
+                "label": "Snack",
+                "text": "Warm banana bread slices soaked in espresso maple syrup, whipped mascarpone, and toasted cacao nibs." 
+              }
+            ],
+            "notes": [
+              "STEM club testing today; leave the back corner free for robotics kits and remember to lock up the soldering station." 
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "overrides": {
+    "2025-03-21": {
+      "reason": "Spring Festival Showcase",
+      "slots": [
+        {
+          "label": "Festival Feast",
+          "text": "Street-food style stations with falafel wraps, crispy halloumi bites, tahini drizzle, pickled vegetables, vibrant za'atar fries, chimichurri corn ribs, and herbaceous yogurt dips, running from lunchtime through late evening."
+        },
+        {
+          "label": "Sweet Table",
+          "text": "Towering croquembouche draped in spun sugar, tray after tray of pistachio baklava, flourless chocolate torte with raspberry coulis, and miniature lemon meringue pies."
+        }
+      ],
+      "notes": [
+        "The rota continues looping after the festival—use this override to keep the widget fed with lots of text and a different tone for the day."
+      ]
+    }
+  }
+}

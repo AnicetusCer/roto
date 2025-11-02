@@ -167,6 +167,8 @@ private fun RotoWidgetContent(
             style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TitleColor)
         )
         Spacer(modifier = GlanceModifier.height(8.dp))
+        OpenAppLink(openAppAction)
+        Spacer(modifier = GlanceModifier.height(8.dp))
         ToggleRow(activeFocus = focus, areBothAvailable = alternateAvailable)
         Spacer(modifier = GlanceModifier.height(8.dp))
         if (summary != null) {
@@ -183,8 +185,6 @@ private fun RotoWidgetContent(
                 )
             }
         }
-        Spacer(modifier = GlanceModifier.height(6.dp))
-        OpenAppLink(openAppAction)
     }
 }
 
@@ -298,8 +298,12 @@ private fun ToggleRow(
     activeFocus: DayFocus,
     areBothAvailable: Boolean
 ) {
-    val todayAction = if (areBothAvailable) actionRunCallback<ShowTodayCallback>() else null
-    val tomorrowAction = if (areBothAvailable) actionRunCallback<ShowTomorrowCallback>() else null
+    val todayAction = if (areBothAvailable && activeFocus != DayFocus.TODAY) {
+        actionRunCallback<ShowTodayCallback>()
+    } else null
+    val tomorrowAction = if (areBothAvailable && activeFocus != DayFocus.TOMORROW) {
+        actionRunCallback<ShowTomorrowCallback>()
+    } else null
     Row(modifier = GlanceModifier.fillMaxWidth()) {
         ToggleChip(
             label = "Today",

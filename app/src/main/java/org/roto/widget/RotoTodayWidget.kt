@@ -60,9 +60,18 @@ class RotoTodayWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val widgetState = loadWidgetState(context, id)
-        val activeFocus = widgetState.activeFocus
+        val prefs = getAppWidgetState(context, PreferencesGlanceStateDefinition, id)
+        val storedFocus = prefs[FOCUS_KEY]?.let { runCatching { DayFocus.valueOf(it) }.getOrNull() }
+        val activeFocus = storedFocus
+            ?.takeIf { widgetState.hasFocusData(it) }
+            ?: widgetState.defaultFocus()
+        if (storedFocus != activeFocus) {
+            updateAppWidgetState(context, id) { mutablePrefs ->
+                mutablePrefs[FOCUS_KEY] = activeFocus.name
+            }
+        }
         val displaySummary = widgetState.summaryForFocus(activeFocus)
-        Log.d(TAG, "provideGlance: today=${widgetState.today != null}, tomorrow=${widgetState.tomorrow != null}")
+        Log.d(TAG, "provideGlance: today=${widgetState.today != null}, tomorrow=${widgetState.tomorrow != null}, focus=$activeFocus")
         provideContent {
             RotoWidgetContent(
                 state = widgetState,
@@ -112,7 +121,6 @@ private suspend fun loadWidgetState(
         return cachedState.toWidgetState()
     }
 
-    val priorFocus = cachedState?.activeFocus
     val freshState = withContext(Dispatchers.IO) {
         val preferences = MenuPreferencesDataSource(context)
         val repository = MenuRepository(context)
@@ -138,26 +146,15 @@ private suspend fun loadWidgetState(
                         tomorrow = null,
                         fallbackMessage = nextAvailable?.let {
                             "No rota entries for today. Next rota: ${it.dateLabel}"
-                        } ?: "No rota entries available.",
-                        activeFocus = priorFocus ?: DayFocus.TODAY
+                        } ?: "No rota entries available."
                     )
                 } else {
                     Log.d(TAG, "loadWidgetState: todayPresent=${todayResult != null}, tomorrowPresent=${tomorrowResult != null}")
-                    val preferredFocus = when (priorFocus) {
-                        DayFocus.TODAY -> if (todayResult != null) DayFocus.TODAY else if (tomorrowResult != null) DayFocus.TOMORROW else DayFocus.TODAY
-                        DayFocus.TOMORROW -> if (tomorrowResult != null) DayFocus.TOMORROW else if (todayResult != null) DayFocus.TODAY else DayFocus.TOMORROW
-                        null -> when {
-                            todayResult != null -> DayFocus.TODAY
-                            tomorrowResult != null -> DayFocus.TOMORROW
-                            else -> DayFocus.TODAY
-                        }
-                    }
                     WidgetState(
                         rotaName = data.rotaName.ifBlank { "Roto" },
                         today = todayResult?.toSummary("Today", DayFocus.TODAY),
                         tomorrow = tomorrowResult?.toSummary("Tomorrow", DayFocus.TOMORROW),
-                        fallbackMessage = null,
-                        activeFocus = preferredFocus
+                        fallbackMessage = null
                     )
                 }
             },
@@ -166,8 +163,7 @@ private suspend fun loadWidgetState(
                     rotaName = "Roto",
                     today = null,
                     tomorrow = null,
-                    fallbackMessage = error.message ?: "Add a rota in the app to populate the widget.",
-                    activeFocus = priorFocus ?: DayFocus.TODAY
+                    fallbackMessage = error.message ?: "Add a rota in the app to populate the widget."
                 )
             }
         )
@@ -184,8 +180,7 @@ private data class WidgetState(
     val rotaName: String,
     val today: DaySummary?,
     val tomorrow: DaySummary?,
-    val fallbackMessage: String?,
-    val activeFocus: DayFocus
+    val fallbackMessage: String?
 )
 
 private data class DaySummary(
@@ -202,8 +197,7 @@ private data class CachedWidgetState(
     val rotaName: String,
     val today: CachedDaySummary?,
     val tomorrow: CachedDaySummary?,
-    val fallbackMessage: String?,
-    val activeFocus: DayFocus
+    val fallbackMessage: String?
 )
 
 @Serializable
@@ -221,8 +215,7 @@ private fun CachedWidgetState.toWidgetState(): WidgetState =
         rotaName = rotaName,
         today = today?.toDaySummary(),
         tomorrow = tomorrow?.toDaySummary(),
-        fallbackMessage = fallbackMessage,
-        activeFocus = activeFocus
+        fallbackMessage = fallbackMessage
     )
 
 private fun CachedDaySummary.toDaySummary(): DaySummary =
@@ -240,8 +233,7 @@ private fun WidgetState.toCached(): CachedWidgetState =
         rotaName = rotaName,
         today = today?.toCached(),
         tomorrow = tomorrow?.toCached(),
-        fallbackMessage = fallbackMessage,
-        activeFocus = activeFocus
+        fallbackMessage = fallbackMessage
     )
 
 private fun DaySummary.toCached(): CachedDaySummary =
@@ -468,6 +460,7 @@ private fun ToggleChip(
 }
 
 private const val TAG = "RotoWidget"
+private val FOCUS_KEY = stringPreferencesKey("active_focus")
 private val STATE_CACHE_KEY = stringPreferencesKey("widget_state_cache")
 private val CACHE_DIRTY_KEY = booleanPreferencesKey("widget_cache_dirty")
 private val cacheJson = Json {
@@ -477,13 +470,9 @@ private val cacheJson = Json {
 
 private suspend fun updateStoredFocus(context: Context, glanceId: GlanceId, focus: DayFocus) {
     updateAppWidgetState(context, glanceId) { prefs ->
-        val cached = prefs[STATE_CACHE_KEY]?.let { json ->
-            runCatching { cacheJson.decodeFromString<CachedWidgetState>(json) }.getOrNull()
-        }
-        if (cached != null && cached.activeFocus != focus) {
-            prefs[STATE_CACHE_KEY] = cacheJson.encodeToString(cached.copy(activeFocus = focus))
-        }
+        prefs[FOCUS_KEY] = focus.name
     }
+    Log.d(TAG, "updateStoredFocus: focus set to $focus for $glanceId")
 }
 
 private fun WidgetState.summaryForFocus(focus: DayFocus): DaySummary? =
@@ -492,8 +481,22 @@ private fun WidgetState.summaryForFocus(focus: DayFocus): DaySummary? =
         DayFocus.TOMORROW -> tomorrow
     }
 
+private fun WidgetState.hasFocusData(focus: DayFocus): Boolean =
+    when (focus) {
+        DayFocus.TODAY -> today != null
+        DayFocus.TOMORROW -> tomorrow != null
+    }
+
+private fun WidgetState.defaultFocus(): DayFocus =
+    when {
+        today != null -> DayFocus.TODAY
+        tomorrow != null -> DayFocus.TOMORROW
+        else -> DayFocus.TODAY
+    }
+
 class ShowTodayCallback : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        Log.d(TAG, "ShowTodayCallback.onAction for $glanceId")
         updateStoredFocus(context, glanceId, DayFocus.TODAY)
         RotoTodayWidget().update(context, glanceId)
     }
@@ -501,6 +504,7 @@ class ShowTodayCallback : ActionCallback {
 
 class ShowTomorrowCallback : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        Log.d(TAG, "ShowTomorrowCallback.onAction for $glanceId")
         updateStoredFocus(context, glanceId, DayFocus.TOMORROW)
         RotoTodayWidget().update(context, glanceId)
     }

@@ -30,6 +30,7 @@ import org.roto.data.MenuSelection
 import org.roto.data.RotoData
 import org.roto.domain.DayResult
 import org.roto.domain.getMenuForDate
+import org.roto.widget.RotoTodayWidget
 
 data class SetupMessage(val text: String, val isError: Boolean)
 
@@ -154,6 +155,12 @@ class MenuViewModel(
         }
     }
 
+    private suspend fun refreshWidgets() {
+        runCatching {
+            RotoTodayWidget.refreshAll(getApplication())
+        }
+    }
+
     fun refresh() {
         viewModelScope.launch {
             performLoad(currentSelection, isManualRefresh = true)
@@ -215,6 +222,7 @@ class MenuViewModel(
             currentRotoData = null
             selectedWeekId = null
             _uiState.emit(MenuUiState())
+            refreshWidgets()
         }
     }
 
@@ -306,6 +314,7 @@ class MenuViewModel(
                 selectedSourceLabel = selectionLabel
             )
         )
+        refreshWidgets()
     }
 
     private suspend fun updateStateWithMenu(
@@ -348,6 +357,7 @@ class MenuViewModel(
                 globalNotes = menuData.notes
             )
         )
+        refreshWidgets()
     }
 
     private fun buildWeekMenus(menuData: RotoData): List<WeekMenu> {

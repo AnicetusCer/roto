@@ -1,4 +1,4 @@
-# Android Emulator Cheat Sheet (Windows host)
+'# Android Emulator Cheat Sheet (Windows host)
 
 ## Typical Workflow
 
@@ -18,10 +18,10 @@
 | Task | Command |
 | --- | --- |
 | List configured AVDs | `avdmanager list avd` |
-| Re-create Pixel-like AVD | ```powershell
+| **Create Pixel-like AVD (Google Play Store)** | ```powershell
 avdmanager create avd \`
   --name "PixelLikeApi34" \`
-  --package "system-images;android-34;google_apis;x86_64" \`
+  --package "system-images;android-34;google_apis_playstore;x86_64" \`
   --device "pixel_5"
 ``` |
 | Launch emulator | `emulator -avd PixelLikeApi34` |
@@ -39,3 +39,8 @@ avdmanager create avd \`
 - Change the emulator date/time to match the week you’re testing (Settings → System → Date & time).
 - Use the in-app **Clear rota** button or `adb shell pm clear org.roto` before importing a new JSON.
 - When returning from WSL, re-run `emulator -avd PixelLikeApi34` if the emulator isn’t already running.
+- If `avdmanager` says the package can’t be found, install it first with:
+  ```powershell
+  sdkmanager "system-images;android-34;google_apis_playstore;x86_64"
+  ```
+'

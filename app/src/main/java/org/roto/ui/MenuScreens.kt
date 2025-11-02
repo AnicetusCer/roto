@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -35,6 +37,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,6 +60,7 @@ import org.roto.data.MenuSelection
 import org.roto.domain.DayDataSource
 import org.roto.domain.DayResult
 import org.roto.domain.SlotEntry
+import kotlinx.coroutines.launch
 
 @Composable
 fun MenuRoot(
@@ -479,6 +483,10 @@ private fun InstructionsDialog(
     onDismiss: () -> Unit
 ) {
     var showSchema by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
+    val quickStartRequester = remember { BringIntoViewRequester() }
+    val coroutineScope = rememberCoroutineScope()
+
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
@@ -490,28 +498,82 @@ private fun InstructionsDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 520.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(scrollState),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("1. Tap \"Copy helper prompt\" to copy it.")
-                Text("2. Paste the prompt into your favourite AI.")
-                Text("3. Follow the AI’s instructions to build the rota — describe what you want or upload an existing schedule (photo, spreadsheet, text, etc.).")
-                Text("4. Save the AI’s JSON output somewhere handy — Downloads works well.")
-                Text("5. In Roto, choose that JSON file when prompted.")
-                Text("6. Enjoy a glanceable rota in the app (and pin the widget if you like).")
-                Button(onClick = onCopyHelperPrompt, modifier = Modifier.fillMaxWidth()) {
-                    Text("Copy helper prompt")
+                Text(
+                    text = "Quick start instructions below",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                TextButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            quickStartRequester.bringIntoView()
+                        }
+                    },
+                    modifier = Modifier.align(Alignment.Start)
+                ) {
+                    Text("Jump to Quick Start")
                 }
-                TextButton(onClick = { showSchema = !showSchema }) {
-                    Text(if (showSchema) "Hide JSON schema" else "Show JSON schema")
+                Text("This app can help you build a rota or weekly schedule.")
+                Text("I originally wrote it to display a weekly school dinner menu, but realised it’s useful for many schedules such as:")
+                val examples = listOf(
+                    "Garbage collection days.",
+                    "Work shifts.",
+                    "Seasonal events.",
+                    "Complicated film production schedules."
+                )
+                examples.forEach { example ->
+                    Text("- $example")
                 }
-                if (showSchema) {
-                    FormatInfoCard()
+                Text("The rota schema (a JSON structure) can be created by hand, but it’s much faster to let an AI build it using the helper prompt below.")
+                Text("Feel free to give your favourite AI a photo or file of your existing rota. If the result isn’t quite right, ask the AI to fix it and then tap refresh in Roto. You can also share the finished rota by sending the JSON file to someone else—they just load it in the app.")
+                Text(
+                    text = "WARNING: Roto is private and offline, but your chosen AI might not be. If you’re not comfortable sharing your rota with an online service, use the sample files below as a template and edit them manually—it’s slower, but private.",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text("RECOMMENDATION: Add the Roto widget! Today and tomorrow are always one glance away, no need to open the app.")
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .bringIntoViewRequester(quickStartRequester),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Quick Start Instructions.",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text("1) Tap \"Copy helper prompt\" below.")
+                    Button(onClick = onCopyHelperPrompt, modifier = Modifier.fillMaxWidth()) {
+                        Text("Copy helper prompt")
+                    }
+                    Text("2) Open your favourite AI and paste the prompt into it.")
+                    Text("3) Follow the AI’s instructions to build your rota file.")
+                    Text("4) Save the file to your phone’s \"Downloads\" folder.")
+                    Text("5) Open the Roto app again and load your rota file.")
+                    TextButton(onClick = { showSchema = !showSchema }) {
+                        Text(if (showSchema) "Hide JSON schema" else "Show JSON schema")
+                    }
+                    if (showSchema) {
+                        FormatInfoCard()
+                    }
                 }
                 if (sampleFiles.isNotEmpty()) {
-                    Text("Need a head start? Copy one of these sample rotas to your Downloads folder and load it in the app.")
+                    Text("Want to see the app in action or tweak a rota by hand? Copy one of these sample files to your Downloads folder, then load it in Roto.")
+                    Text(
+                        text = "Sample Files:",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
                     sampleFiles.forEach { name ->
-                        val display = name.removeSuffix(".json").replace('_', ' ').replace('-', ' ')
+                        val display = when (name) {
+                            "Simple_School_Menu_Infinite.json" -> "Simple School Menu"
+                            "Nurse_Night_Shift_Infinite.json" -> "Nurse Night Shift"
+                            else -> name.removeSuffix(".json").replace('_', ' ').replace('-', ' ')
+                        }
                         Button(
                             onClick = { onCopySample(name) },
                             modifier = Modifier.fillMaxWidth()
@@ -520,7 +582,7 @@ private fun InstructionsDialog(
                         }
                     }
                     Text(
-                        text = "Samples are copied into Downloads/Roto. After copying, you can load it right away or tap 'Load rota file' later to pick it manually.",
+                        text = "Samples are copied into Downloads/Roto. You can load them immediately or tap \"Load rota file\" later to select them manually.",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }

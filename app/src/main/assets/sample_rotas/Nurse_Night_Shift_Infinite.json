@@ -1,0 +1,158 @@
+{
+  "schema_version": "0.3",
+  "school_name": "City Hospital Night Shift Sample",
+  "notes": [
+    "Rotation shows a repeating seven-night pattern for the general medicine ward.",
+    "Each night includes a senior nurse, a support nurse, and an admissions float.",
+    "Use this sample to explore how the widget handles shift-style data."
+  ],
+  "cycle": {
+    "repeat": {
+      "start_date": "2025-10-27",
+      "start_week_id": "Night Cycle"
+    },
+    "weeks": [
+      {
+        "week_id": "Night Cycle",
+        "week_commencing": [
+          "2025-10-27"
+        ],
+        "days": {
+          "monday": {
+            "slots": [
+              {
+                "label": "Senior Nurse",
+                "text": "S. Patel (22:00-07:30)"
+              },
+              {
+                "label": "Support Nurse",
+                "text": "E. Martin (22:00-07:30)"
+              },
+              {
+                "label": "Admissions Float",
+                "text": "J. Okafor on standby until 02:00, then rounding."
+              }
+            ],
+            "notes": [
+              "Medication reconciliation focus night. Expect 6 new admissions."
+            ]
+          },
+          "tuesday": {
+            "slots": [
+              {
+                "label": "Senior Nurse",
+                "text": "K. Wong (22:00-07:30)"
+              },
+              {
+                "label": "Support Nurse",
+                "text": "D. Voss (22:00-07:30)"
+              },
+              {
+                "label": "Admissions Float",
+                "text": "R. Jenkins covering telemetry overflow."
+              }
+            ],
+            "notes": [
+              "Night safety round at 01:30. Imaging requests should be queued for 06:45."
+            ]
+          },
+          "wednesday": {
+            "slots": [
+              {
+                "label": "Senior Nurse",
+                "text": "M. Alvarez (22:00-07:30)"
+              },
+              {
+                "label": "Support Nurse",
+                "text": "P. Hughes (22:00-07:30)"
+              },
+              {
+                "label": "Admissions Float",
+                "text": "L. Singh handling step-down transfers."
+              }
+            ],
+            "notes": [
+              "Expect delayed discharges from theatre; admissions float may relocate briefly to PACU."
+            ]
+          },
+          "thursday": {
+            "slots": [
+              {
+                "label": "Senior Nurse",
+                "text": "J. Tan (22:00-07:30)"
+              },
+              {
+                "label": "Support Nurse",
+                "text": "B. Carter (22:00-07:30)"
+              },
+              {
+                "label": "Admissions Float",
+                "text": "S. Fox assisting resus until midnight, then ward cover."
+              }
+            ],
+            "notes": [
+              "Monthly night audit — complete falls checklist for beds 12-20."
+            ]
+          },
+          "friday": {
+            "slots": [
+              {
+                "label": "Senior Nurse",
+                "text": "E. Mensah (22:00-07:30)"
+              },
+              {
+                "label": "Support Nurse",
+                "text": "H. Doyle (22:00-07:30)"
+              },
+              {
+                "label": "Admissions Float",
+                "text": "C. Rivera backing up emergency admissions until 03:00."
+              }
+            ],
+            "notes": [
+              "Peak admissions expected from ED after 23:30 — prepare isolation bay."
+            ]
+          },
+          "saturday": {
+            "slots": [
+              {
+                "label": "Senior Nurse",
+                "text": "L. Petrov (22:00-07:30)"
+              },
+              {
+                "label": "Support Nurse",
+                "text": "T. Gallagher (22:00-07:30)"
+              },
+              {
+                "label": "Admissions Float",
+                "text": "F. Mistry covering both general ward and HDU overflow."
+              }
+            ],
+            "notes": [
+              "Short staffing alert: agency HCA scheduled for 23:00 arrival."
+            ]
+          },
+          "sunday": {
+            "slots": [
+              {
+                "label": "Senior Nurse",
+                "text": "A. Brown (22:00-07:30)"
+              },
+              {
+                "label": "Support Nurse",
+                "text": "G. Li (22:00-07:30)"
+              },
+              {
+                "label": "Admissions Float",
+                "text": "M. O'Connor focusing on discharge prep for Monday morning."
+              }
+            ],
+            "notes": [
+              "Bed meeting 06:30 with day team; update handover sheet before 06:15."
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

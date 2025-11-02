@@ -1,0 +1,114 @@
+{
+  "schema_version": "0.3",
+  "school_name": "Springfield Primary Sample Menu",
+  "notes": [
+    "Hot meal and vegetarian alternative are offered every day.",
+    "Fresh fruit, yoghurt, and water are always available."
+  ],
+  "cycle": {
+    "repeat": {
+      "start_date": "2025-10-27",
+      "start_week_id": "Week 1"
+    },
+    "weeks": [
+      {
+        "week_id": "Week 1",
+        "week_commencing": [
+          "2025-10-27"
+        ],
+        "days": {
+          "monday": {
+            "slots": [
+              {
+                "label": "Main",
+                "text": "Chicken pasta bake with garlic bread and sweetcorn."
+              },
+              {
+                "label": "Veggie",
+                "text": "Roasted vegetable pasta bake with garlic bread."
+              },
+              {
+                "label": "Dessert",
+                "text": "Apple crumble with custard."
+              }
+            ]
+          },
+          "tuesday": {
+            "slots": [
+              {
+                "label": "Main",
+                "text": "Beef tacos with salsa, grated cheese, and lettuce."
+              },
+              {
+                "label": "Veggie",
+                "text": "Bean and sweet potato tacos with salsa."
+              },
+              {
+                "label": "Dessert",
+                "text": "Fresh melon slices."
+              }
+            ]
+          },
+          "wednesday": {
+            "slots": [
+              {
+                "label": "Main",
+                "text": "Roast turkey with roast potatoes, carrots, and gravy."
+              },
+              {
+                "label": "Veggie",
+                "text": "Roast vegetable wellington with roast potatoes."
+              },
+              {
+                "label": "Dessert",
+                "text": "Chocolate sponge with chocolate sauce."
+              }
+            ]
+          },
+          "thursday": {
+            "slots": [
+              {
+                "label": "Main",
+                "text": "Fish goujons with chips, peas, and tartar sauce."
+              },
+              {
+                "label": "Veggie",
+                "text": "Cheese and spinach pastry with chips and peas."
+              },
+              {
+                "label": "Dessert",
+                "text": "Fruit yoghurt selection."
+              }
+            ]
+          },
+          "friday": {
+            "slots": [
+              {
+                "label": "Main",
+                "text": "Homemade margarita pizza with side salad."
+              },
+              {
+                "label": "Veggie",
+                "text": "Roasted vegetable pizza with side salad."
+              },
+              {
+                "label": "Dessert",
+                "text": "Banana bread slice."
+              }
+            ]
+          },
+          "saturday": {
+            "notes": [
+              "School kitchen closed. Packed lunches required for clubs or trips."
+            ]
+          },
+          "sunday": {
+            "notes": [
+              "No catering service. Enjoy a rest day!"
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

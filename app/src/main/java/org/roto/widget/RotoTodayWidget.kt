@@ -180,7 +180,7 @@ private fun RotoWidgetContent(
             )
         } else {
             val message = state.fallbackMessage
-                ?: "No rota recorded for ${focus.displayLabel().lowercase()} yet."
+                ?: "There is no rota data for ${focus.displayLabel().lowercase()}."
             Text(
                 text = message,
                 style = TextStyle(fontSize = 12.sp, color = SecondaryTextColor)
@@ -312,8 +312,8 @@ private fun ToggleRow(
     tomorrowAvailable: Boolean,
     openAppAction: Action
 ) {
-    val todayAction = if (todayAvailable) actionRunCallback<ShowTodayCallback>() else null
-    val tomorrowAction = if (tomorrowAvailable) actionRunCallback<ShowTomorrowCallback>() else null
+    val todayAction = actionRunCallback<ShowTodayCallback>()
+    val tomorrowAction = actionRunCallback<ShowTomorrowCallback>()
     Row(modifier = GlanceModifier.fillMaxWidth()) {
         ToggleChip(
             label = "Today",
@@ -388,14 +388,14 @@ private fun WidgetState.defaultFocus(): DayFocus =
         else -> DayFocus.TODAY
     }
 
-private class ShowTodayCallback : ActionCallback {
+class ShowTodayCallback : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         writeStoredFocus(context, glanceId, DayFocus.TODAY)
         RotoTodayWidget().update(context, glanceId)
     }
 }
 
-private class ShowTomorrowCallback : ActionCallback {
+class ShowTomorrowCallback : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         writeStoredFocus(context, glanceId, DayFocus.TOMORROW)
         RotoTodayWidget().update(context, glanceId)

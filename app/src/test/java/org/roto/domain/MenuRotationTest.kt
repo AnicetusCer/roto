@@ -15,11 +15,19 @@ class MenuRotationTest {
 
     private lateinit var rotaData: RotoData
 
+    private fun readAsset(name: String): String {
+        val candidates = listOf(
+            File("src/main/assets/$name"),
+            File("app/src/main/assets/$name")
+        )
+        val path = candidates.firstOrNull(File::exists)
+            ?: error("Expected rota asset for $name")
+        return path.readText()
+    }
+
     @Before
     fun loadRota() {
-        val path = File("src/main/assets/sample_rotas/School_Menu_Rota_with_Closure_and_Theme_Day.json")
-        require(path.exists()) { "Expected rota asset at ${path.absolutePath}" }
-        rotaData = RotoJsonParser.parse(path.readText())
+        rotaData = RotoJsonParser.parse(readAsset("sample_rotas/Simple_School_Menu_Infinite.json"))
     }
 
     @Test
@@ -30,24 +38,24 @@ class MenuRotationTest {
         result!!
         assertEquals("Week 1", result.weekId)
         assertEquals(DayDataSource.ROTATION, result.source)
-        assertEquals("Mains", result.slots.first().label)
-        assertTrue(result.slots.first().text.contains("Margherita Pizza"))
+        assertEquals("Main", result.slots.first().label)
+        assertTrue(result.slots.first().text.contains("Chicken pasta bake"))
     }
 
     @Test
-    fun `returns week two friday rota`() {
-        val result = getMenuForDate(rotaData, LocalDate.parse("2025-11-14"))
+    fun `repeats rota for future friday`() {
+        val result = getMenuForDate(rotaData, LocalDate.parse("2025-11-07"))
 
         assertNotNull(result)
         result!!
-        assertEquals("Week 2", result.weekId)
+        assertEquals("Week 1", result.weekId)
         assertEquals(DayDataSource.ROTATION, result.source)
-        assertTrue(result.slots.any { it.text.contains("Fish Fingers") })
+        assertTrue(result.slots.any { it.text.contains("pizza", ignoreCase = true) })
     }
 
     @Test
-    fun `returns null for weekend without rota entry`() {
-        val result = getMenuForDate(rotaData, LocalDate.parse("2025-11-08")) // Saturday
+    fun `returns null for dates before rotation starts`() {
+        val result = getMenuForDate(rotaData, LocalDate.parse("2025-10-25")) // Saturday before anchor
 
         assertNull(result)
     }

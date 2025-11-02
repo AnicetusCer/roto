@@ -93,7 +93,6 @@ class MenuViewModel(
     val uiState: StateFlow<MenuUiState> = _uiState
 
     private var currentSelection: MenuSelection? = null
-    private var currentRotoData: RotoData? = null
     private var selectedWeekId: String? = null
 
     init {
@@ -221,7 +220,6 @@ class MenuViewModel(
         viewModelScope.launch {
             preferences.clearMenuSelection()
             currentSelection = null
-            currentRotoData = null
             selectedWeekId = null
             _uiState.emit(MenuUiState())
             refreshWidgets()
@@ -306,7 +304,6 @@ class MenuViewModel(
         message: String,
         selectionLabel: String
     ) {
-        currentRotoData = null
         selectedWeekId = null
         _uiState.emit(
             MenuUiState(
@@ -327,8 +324,6 @@ class MenuViewModel(
         tomorrow: LocalDate,
         messageOverride: String?
     ) {
-        currentRotoData = menuData
-
         val todayMenu = getMenuForDate(menuData, today)
         val tomorrowMenu = getMenuForDate(menuData, tomorrow)
 
@@ -382,9 +377,10 @@ class MenuViewModel(
                 val baseResult = getMenuForDate(menuData, monday) ?: return@mapNotNull null
                 val days = (0..6).map { delta ->
                     val date = monday.plusDays(delta.toLong())
+                    val menu = if (delta == 0) baseResult else getMenuForDate(menuData, date)
                     WeekMenuDay(
                         date = date,
-                        menu = getMenuForDate(menuData, date)
+                        menu = menu
                     )
                 }
                 if (days.all { it.menu == null }) return@mapNotNull null

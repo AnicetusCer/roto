@@ -762,7 +762,6 @@ private fun BrowseWeeksSection(
             WeekMenuCard(week)
             TextButton(onClick = onClearWeek) { Text("Clear selection") }
         }
-        TipJarLinks(modifier = Modifier.fillMaxWidth())
     }
 }
 

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -476,6 +477,7 @@ private fun NotesColumn(title: String, notes: List<String>) {
 }
 
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 private fun InstructionsDialog(
     sampleFiles: List<String>,
     onCopyHelperPrompt: () -> Unit,

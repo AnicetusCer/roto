@@ -98,13 +98,19 @@
             ]
           },
           "saturday": {
-            "notes": [
-              "School kitchen closed. Packed lunches required for clubs or trips."
+            "slots": [
+              {
+                "label": "Closed",
+                "text": "School kitchen closed. Packed lunches required for clubs or trips."
+              }
             ]
           },
           "sunday": {
-            "notes": [
-              "No catering service. Enjoy a rest day!"
+            "slots": [
+              {
+                "label": "Closed",
+                "text": "No catering service. Enjoy a rest day!"
+              }
             ]
           }
         }

@@ -296,12 +296,8 @@ private fun ToggleRow(
     todayAvailable: Boolean,
     tomorrowAvailable: Boolean
 ) {
-    val todayAction = if (todayAvailable && activeFocus != DayFocus.TODAY) {
-        actionRunCallback<ShowTodayCallback>()
-    } else null
-    val tomorrowAction = if (tomorrowAvailable && activeFocus != DayFocus.TOMORROW) {
-        actionRunCallback<ShowTomorrowCallback>()
-    } else null
+    val todayAction = if (todayAvailable) actionRunCallback<ShowTodayCallback>() else null
+    val tomorrowAction = if (tomorrowAvailable) actionRunCallback<ShowTomorrowCallback>() else null
     Row(modifier = GlanceModifier.fillMaxWidth()) {
         ToggleChip(
             label = "Today",

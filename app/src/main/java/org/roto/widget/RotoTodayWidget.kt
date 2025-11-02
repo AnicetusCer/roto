@@ -49,16 +49,9 @@ class RotoTodayWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val widgetState = loadWidgetState(context)
-        val storedFocus = readStoredFocus(context, id) ?: widgetState.defaultFocus()
-        val primarySummary = widgetState.summaryForFocus(storedFocus)
-        val (activeFocus, displaySummary) = if (primarySummary != null) {
-            storedFocus to primarySummary
-        } else {
-            val fallbackFocus = storedFocus.other()
-            fallbackFocus to widgetState.summaryForFocus(fallbackFocus)
-        }
-        val nextFocus = activeFocus.other()
-        val hasAlternate = widgetState.summaryForFocus(nextFocus) != null
+        val activeFocus = readStoredFocus(context, id) ?: widgetState.defaultFocus()
+        val displaySummary = widgetState.summaryForFocus(activeFocus)
+        val hasAlternate = widgetState.summaryForFocus(activeFocus.other()) != null
         writeStoredFocus(context, id, activeFocus)
         provideContent {
             RotoWidgetContent(
@@ -178,12 +171,12 @@ private fun RotoWidgetContent(
                 background = background
             )
         } else {
-            state.fallbackMessage?.let { message ->
-                Text(
-                    text = message,
-                    style = TextStyle(fontSize = 12.sp, color = SecondaryTextColor)
-                )
-            }
+            val message = state.fallbackMessage
+                ?: "No rota recorded for ${focus.displayLabel().lowercase()} yet."
+            Text(
+                text = message,
+                style = TextStyle(fontSize = 12.sp, color = SecondaryTextColor)
+            )
         }
     }
 }
@@ -243,12 +236,12 @@ private fun DaySection(
 @Composable
 private fun OpenAppLink(action: Action) {
     Text(
-        text = "Open in Roto",
-        style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Medium, color = PrimaryTextColor),
+        text = "Open app",
+        style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Medium, color = PrimaryTextColor),
         modifier = GlanceModifier
             .background(ChipUnselectedBackground)
-            .cornerRadius(10.dp)
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .cornerRadius(8.dp)
+            .padding(horizontal = 10.dp, vertical = 4.dp)
             .clickable(action)
     )
 }

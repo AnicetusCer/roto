@@ -173,8 +173,7 @@ private fun RotoWidgetContent(
             val background = if (focus == DayFocus.TODAY) TodayBackground else TomorrowBackground
             DaySection(
                 summary = summary,
-                background = background,
-                openAppAction = openAppAction
+                background = background
             )
         } else {
             state.fallbackMessage?.let { message ->
@@ -184,14 +183,15 @@ private fun RotoWidgetContent(
                 )
             }
         }
+        Spacer(modifier = GlanceModifier.height(6.dp))
+        OpenAppLink(openAppAction)
     }
 }
 
 @Composable
 private fun DaySection(
     summary: DaySummary,
-    background: ColorProvider,
-    openAppAction: Action
+    background: ColorProvider
 ) {
     Column(
         modifier = GlanceModifier
@@ -199,7 +199,6 @@ private fun DaySection(
             .background(background)
             .cornerRadius(12.dp)
             .padding(horizontal = 12.dp, vertical = 10.dp)
-            .clickable(openAppAction)
     ) {
         Text(
             text = summary.title,
@@ -219,7 +218,7 @@ private fun DaySection(
             LazyColumn(
                 modifier = GlanceModifier
                     .fillMaxWidth()
-                    .height(96.dp)
+                    .height(116.dp)
             ) {
                 if (summary.lines.isEmpty()) {
                     item {
@@ -239,6 +238,19 @@ private fun DaySection(
             }
         }
     }
+}
+
+@Composable
+private fun OpenAppLink(action: Action) {
+    Text(
+        text = "Open in Roto",
+        style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Medium, color = PrimaryTextColor),
+        modifier = GlanceModifier
+            .background(ChipUnselectedBackground)
+            .cornerRadius(10.dp)
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .clickable(action)
+    )
 }
 
 private fun DayResult.toSummary(title: String, focus: DayFocus): DaySummary {

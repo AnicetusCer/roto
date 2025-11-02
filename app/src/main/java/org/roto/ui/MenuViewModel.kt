@@ -374,24 +374,23 @@ class MenuViewModel(
         return mondays
             .sorted()
             .mapNotNull { monday ->
-                val baseResult = getMenuForDate(menuData, monday) ?: return@mapNotNull null
-                val days = (0..6).map { delta ->
+                val dayResults = (0..6).map { delta ->
                     val date = monday.plusDays(delta.toLong())
-                    val menu = if (delta == 0) baseResult else getMenuForDate(menuData, date)
                     WeekMenuDay(
                         date = date,
-                        menu = menu
+                        menu = getMenuForDate(menuData, date)
                     )
                 }
-                if (days.all { it.menu == null }) return@mapNotNull null
+                if (dayResults.all { it.menu == null }) return@mapNotNull null
 
-                val weekId = baseResult.weekId ?: "Week"
+                val anchorResult = dayResults.firstNotNullOfOrNull { it.menu } ?: return@mapNotNull null
+                val weekId = anchorResult.weekId ?: "Week"
                 WeekMenu(
                     id = "${weekId}_$monday",
-                    title = buildWeekTitle(baseResult, monday),
+                    title = buildWeekTitle(anchorResult, monday),
                     startDate = monday,
                     endDate = monday.plusDays(6),
-                    days = days
+                    days = dayResults
                 )
             }
     }

@@ -33,7 +33,7 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import androidx.glance.layout.fillMaxHeight
+import org.roto.data.RotoData
 import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
@@ -99,16 +99,24 @@ private suspend fun loadWidgetState(context: Context): WidgetState =
                 val data = loadResult.data
                 val todayResult = getMenuForDate(data, today)
                 val tomorrowResult = getMenuForDate(data, tomorrow)
-                WidgetState(
-                    rotaName = data.rotaName.ifBlank { "Roto" },
-                    today = todayResult?.toSummary("Today", DayFocus.TODAY),
-                    tomorrow = tomorrowResult?.toSummary("Tomorrow", DayFocus.TOMORROW),
-                    fallbackMessage = if (todayResult == null && tomorrowResult == null) {
-                        "No rota entries found for today or tomorrow."
-                    } else {
-                        null
-                    }
-                )
+                if (todayResult == null && tomorrowResult == null) {
+                    val nextAvailable = findNextAvailableDay(data, today)
+                    WidgetState(
+                        rotaName = data.rotaName.ifBlank { "Roto" },
+                        today = null,
+                        tomorrow = null,
+                        fallbackMessage = nextAvailable?.let {
+                            "No rota entries for today. Next rota: ${it.dateLabel}"
+                        } ?: "No rota entries available."
+                    )
+                } else {
+                    WidgetState(
+                        rotaName = data.rotaName.ifBlank { "Roto" },
+                        today = todayResult?.toSummary("Today", DayFocus.TODAY),
+                        tomorrow = tomorrowResult?.toSummary("Tomorrow", DayFocus.TOMORROW),
+                        fallbackMessage = null
+                    )
+                }
             },
             onFailure = { error ->
                 WidgetState(
@@ -260,6 +268,17 @@ private fun DayResult.toSummary(title: String, focus: DayFocus): DaySummary {
         closedReason = closedReason,
         focus = focus
     )
+}
+
+private fun findNextAvailableDay(data: RotoData, startDate: LocalDate): DaySummary? {
+    for (offset in 1..7) {
+        val candidateDate = startDate.plusDays(offset.toLong())
+        val candidate = getMenuForDate(data, candidateDate)
+        if (candidate != null) {
+            return candidate.toSummary("Next rota", DayFocus.TODAY)
+        }
+    }
+    return null
 }
 
 private val BackgroundColor = ColorProvider(color = Color(0xFFF4FBFA))

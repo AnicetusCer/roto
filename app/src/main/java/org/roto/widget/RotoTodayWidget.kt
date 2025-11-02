@@ -51,14 +51,12 @@ class RotoTodayWidget : GlanceAppWidget() {
         val widgetState = loadWidgetState(context)
         val activeFocus = readStoredFocus(context, id) ?: widgetState.defaultFocus()
         val displaySummary = widgetState.summaryForFocus(activeFocus)
-        val hasAlternate = widgetState.summaryForFocus(activeFocus.other()) != null
         writeStoredFocus(context, id, activeFocus)
         provideContent {
             RotoWidgetContent(
                 state = widgetState,
                 focus = activeFocus,
                 summary = displaySummary,
-                alternateAvailable = hasAlternate,
                 modifier = GlanceModifier
                     .padding(16.dp)
                     .wrapContentHeight()
@@ -144,7 +142,6 @@ private fun RotoWidgetContent(
     state: WidgetState,
     focus: DayFocus,
     summary: DaySummary?,
-    alternateAvailable: Boolean,
     modifier: GlanceModifier = GlanceModifier
 ) {
     val openAppAction = actionStartActivity<MainActivity>()
@@ -160,12 +157,11 @@ private fun RotoWidgetContent(
             style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TitleColor)
         )
         Spacer(modifier = GlanceModifier.height(8.dp))
-        OpenAppLink(openAppAction)
-        Spacer(modifier = GlanceModifier.height(8.dp))
         ToggleRow(
             activeFocus = focus,
             todayAvailable = state.today != null,
-            tomorrowAvailable = state.tomorrow != null
+            tomorrowAvailable = state.tomorrow != null,
+            openAppAction = openAppAction
         )
         Spacer(modifier = GlanceModifier.height(8.dp))
         if (summary != null) {
@@ -241,11 +237,11 @@ private fun DaySection(
 private fun OpenAppLink(action: Action) {
     Text(
         text = "Open app",
-        style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Medium, color = PrimaryTextColor),
+        style = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.Medium, color = PrimaryTextColor),
         modifier = GlanceModifier
             .background(ChipUnselectedBackground)
             .cornerRadius(8.dp)
-            .padding(horizontal = 10.dp, vertical = 4.dp)
+            .padding(horizontal = 8.dp, vertical = 4.dp)
             .clickable(action)
     )
 }
@@ -294,7 +290,8 @@ private enum class DayFocus {
 private fun ToggleRow(
     activeFocus: DayFocus,
     todayAvailable: Boolean,
-    tomorrowAvailable: Boolean
+    tomorrowAvailable: Boolean,
+    openAppAction: Action
 ) {
     val todayAction = if (todayAvailable) actionRunCallback<ShowTodayCallback>() else null
     val tomorrowAction = if (tomorrowAvailable) actionRunCallback<ShowTomorrowCallback>() else null
@@ -310,9 +307,10 @@ private fun ToggleRow(
             label = "Tomorrow",
             isSelected = activeFocus == DayFocus.TOMORROW,
             modifier = GlanceModifier
-                .padding(start = 4.dp),
+                .padding(end = 8.dp),
             onClick = tomorrowAction
         )
+        OpenAppLink(openAppAction)
     }
 }
 

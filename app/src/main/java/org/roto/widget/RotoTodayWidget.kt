@@ -62,9 +62,7 @@ class RotoTodayWidget : GlanceAppWidget() {
         val widgetState = loadWidgetState(context, id)
         val prefs = getAppWidgetState(context, PreferencesGlanceStateDefinition, id)
         val storedFocus = prefs[FOCUS_KEY]?.let { runCatching { DayFocus.valueOf(it) }.getOrNull() }
-        val activeFocus = storedFocus
-            ?.takeIf { widgetState.hasFocusData(it) }
-            ?: widgetState.defaultFocus()
+        val activeFocus = storedFocus ?: widgetState.defaultFocus()
         if (storedFocus != activeFocus) {
             updateAppWidgetState(context, id) { mutablePrefs ->
                 mutablePrefs[FOCUS_KEY] = activeFocus.name
@@ -268,8 +266,6 @@ private fun RotoWidgetContent(
         Spacer(modifier = GlanceModifier.height(8.dp))
         ToggleRow(
             activeFocus = focus,
-            todayAvailable = state.today != null,
-            tomorrowAvailable = state.tomorrow != null,
             openAppAction = openAppAction
         )
         Spacer(modifier = GlanceModifier.height(8.dp))
@@ -410,12 +406,10 @@ private enum class DayFocus {
 @Composable
 private fun ToggleRow(
     activeFocus: DayFocus,
-    todayAvailable: Boolean,
-    tomorrowAvailable: Boolean,
     openAppAction: Action
 ) {
-    val todayAction = if (todayAvailable) actionRunCallback<ShowTodayCallback>() else null
-    val tomorrowAction = if (tomorrowAvailable) actionRunCallback<ShowTomorrowCallback>() else null
+    val todayAction = actionRunCallback<ShowTodayCallback>()
+    val tomorrowAction = actionRunCallback<ShowTomorrowCallback>()
     Row(modifier = GlanceModifier.fillMaxWidth()) {
         ToggleChip(
             label = "Today",
@@ -479,12 +473,6 @@ private fun WidgetState.summaryForFocus(focus: DayFocus): DaySummary? =
     when (focus) {
         DayFocus.TODAY -> today
         DayFocus.TOMORROW -> tomorrow
-    }
-
-private fun WidgetState.hasFocusData(focus: DayFocus): Boolean =
-    when (focus) {
-        DayFocus.TODAY -> today != null
-        DayFocus.TOMORROW -> tomorrow != null
     }
 
 private fun WidgetState.defaultFocus(): DayFocus =

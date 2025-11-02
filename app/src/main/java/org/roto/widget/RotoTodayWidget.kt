@@ -12,21 +12,20 @@ import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
-import androidx.glance.border
-import androidx.glance.clickable
+import androidx.glance.action.clickable
 import androidx.glance.layout.Column
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.wrapContentHeight
-import androidx.glance.layout.RoundedCornerShape
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import androidx.glance.unit.dp
-import androidx.glance.unit.sp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color
 import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
@@ -140,19 +139,19 @@ private fun RotoWidgetContent(
     ) {
         Text(
             text = state.rotaName,
-            style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TitleColor)
+            style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TitleColor)
         )
         Spacer(modifier = GlanceModifier.height(8.dp))
         var renderedSection = false
         state.today?.let {
-            DaySection(summary = it, background = TodayBackground, border = TodayBorder)
+            DaySection(summary = it, background = TodayBackground)
             renderedSection = true
         }
         state.tomorrow?.let {
             if (renderedSection) {
                 Spacer(modifier = GlanceModifier.height(8.dp))
             }
-            DaySection(summary = it, background = TomorrowBackground, border = TomorrowBorder)
+            DaySection(summary = it, background = TomorrowBackground)
             renderedSection = true
         }
         if (state.today == null && state.tomorrow == null) {
@@ -169,14 +168,13 @@ private fun RotoWidgetContent(
 @Composable
 private fun DaySection(
     summary: DaySummary,
-    background: ColorProvider,
-    border: ColorProvider
+    background: ColorProvider
 ) {
     Column(
         modifier = GlanceModifier
             .fillMaxWidth()
             .background(background)
-            .border(width = 1.dp, color = border, shape = RoundedCornerShape(12.dp))
+            .cornerRadius(12.dp)
             .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
         Text(
@@ -223,38 +221,14 @@ private fun DayResult.toSummary(title: String): DaySummary {
     )
 }
 
-private val BackgroundColor = ColorProvider(
-    color = androidx.compose.ui.graphics.Color(0xFFF4FBFA)
-)
+private val BackgroundColor = ColorProvider(color = Color(0xFFF4FBFA))
 
-private val TitleColor = ColorProvider(
-    color = androidx.compose.ui.graphics.Color(0xFF132327)
-)
+private val TitleColor = ColorProvider(color = Color(0xFF132327))
 
-private val PrimaryTextColor = ColorProvider(
-    color = androidx.compose.ui.graphics.Color(0xFF132327)
-)
+private val PrimaryTextColor = ColorProvider(color = Color(0xFF132327))
 
-private val SecondaryTextColor = ColorProvider(
-    color = androidx.compose.ui.graphics.Color(0xFF2B4548)
-)
+private val SecondaryTextColor = ColorProvider(color = Color(0xFF2B4548))
 
-private val TodayBackground = ColorProvider(
-    day = androidx.compose.ui.graphics.Color(0xFFD7F2EB),
-    night = androidx.compose.ui.graphics.Color(0xFF2F4E4B)
-)
+private val TodayBackground = ColorProvider(color = Color(0xFFD7F2EB))
 
-private val TodayBorder = ColorProvider(
-    day = androidx.compose.ui.graphics.Color(0xFF00BF93),
-    night = androidx.compose.ui.graphics.Color(0xFF69D5BE)
-)
-
-private val TomorrowBackground = ColorProvider(
-    day = androidx.compose.ui.graphics.Color(0xFFFFF3D6),
-    night = androidx.compose.ui.graphics.Color(0xFF5B5138)
-)
-
-private val TomorrowBorder = ColorProvider(
-    day = androidx.compose.ui.graphics.Color(0xFFF2C94C),
-    night = androidx.compose.ui.graphics.Color(0xFFE4D07A)
-)
+private val TomorrowBackground = ColorProvider(color = Color(0xFFFFF3D6))

@@ -55,7 +55,7 @@ android {
                 storePassword = props["storePassword"] as String
                 keyAlias = props["keyAlias"] as String
                 keyPassword = props["keyPassword"] as String
-            }
+            } ?: logger.warn("Release signing props not found; APK will be unsigned.")
         }
     }
     

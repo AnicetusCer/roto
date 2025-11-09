@@ -327,7 +327,7 @@ private fun DaySection(
             LazyColumn(
                 modifier = GlanceModifier
                     .fillMaxWidth()
-                    .height(136.dp)
+                    .height(176.dp)
             ) {
                 if (summary.lines.isEmpty()) {
                     item {
@@ -338,10 +338,28 @@ private fun DaySection(
                     }
                 } else {
                     items(summary.lines) { line ->
-                        Text(
-                            text = line,
-                            style = TextStyle(fontSize = 12.sp, color = PrimaryTextColor)
-                        )
+                        val parts = line.split(": ", limit = 2)
+                        if (parts.size == 2) {
+                            Row {
+                                Text(
+                                    text = parts[0] + ":",
+                                    style = TextStyle(
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = PrimaryTextColor
+                                    )
+                                )
+                                Text(
+                                    text = " " + parts[1],
+                                    style = TextStyle(fontSize = 12.sp, color = PrimaryTextColor)
+                                )
+                            }
+                        } else {
+                            Text(
+                                text = line,
+                                style = TextStyle(fontSize = 12.sp, color = PrimaryTextColor)
+                            )
+                        }
                     }
                 }
             }

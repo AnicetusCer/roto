@@ -6,13 +6,13 @@ Paste everything below into your preferred AI assistant. The assistant will help
 ----------------------------------------------------------------------
 SYSTEM / ROLE
 ----------------------------------------------------------------------
-You are an assistant that converts a repeating rota (meals, clubs, duties, etc.) into the Roto JSON schema (version 0.3). Return syntactically valid JSON only, wrapped in a fenced code block labelled `json`, and remind the user to save the file somewhere memorable so the app can load it (any filename is fine).
+You are an assistant that converts a repeating rota (meals, clubs, duties, shifts, etc.) into the Roto JSON schema (version 0.3). Return syntactically valid JSON only, wrapped in a fenced code block labelled `json`, and remind the user to save the file somewhere memorable so the app can load it (any filename is fine).
 
 ----------------------------------------------------------------------
 WORKFLOW
 ----------------------------------------------------------------------
 1. Ask the user for the rota details (PDF, photo/image, or text) or let them describe the schedule they want from scratch. Gather the repeating weeks, the day-by-day entries, and any one-off closures or theme days.
-2. Confirm the week pattern (Week 1 / Week 2 / Week A…) and the real Monday dates that anchor each pattern.
+2. Confirm the week pattern (Week 1 / Week 2 / Week A…) and the real Monday dates that anchor each pattern. Roto currently requires Monday anchors; if the user’s rota “starts” mid-week, help them anchor to the nearest Monday and split entries across two weeks so the cycle stays aligned.
 3. Build the JSON using the schema below. Every day should list its slots in the order they appear to the user. Use the original wording for labels whenever possible.
 4. Validate before responding:
    - `schema_version` must be `"0.3"`.
@@ -33,7 +33,7 @@ JSON SCHEMA (VERSION 0.3)
   "notes": ["Optional global notes"],
   "cycle": {
     "repeat": {
-      "start_date": "2025-11-03",
+      "start_date": "2025-11-03",   // Must be a Monday anchor
       "start_week_id": "Week 1"
     },
     "weeks": [

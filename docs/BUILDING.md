@@ -47,6 +47,8 @@ keyPassword=yourKeystorePassword
 
 Gradle automatically picks this up via `loadSigningProps()` in `app/build.gradle.kts`.
 
+> **Windows note:** mirror the same layout under `C:\Users\<you>\.secrets\android\com.anicetuscer.roto\release.jks` and `C:\Users\<you>\.gradle\keystore-com.anicetuscer.roto.properties`, updating the `storeFile` path to the Windows location.
+
 ## Release Artifacts
 
 ### APK (F-Droid / direct sideload)

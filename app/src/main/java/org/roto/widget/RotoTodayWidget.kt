@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -18,6 +19,7 @@ import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
+import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.state.getAppWidgetState
@@ -57,6 +59,13 @@ import androidx.glance.state.PreferencesGlanceStateDefinition
 
 class RotoTodayWidget : GlanceAppWidget() {
     override val stateDefinition = PreferencesGlanceStateDefinition
+    override val sizeMode: SizeMode = SizeMode.Responsive(
+        setOf(
+            DpSize(150.dp, 120.dp),
+            DpSize(180.dp, 200.dp),
+            DpSize(220.dp, 280.dp)
+        )
+    )
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val widgetState = loadWidgetState(context, id)
@@ -76,10 +85,9 @@ class RotoTodayWidget : GlanceAppWidget() {
                 focus = activeFocus,
                 summary = displaySummary,
                 modifier = GlanceModifier
-                    .padding(16.dp)
-                    .wrapContentHeight()
                     .fillMaxWidth()
-                    .padding(4.dp)
+                    .wrapContentHeight()
+                    .padding(horizontal = 8.dp, vertical = 6.dp)
             )
         }
     }
@@ -259,8 +267,8 @@ private fun RotoWidgetContent(
         modifier = modifier
             .fillMaxWidth()
             .background(BackgroundColor)
-            .padding(12.dp)
-            .cornerRadius(16.dp)
+            .cornerRadius(12.dp)
+            .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
         Text(
             text = state.rotaName,
@@ -298,7 +306,7 @@ private fun DaySection(
         modifier = GlanceModifier
             .fillMaxWidth()
             .background(background)
-            .cornerRadius(12.dp)
+            .cornerRadius(10.dp)
             .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
         Text(
@@ -319,7 +327,7 @@ private fun DaySection(
             LazyColumn(
                 modifier = GlanceModifier
                     .fillMaxWidth()
-                    .height(116.dp)
+                    .height(136.dp)
             ) {
                 if (summary.lines.isEmpty()) {
                     item {

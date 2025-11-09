@@ -33,6 +33,7 @@ import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.Column
+import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxWidth
@@ -95,9 +96,8 @@ class RotoTodayWidget : GlanceAppWidget() {
                 focus = presentation.focus,
                 summary = presentation.state.summaryForFocus(presentation.focus),
                 modifier = GlanceModifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                    .fillMaxSize()
+                    .padding(8.dp)
             )
         }
     }
@@ -280,9 +280,8 @@ private fun RotoWidgetContent(
     val openAppAction = actionStartActivity<MainActivity>()
     Column(
         modifier = modifier
-            .fillMaxWidth()
             .background(BackgroundColor)
-            .cornerRadius(12.dp)
+            .cornerRadius(10.dp)
             .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
         Text(
@@ -299,7 +298,10 @@ private fun RotoWidgetContent(
             val background = if (focus == DayFocus.TODAY) TodayBackground else TomorrowBackground
             DaySection(
                 summary = summary,
-                background = background
+                background = background,
+                modifier = GlanceModifier
+                    .defaultWeight()
+                    .fillMaxWidth()
             )
         } else {
             val message = state.fallbackMessage
@@ -315,13 +317,13 @@ private fun RotoWidgetContent(
 @Composable
 private fun DaySection(
     summary: DaySummary,
-    background: ColorProvider
+    background: ColorProvider,
+    modifier: GlanceModifier = GlanceModifier
 ) {
     Column(
-        modifier = GlanceModifier
-            .fillMaxWidth()
+        modifier = modifier
             .background(background)
-            .cornerRadius(10.dp)
+            .cornerRadius(8.dp)
             .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
         Text(
@@ -338,11 +340,12 @@ private fun DaySection(
                 text = summary.closedReason?.takeIf { it.isNotBlank() } ?: "Closed day",
                 style = TextStyle(fontSize = 12.sp, color = PrimaryTextColor)
             )
+            Spacer(modifier = GlanceModifier.defaultWeight())
         } else {
             LazyColumn(
                 modifier = GlanceModifier
                     .fillMaxWidth()
-                    .height(176.dp)
+                    .defaultWeight()
             ) {
                 if (summary.lines.isEmpty()) {
                     item {

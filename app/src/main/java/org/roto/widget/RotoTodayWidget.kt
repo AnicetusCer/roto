@@ -4,6 +4,9 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -42,8 +45,10 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import org.roto.data.RotoData
 import java.time.LocalDate
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
 import org.roto.MainActivity
 import org.roto.data.MenuPreferencesDataSource
@@ -77,19 +82,29 @@ class RotoTodayWidget : GlanceAppWidget() {
                 mutablePrefs[FOCUS_KEY] = activeFocus.name
             }
         }
-        val displaySummary = widgetState.summaryForFocus(activeFocus)
-        Log.d(TAG, "provideGlance: today=${widgetState.today != null}, tomorrow=${widgetState.tomorrow != null}, focus=$activeFocus")
+        WidgetPresentationStore.update(id, WidgetPresentation(widgetState, activeFocus))
+        Log.d(
+            TAG,
+            "provideGlance: today=${widgetState.today != null}, tomorrow=${widgetState.tomorrow != null}, focus=$activeFocus"
+        )
         provideContent {
+            val presentationFlow = remember(id) { WidgetPresentationStore.flowFor(id) }
+            val presentation by presentationFlow.collectAsState()
             RotoWidgetContent(
-                state = widgetState,
-                focus = activeFocus,
-                summary = displaySummary,
+                state = presentation.state,
+                focus = presentation.focus,
+                summary = presentation.state.summaryForFocus(presentation.focus),
                 modifier = GlanceModifier
                     .fillMaxWidth()
                     .wrapContentHeight()
                     .padding(horizontal = 8.dp, vertical = 6.dp)
             )
         }
+    }
+
+    override suspend fun onDelete(context: Context, glanceId: GlanceId) {
+        WidgetPresentationStore.clear(glanceId)
+        super.onDelete(context, glanceId)
     }
 
     companion object {
@@ -495,7 +510,38 @@ private suspend fun updateStoredFocus(context: Context, glanceId: GlanceId, focu
     updateAppWidgetState(context, glanceId) { prefs ->
         prefs[FOCUS_KEY] = focus.name
     }
+    WidgetPresentationStore.updateFocus(glanceId, focus)
     Log.d(TAG, "updateStoredFocus: focus set to $focus for $glanceId")
+}
+
+private data class WidgetPresentation(
+    val state: WidgetState = WidgetState(
+        rotaName = "Roto",
+        today = null,
+        tomorrow = null,
+        fallbackMessage = "Loading rota..."
+    ),
+    val focus: DayFocus = DayFocus.TODAY
+)
+
+private object WidgetPresentationStore {
+    private val flows = ConcurrentHashMap<GlanceId, MutableStateFlow<WidgetPresentation>>()
+
+    fun flowFor(glanceId: GlanceId): MutableStateFlow<WidgetPresentation> =
+        flows.getOrPut(glanceId) { MutableStateFlow(WidgetPresentation()) }
+
+    fun update(glanceId: GlanceId, presentation: WidgetPresentation) {
+        flowFor(glanceId).value = presentation
+    }
+
+    fun updateFocus(glanceId: GlanceId, focus: DayFocus) {
+        val flow = flowFor(glanceId)
+        flow.value = flow.value.copy(focus = focus)
+    }
+
+    fun clear(glanceId: GlanceId) {
+        flows.remove(glanceId)
+    }
 }
 
 private fun WidgetState.summaryForFocus(focus: DayFocus): DaySummary? =

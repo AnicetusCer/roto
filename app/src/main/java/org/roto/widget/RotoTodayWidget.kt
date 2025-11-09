@@ -128,7 +128,10 @@ private suspend fun loadWidgetState(
 
         val today = LocalDate.now()
         val tomorrow = today.plusDays(1)
-        val rotaResult = repository.loadMenu(selection?.uriString?.let(Uri::parse))
+        val rotaResult = repository.loadMenu(
+            preferredUri = selection?.uriString?.let(Uri::parse),
+            allowDownloadsFallback = false
+        )
 
         rotaResult.fold(
             onSuccess = { loadResult ->

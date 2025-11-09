@@ -1,35 +1,53 @@
 # Roto
 
-Roto is an offline, privacy-first Android app that answers one simple question: **“What’s on the rota tomorrow?”** It keeps a rotating timetable on-device, honours real calendar Mondays for Week 1/Week 2 style cycles, and supports one-off overrides without ever touching the network.
+<p align="center">
+  <img src="app/src/main/assets/logo_images/RotoSquare.jpg" alt="Roto logo" width="160" />
+</p>
+
+<p align="center">
+  <img src="app/src/main/assets/screenshots/roto-screenshot-1.jpg" alt="Roto app screenshot" width="280" />
+  <img src="app/src/main/assets/screenshots/roto-screenshot-2-widget.jpg" alt="Roto widget screenshot" width="280" />
+</p>
+
+Roto is an offline, privacy-first Android app that answers one simple question: **“What’s on the rota tomorrow?”** It keeps any rotating schedule on-device—school dinners, shift work, collections, rehearsals—honouring real calendar Mondays for Week 1/Week 2/Week 3... style cycles, and supports one-off overrides without ever touching the network.
 
 ## Key Features
 
-- **Tomorrow-first** – Launch straight into tomorrow’s rota with day-specific notes, tags, and override reasons.
+- **Today & tomorrow at a glance** – The home screen surfaces today first, and you can flip to tomorrow with a tap, including notes, tags, and override reasons.
 - **Browse any day** – Pick any calendar date (weekends included) to see its slots or a friendly “No rota found” message.
 - **Flexible slots** – Schema 0.3 stores labelled slots (Option 1, Grab & Go, Duty, etc.) plus optional tags for allergens or year groups.
 - **Looping cycles** – Supply a repeat anchor once and the app keeps the rota cycling forever without duplicating dates.
-- **Ready-made samples** – A library of example rotas ships in `app/src/main/assets/sample_rotas` so you can see working files or share starters with families.
-- **Offline JSON import** – Load your rota via **Load rota (JSON)** or by placing `RotoRota.json` in the app’s scoped Downloads directory.
-- **AI helper prompt** – The setup screen’s **Copy AI Instructions** button gives parents/carers a ready-made prompt to turn a PDF/photo into valid JSON with their own assistant.
+- **Ready-made samples** – Example rotas ship in `app/src/main/assets/sample_rotas` so you can preview the UI or tweak them for your own needs (school menu, shift cycle, etc.).
+- **Offline JSON import** – Load any rota via **Load rota (JSON)** or by placing `RotoRota.json` in the app’s scoped Downloads directory.
+- **AI helper prompt** – The setup screen’s **Copy AI Instructions** button gives anyone a ready-made prompt to turn a PDF/photo into valid JSON with their favourite assistant.
 - **Privacy by default** – No analytics, tracking, or proprietary dependencies; the app runs happily offline and is F-Droid friendly.
 
-## Getting Started (Families)
+## Getting Started
 
-1. **Install the app** – Build locally (see below) or side-load the provided APK.
+1. **Install the app on your phone**
+   - Side-load the latest APK (release builds live in `app/build/outputs/apk/release`).
+   - Or generate your own signed build by following the [build guide](docs/BUILDING.md).
+   - F-Droid and Google Play listings are planned; once live you can install directly from those stores.
 2. **Generate the rota JSON**
    - On the setup screen tap **Copy AI Instructions**.
-   - Paste the prompt into your preferred assistant (ChatGPT, Claude, Copilot, etc.) and share the rota PDF/photo/text.
-   - The AI replies with JSON matching schema 0.3.
+   - Paste the prompt into your preferred assistant (ChatGPT, Claude, Copilot, etc.) and either have a conversation with the AI or share an existing rota you have, such as a PDF/photo/text so it can build your rota file.
+   - The AI will reply with a JSON file matching the roto schema 0.3.
+   - You can also, manual edit a json rota file, select a sample rota and edit it `app/src/main/assets/sample_rotas`.
 3. **Load the rota file**
    - Save the helper’s reply (for example `RotoRota.json`).
-   - In the app tap **Load rota file** and choose it, or place it at `Android/data/org.roto/files/Download/RotoRota.json` via `adb`.
-   - Want a head start? Copy any of the example rotas in `app/src/main/assets/sample_rotas` to your device and try them out.
+   - In the app tap **Load rota file** and choose it, (There is also a default file name that will be checked for `Android/data/org.roto/files/Download/RotoRota.json` , this can help sharing out a rota file to just work straight away without the need to load it).
 4. **Browse the rota**
-   - The home screen shows tomorrow and today.
-   - Use **Browse rota weeks** to open any week pattern and inspect its days.
+   - The home screen shows today and tomorrow at a glance.
+   - Even though the app focuses on quick today/tomorrow views, you can open **Browse rota weeks** to inspect any upcoming week’s cycle.
 5. **Need to start over?** Tap **Clear rota** on the setup screen to forget the file and return to the instructions.
 
+> **Week anchor tip:** Rotating schedules are anchored to real calendar Mondays. Set `cycle.repeat.start_date` to the Monday that should count as “Week 1” and the app will cycle forwards (and backwards) automatically from that date.
+>
+> If your rota naturally starts mid-week (say, a Wednesday-to-Wednesday shift), anchor it to the nearest Monday and split the data across two weeks so the app can keep the cycle aligned until the any-day anchor feature lands.
+
 ## JSON Format Summary (Schema 0.3)
+
+Roto’s schema is deliberately lightweight: name the rota, add optional notes, describe one or more week templates (each with an optional repeat anchor), and list per-date overrides for special cases. Each day can contain any number of labelled slots plus tags/notes, letting you model everything from meal choices to shift assignments. For a fully annotated walkthrough, see [`docs/SCHEMA.md`](docs/SCHEMA.md).
 
 ```json
 {
@@ -82,38 +100,16 @@ The full AI helper prompt lives in `app/src/main/assets/ai_llm_instructions.txt`
 
 ## Development
 
-### Requirements
-
-- Android Studio or command-line tools with Android SDK 34
-- JDK 21
-- Gradle (wrapper included)
-
-### Building & Testing
-
-```bash
-./gradlew assembleDebug          # build the debug APK
-./gradlew testDebugUnitTest
-```
-
-Install to a running emulator or device:
-
-```bash
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-```
-
-### Project Structure Highlights
+See [`docs/BUILDING.md`](docs/BUILDING.md) for environment prerequisites, debug builds, release signing, and Play/F-Droid packaging. The high-level layout:
 
 - `app/src/main/java/org/roto/data` – Roto models, repository, and DataStore-backed preferences.
 - `app/src/main/java/org/roto/domain` – Rotation logic that resolves overrides, notes, and slot lists.
 - `app/src/main/java/org/roto/ui` – Compose screens plus the view model that handles imports and date browsing.
 - `app/src/main/assets/ai_llm_instructions.txt` – The prompt surfaced by **Copy AI Instructions**.
 
-## Roadmap Snapshot
+## Maintenance & Feedback
 
-- Harden JSON validation and surface clearer inline errors.
-- Remember the last-opened week/day to speed up return visits.
-- Polish accessibility copy and spacing on the setup flow.
-- Longer term: explore a homescreen widget powered by the same offline logic.
+Roto is a spare-time project. I’m happy to hear bug reports or feature requests, but please understand that I’m one person juggling a full-time job and a family, so updates will be slow and scoped. If you’re comfortable sending pull requests, even small ones, they’re very welcome and help the app improve without waiting on my limited cycles.
 
 ## Contributing
 

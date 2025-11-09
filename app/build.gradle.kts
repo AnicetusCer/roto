@@ -1,7 +1,17 @@
+import java.io.File
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.serialization")
+}
+
+fun Project.loadSigningProps(): Properties? {
+    val propsFile = File(System.getProperty("user.home"), ".gradle/keystore-com.anicetuscer.roto.properties")
+    return propsFile.takeIf(File::exists)?.reader()?.use {
+        Properties().apply { load(it) }
+    }
 }
 
 android {
@@ -14,16 +24,6 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
     }
 
     compileOptions {
@@ -46,6 +46,31 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    val signingProps = loadSigningProps()
+
+    signingConfigs {
+        create("release") {
+            signingProps?.let { props ->
+                storeFile = file(props["storeFile"] as String)
+                storePassword = props["storePassword"] as String
+                keyAlias = props["keyAlias"] as String
+                keyPassword = props["keyPassword"] as String
+            }
+        }
+    }
+    
+    buildTypes {
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+
 }
 
 dependencies {

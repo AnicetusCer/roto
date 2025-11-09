@@ -22,13 +22,14 @@ class MenuRepository(
     private val downloadsFileName: String = DEFAULT_DOWNLOADS_FILE_NAME
 ) {
 
-    fun loadMenu(preferredUri: Uri?): Result<MenuLoadResult> =
+    fun loadMenu(preferredUri: Uri?, allowDownloadsFallback: Boolean = true): Result<MenuLoadResult> =
         runCatching {
             val (rawJson, sourceType) = when {
                 preferredUri != null -> readExternalFile(preferredUri)?.let { it to MenuSourceType.EXTERNAL_SELECTION }
                     ?: throw IllegalStateException("Unable to read the selected rota file.")
-                else -> readDownloadsMenu()?.let { it to MenuSourceType.SCOPED_DOWNLOADS }
+                allowDownloadsFallback -> readDownloadsMenu()?.let { it to MenuSourceType.SCOPED_DOWNLOADS }
                     ?: throw IllegalStateException("No rota file found. Choose a file manually or place one in the app's downloads folder.")
+                else -> throw IllegalStateException("No rota file selected. Load one in the app first.")
             }
             val parsed = try {
                 RotoJsonParser.parse(rawJson)

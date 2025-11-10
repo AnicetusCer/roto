@@ -114,14 +114,16 @@ class RotoTodayWidget : GlanceAppWidget() {
             val ids = manager.getGlanceIds(RotoTodayWidget::class.java)
             if (ids.isEmpty()) return
             for (glanceId in ids) {
-                updateAppWidgetState(context, glanceId) { prefs ->
-                    prefs[CACHE_DIRTY_KEY] = true
-                }
-            }
-            for (glanceId in ids) {
-                RotoTodayWidget().update(context, glanceId)
+                refreshSingle(context, glanceId)
             }
             WidgetRefreshScheduler.scheduleDailyRefresh(context)
+        }
+
+        suspend fun refreshSingle(context: Context, glanceId: GlanceId) {
+            updateAppWidgetState(context, glanceId) { prefs ->
+                prefs[CACHE_DIRTY_KEY] = true
+            }
+            RotoTodayWidget().update(context, glanceId)
         }
     }
 }
@@ -621,6 +623,7 @@ class ShowTomorrowCallback : ActionCallback {
 class RefreshWidgetCallback : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         Log.d(TAG, "RefreshWidgetCallback.onAction for $glanceId")
-        RotoTodayWidget.refreshAll(context)
+        RotoTodayWidget.refreshSingle(context, glanceId)
+        WidgetRefreshScheduler.scheduleDailyRefresh(context)
     }
 }

@@ -120,12 +120,23 @@ class RotoTodayWidget : GlanceAppWidget() {
             for (glanceId in ids) {
                 RotoTodayWidget().update(context, glanceId)
             }
+            WidgetRefreshScheduler.scheduleDailyRefresh(context)
         }
     }
 }
 
 class RotoTodayWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = RotoTodayWidget()
+
+    override fun onEnabled(context: Context) {
+        super.onEnabled(context)
+        WidgetRefreshScheduler.scheduleDailyRefresh(context)
+    }
+
+    override fun onDisabled(context: Context) {
+        super.onDisabled(context)
+        WidgetRefreshScheduler.cancel(context)
+    }
 }
 
 private suspend fun loadWidgetState(
@@ -457,6 +468,7 @@ private fun ToggleRow(
 ) {
     val todayAction = actionRunCallback<ShowTodayCallback>()
     val tomorrowAction = actionRunCallback<ShowTomorrowCallback>()
+    val refreshAction = actionRunCallback<RefreshWidgetCallback>()
     Row(modifier = GlanceModifier.fillMaxWidth()) {
         ToggleChip(
             label = "Today",
@@ -471,6 +483,12 @@ private fun ToggleRow(
             modifier = GlanceModifier
                 .padding(end = 8.dp),
             onClick = tomorrowAction
+        )
+        ActionChip(
+            label = "Refresh",
+            modifier = GlanceModifier
+                .padding(end = 8.dp),
+            onClick = refreshAction
         )
         OpenAppLink(openAppAction)
     }
@@ -498,6 +516,27 @@ private fun ToggleChip(
             )
         )
     }
+}
+
+@Composable
+private fun ActionChip(
+    label: String,
+    modifier: GlanceModifier,
+    onClick: Action
+) {
+    Text(
+        text = label,
+        style = TextStyle(
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            color = ChipUnselectedText
+        ),
+        modifier = modifier
+            .background(ChipUnselectedBackground)
+            .cornerRadius(12.dp)
+            .padding(horizontal = 8.dp, vertical = 6.dp)
+            .clickable(onClick)
+    )
 }
 
 private const val TAG = "RotoWidget"
@@ -573,5 +612,12 @@ class ShowTomorrowCallback : ActionCallback {
         Log.d(TAG, "ShowTomorrowCallback.onAction for $glanceId")
         updateStoredFocus(context, glanceId, DayFocus.TOMORROW)
         RotoTodayWidget().update(context, glanceId)
+    }
+}
+
+class RefreshWidgetCallback : ActionCallback {
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        Log.d(TAG, "RefreshWidgetCallback.onAction for $glanceId")
+        RotoTodayWidget.refreshAll(context)
     }
 }

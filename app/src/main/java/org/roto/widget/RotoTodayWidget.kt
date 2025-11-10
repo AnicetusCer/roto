@@ -32,6 +32,7 @@ import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
+import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.Row
@@ -300,10 +301,14 @@ private fun RotoWidgetContent(
             style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TitleColor)
         )
         Spacer(modifier = GlanceModifier.height(8.dp))
-        ToggleRow(
-            activeFocus = focus,
-            openAppAction = openAppAction
-        )
+        ToggleRow(activeFocus = focus)
+        Spacer(modifier = GlanceModifier.height(6.dp))
+        Row(
+            modifier = GlanceModifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.Horizontal.End
+        ) {
+            OpenAppLink(openAppAction)
+        }
         Spacer(modifier = GlanceModifier.height(8.dp))
         if (summary != null) {
             val background = if (focus == DayFocus.TODAY) TodayBackground else TomorrowBackground
@@ -463,8 +468,7 @@ private enum class DayFocus {
 
 @Composable
 private fun ToggleRow(
-    activeFocus: DayFocus,
-    openAppAction: Action
+    activeFocus: DayFocus
 ) {
     val todayAction = actionRunCallback<ShowTodayCallback>()
     val tomorrowAction = actionRunCallback<ShowTomorrowCallback>()
@@ -490,7 +494,6 @@ private fun ToggleRow(
                 .padding(end = 8.dp),
             onClick = refreshAction
         )
-        OpenAppLink(openAppAction)
     }
 }
 

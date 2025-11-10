@@ -2,22 +2,22 @@ project_primer:
   project_identity:
     name: "Roto"
     mission_summary: >
-      Offline, privacy-first Android app (F-Droid friendly) that tells parents,
-      carers, and organisers what is scheduled on any given date using rotating week
+      Offline, privacy-first Android app (F-Droid friendly) that tells anyone managing
+      a rotating schedule what is happening on any given date using repeating week
       patterns (Week 1 / Week 2 / Week 3 …).
     core_question: "What's on the rota tomorrow?"
     status: "Interactive Compose app in place with JSON import, tomorrow/today view, week browser, and override-aware domain logic."
     audience:
       primary:
-        - parents
-        - carers
-        - school-age children
+        - people managing personal or family rotas
+        - organisers and coordinators of clubs, teams, or workplaces
+        - rota followers who need tomorrow's plan at a glance
       stretch:
-        - anyone managing repeating school/club/meal rotas
+        - any rotating schedule that benefits from an offline summary
     principles:
       - offline_first: "All rota data and logic stay on device; no servers or logins."
       - privacy: "No analytics, tracking, or ads; F-Droid-friendly dependencies only."
-      - human_editable_data: "Parents/carers can paste and edit a human-readable JSON rota."
+      - human_editable_data: "Users can paste and edit a human-readable JSON rota."
       - predictable: "If there is no rota for a date, surface a clear 'No rota found' message."
 
   product_scope:
@@ -31,20 +31,20 @@ project_primer:
       - key: offline_persistence
         description: "Persist the rota JSON locally so data survives app restarts and works offline."
       - key: human_editable_data
-        description: "Support pasting or importing JSON that parents can tweak or regenerate with an AI."
+        description: "Support pasting or importing JSON that any user can tweak or regenerate with an AI."
       - key: browse_week_rota
-        description: "Allow families to open any published week pattern and inspect all configured days (weekday or weekend)."
+        description: "Allow users to open any published week pattern and inspect all configured days (weekday or weekend)."
     stretch_goals:
       - key: home_screen_widget
         description: "Android widget showing tomorrow's rota summary."
       - key: multiple_profiles
         description: "Optional ability to store rotas for more than one school or club."
       - key: holiday_exceptions
-        description: "Parents can mark closed days or special events without editing the base rotation."
+        description: "Rota owners can mark closed days or special events without editing the base rotation."
       - key: allergen_filtering
         description: "Surface dietary tags supplied by the school as display-only info."
       - key: export_import_share
-        description: "One-tap share of the stored JSON to help other families."
+        description: "One-tap share of the stored JSON to help other teams or households."
 
   data_model:
     schema_version: "0.3"
@@ -54,7 +54,7 @@ project_primer:
       - "DayDefinition provides slots[] (ordered {label, text, tags[]}) plus optional notes[]."
       - "Optional cycle.repeat{start_date, start_week_id} enables the rota to loop indefinitely without enumerating future Mondays."
       - "overrides{} maps ISO dates to OverrideDay with closed/reason/slots/notes for one-off changes."
-    design_rationale: "Supports any repeating rota (meals, clubs, duties) while staying human-editable for families and organisers."
+    design_rationale: "Supports any repeating rota (meals, clubs, duties) while staying human-editable for users and organisers."
 
   rotation_logic:
     steps:

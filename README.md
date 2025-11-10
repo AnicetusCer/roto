@@ -111,6 +111,12 @@ See [`docs/BUILDING.md`](docs/BUILDING.md) for environment prerequisites, debug 
 
 Roto is a spare-time project. I’m happy to hear bug reports or feature requests, but please understand that I’m one person juggling a full-time job and a family, so updates will be slow and scoped. If you’re comfortable sending pull requests, even small ones, they’re very welcome and help the app improve without waiting on my limited cycles.
 
+## License & Disclaimer
+
+- Source code is licensed under the [Apache License 2.0](LICENSE); forks and contributions are welcome as long as the terms are respected.
+- By using the software you agree to the terms in the [DISCLAIMER](DISCLAIMER.md): no warranties, and you remain responsible for verifying rota data before acting on it.
+- Third-party libraries (AndroidX Compose, Glance, WorkManager, Kotlinx Serialization, Material Components, etc.) are also Apache 2.0 (or similarly permissive). Attribution details live in [`NOTICE`](NOTICE).
+
 ## Contributing
 
 Pull requests and issue reports are welcome. Please keep changes focused and ensure unit tests pass (`./gradlew testDebugUnitTest`) before submitting.

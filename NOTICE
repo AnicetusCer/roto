@@ -1,0 +1,32 @@
+Roto includes the following third-party components:
+
+1. AndroidX Compose UI, Material3, Navigation, Runtime, and tooling artifacts  
+   Copyright (C) The Android Open Source Project  
+   Licensed under the Apache License, Version 2.0.
+
+2. AndroidX Glance and Glance AppWidget  
+   Copyright (C) The Android Open Source Project  
+   Licensed under the Apache License, Version 2.0.
+
+3. AndroidX WorkManager (work-runtime-ktx)  
+   Copyright (C) The Android Open Source Project  
+   Licensed under the Apache License, Version 2.0.
+
+4. AndroidX DataStore, Core KTX, Activity, Lifecycle, and other support libraries  
+   Copyright (C) The Android Open Source Project  
+   Licensed under the Apache License, Version 2.0.
+
+5. Google Material Components for Android  
+   Copyright (C) Google LLC  
+   Licensed under the Apache License, Version 2.0.
+
+6. kotlinx-serialization-json  
+   Copyright (C) 2017–2024 JetBrains s.r.o. and Kotlin Programming Language contributors  
+   Licensed under the Apache License, Version 2.0.
+
+7. JUnit 4 and AndroidX Test artifacts (espresso, androidx.test.ext:junit)  
+   Licensed under the Eclipse Public License 1.0 (JUnit) and Apache License 2.0 (AndroidX Test).
+
+Each dependency retains its original license terms, which are compatible with Roto’s shared
+source license. Copies of the Apache License, Version 2.0, are available at:
+https://www.apache.org/licenses/LICENSE-2.0

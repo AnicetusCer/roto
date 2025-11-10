@@ -120,8 +120,15 @@ class RotoTodayWidget : GlanceAppWidget() {
         }
 
         suspend fun refreshSingle(context: Context, glanceId: GlanceId) {
-            updateAppWidgetState(context, glanceId) { prefs ->
-                prefs[CACHE_DIRTY_KEY] = true
+            val freshState = computeWidgetState(context)
+            val prefs = getAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId)
+            val storedFocus = prefs[FOCUS_KEY]?.let { runCatching { DayFocus.valueOf(it) }.getOrNull() }
+            val activeFocus = storedFocus ?: freshState.defaultFocus()
+
+            WidgetPresentationStore.update(glanceId, WidgetPresentation(freshState, activeFocus))
+            updateAppWidgetState(context, glanceId) { mutablePrefs ->
+                mutablePrefs[STATE_CACHE_KEY] = cacheJson.encodeToString(freshState.toCached())
+                mutablePrefs[CACHE_DIRTY_KEY] = false
             }
             RotoTodayWidget().update(context, glanceId)
         }
@@ -156,7 +163,17 @@ private suspend fun loadWidgetState(
         return cachedState.toWidgetState()
     }
 
-    val freshState = withContext(Dispatchers.IO) {
+    val freshState = computeWidgetState(context)
+
+    updateAppWidgetState(context, glanceId) { mutablePrefs ->
+        mutablePrefs[STATE_CACHE_KEY] = cacheJson.encodeToString(freshState.toCached())
+        mutablePrefs[CACHE_DIRTY_KEY] = false
+    }
+    return freshState
+}
+
+private suspend fun computeWidgetState(context: Context): WidgetState =
+    withContext(Dispatchers.IO) {
         val preferences = MenuPreferencesDataSource(context)
         val repository = MenuRepository(context)
         val selection: MenuSelection? = runCatching {
@@ -177,7 +194,7 @@ private suspend fun loadWidgetState(
                 val tomorrowResult = getMenuForDate(data, tomorrow)
                 if (todayResult == null && tomorrowResult == null) {
                     val nextAvailable = findNextAvailableDay(data, today)
-                    Log.d(TAG, "loadWidgetState: no entries today/tomorrow; next=${nextAvailable?.dateLabel}")
+                    Log.d(TAG, "computeWidgetState: no entries today/tomorrow; next=${nextAvailable?.dateLabel}")
                     WidgetState(
                         rotaName = data.rotaName.ifBlank { "Roto" },
                         today = null,
@@ -187,7 +204,7 @@ private suspend fun loadWidgetState(
                         } ?: "No rota entries available."
                     )
                 } else {
-                    Log.d(TAG, "loadWidgetState: todayPresent=${todayResult != null}, tomorrowPresent=${tomorrowResult != null}")
+                    Log.d(TAG, "computeWidgetState: todayPresent=${todayResult != null}, tomorrowPresent=${tomorrowResult != null}")
                     WidgetState(
                         rotaName = data.rotaName.ifBlank { "Roto" },
                         today = todayResult?.toSummary("Today", DayFocus.TODAY),
@@ -206,13 +223,6 @@ private suspend fun loadWidgetState(
             }
         )
     }
-
-    updateAppWidgetState(context, glanceId) { mutablePrefs ->
-        mutablePrefs[STATE_CACHE_KEY] = cacheJson.encodeToString(freshState.toCached())
-        mutablePrefs[CACHE_DIRTY_KEY] = false
-    }
-    return freshState
-}
 
 private data class WidgetState(
     val rotaName: String,

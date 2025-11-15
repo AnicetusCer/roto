@@ -19,6 +19,7 @@ Roto is an offline, privacy-first Android app that answers one simple question: 
 - **Looping cycles** – Supply a repeat anchor once and the app keeps the rota cycling forever without duplicating dates.
 - **Ready-made samples** – Example rotas ship in `app/src/main/assets/sample_rotas` so you can preview the UI or tweak them for your own needs (school menu, shift cycle, etc.).
 - **Offline JSON import** – Load any rota via **Load rota (JSON)** or by placing `RotoRota.json` in the app’s scoped Downloads directory.
+- **Shared link rotas** – Paste a GitHub Gist (or other HTTPS) link; the app downloads it once, caches it locally, and keeps serving the cached copy offline.
 - **AI helper prompt** – The setup screen’s **Copy AI Instructions** button gives anyone a ready-made prompt to turn a PDF/photo into valid JSON with their favourite assistant.
 - **Privacy by default** – No analytics, tracking, or proprietary dependencies; the app runs happily offline and is F-Droid friendly.
 
@@ -44,6 +45,12 @@ Roto is an offline, privacy-first Android app that answers one simple question: 
 > **Week anchor tip:** Rotating schedules are anchored to real calendar Mondays. Set `cycle.repeat.start_date` to the Monday that should count as “Week 1” and the app will cycle forwards (and backwards) automatically from that date.
 >
 > If your rota naturally starts mid-week (say, a Wednesday-to-Wednesday shift), anchor it to the nearest Monday and split the data across two weeks so the app can keep the cycle aligned until the any-day anchor feature lands.
+
+## Permissions
+
+Roto only requests one runtime permission:
+
+- `android.permission.INTERNET` – used to download shared-link rotas (for example GitHub Gist raw URLs) and to refresh the homescreen widget. All rota JSON stays on-device and is cached for offline use after the first successful sync.
 
 ## JSON Format Summary (Schema 0.3)
 

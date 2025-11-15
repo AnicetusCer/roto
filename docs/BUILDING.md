@@ -19,6 +19,8 @@ This document covers the developer build process end-to-end: environment prerequ
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
+> If the manifest changes (for example when new permissions like `android.permission.INTERNET` are added for shared-link rotas), reinstall the app on your emulator/device so Android picks up the updated permissions.
+
 ## Release Signing Setup
 
 ### 1. Generate or reuse a keystore (one-time)

@@ -27,6 +27,8 @@ import android.widget.Toast
 import org.roto.data.MenuPreferencesDataSource
 import org.roto.data.MenuRepository
 import org.roto.data.MenuSelection
+import org.roto.data.MenuSelectionType
+import org.roto.data.RemoteSourceStatus
 import org.roto.data.RotoData
 import org.roto.domain.DayResult
 import org.roto.domain.getMenuForDate
@@ -53,6 +55,9 @@ data class MenuUiState(
     val todayMenu: DayResult? = null,
     val tomorrowMenu: DayResult? = null,
     val selectedSourceLabel: String = "No rota selected",
+    val selectedSourceType: MenuSelectionType? = null,
+    val remoteStatus: RemoteStatusUi? = null,
+    val remoteUrl: String? = null,
     val coverageStatus: CoverageStatus? = null,
     val weekMenus: List<WeekMenu> = emptyList(),
     val selectedWeekMenu: WeekMenu? = null,
@@ -62,6 +67,12 @@ data class MenuUiState(
 data class CoverageStatus(
     val type: CoverageType,
     val message: String
+)
+
+data class RemoteStatusUi(
+    val url: String,
+    val lastSyncedEpochMillis: Long,
+    val isUsingCache: Boolean
 )
 
 enum class CoverageType { FUTURE, PAST }
@@ -107,7 +118,7 @@ class MenuViewModel(
 
     fun applySampleSelection(selection: MenuSelection) {
         viewModelScope.launch {
-            preferences.saveMenuSelection(selection.uriString, selection.displayName)
+            persistSelection(selection)
             refreshWidgets()
         }
     }
@@ -136,7 +147,11 @@ class MenuViewModel(
             }
             SampleCopyOutcome(
                 locationHint = "Downloads/Roto/$targetName",
-                selection = MenuSelection(uri.toString(), targetName)
+                selection = MenuSelection(
+                    type = MenuSelectionType.LOCAL_FILE,
+                    reference = uri.toString(),
+                    displayName = targetName
+                )
             )
         } else {
             @Suppress("DEPRECATION")
@@ -150,7 +165,11 @@ class MenuViewModel(
             MediaScannerConnection.scanFile(app, arrayOf(target.absolutePath), arrayOf("application/json"), null)
             SampleCopyOutcome(
                 locationHint = "Downloads/Roto/$targetName",
-                selection = MenuSelection(Uri.fromFile(target).toString(), targetName)
+                selection = MenuSelection(
+                    type = MenuSelectionType.LOCAL_FILE,
+                    reference = Uri.fromFile(target).toString(),
+                    displayName = targetName
+                )
             )
         }
     }
@@ -158,6 +177,13 @@ class MenuViewModel(
     private suspend fun refreshWidgets() {
         runCatching {
             RotoTodayWidget.refreshAll(getApplication())
+        }
+    }
+
+    private suspend fun persistSelection(selection: MenuSelection) {
+        when (selection.type) {
+            MenuSelectionType.LOCAL_FILE -> preferences.saveLocalSelection(selection.reference, selection.displayName)
+            MenuSelectionType.REMOTE_LINK -> preferences.saveRemoteSelection(selection.reference, selection.displayName)
         }
     }
 
@@ -170,7 +196,30 @@ class MenuViewModel(
     fun onExternalFileChosen(context: Context, uri: Uri) {
         viewModelScope.launch {
             val label = resolveDisplayName(context, uri)
-            preferences.saveMenuSelection(uri.toString(), label)
+            preferences.saveLocalSelection(uri.toString(), label)
+            refreshWidgets()
+        }
+    }
+
+    fun submitSharedLink(rawInput: String) {
+        val trimmed = rawInput.trim()
+        if (trimmed.isBlank()) {
+            _uiState.update { it.copy(setupMessage = SetupMessage("Enter a shared link to continue.", true)) }
+            return
+        }
+        val uri = runCatching { Uri.parse(trimmed) }.getOrNull()
+        val scheme = uri?.scheme?.lowercase()
+        if (uri == null || scheme !in setOf("https", "http")) {
+            _uiState.update { it.copy(setupMessage = SetupMessage("Shared links must start with https://", true)) }
+            return
+        }
+        viewModelScope.launch {
+            preferences.saveRemoteSelection(trimmed, deriveRemoteLabel(uri))
+            _uiState.update { state ->
+                state.copy(
+                    setupMessage = SetupMessage("Saved shared link. Loading the latest rota…", false)
+                )
+            }
             refreshWidgets()
         }
     }
@@ -254,42 +303,45 @@ class MenuViewModel(
 
         val today = LocalDate.now()
         val tomorrow = today.plusDays(1)
-        val preferredUri = selection?.uriString?.let(Uri::parse)
         val preferredLabel = selection?.displayName
 
         val primaryResult = withContext(Dispatchers.IO) {
-            repository.loadMenu(preferredUri)
+            repository.loadMenu(selection)
         }
         primaryResult.onSuccess { result ->
             updateStateWithMenu(
                 menuData = result.data,
-                selectionUri = preferredUri,
+                selection = selection,
                 selectionLabel = preferredLabel,
                 today = today,
                 tomorrow = tomorrow,
-                messageOverride = null
+                messageOverride = null,
+                remoteStatus = result.remoteStatus
             )
         }.onFailure { primaryError ->
-            if (preferredUri != null) {
+            if (selection != null) {
                 val fallbackResult = withContext(Dispatchers.IO) {
                     repository.loadMenu(null)
                 }
                 fallbackResult.onSuccess { fallback ->
                     updateStateWithMenu(
                         menuData = fallback.data,
-                        selectionUri = null,
-                        selectionLabel = null,
+                        selection = selection,
+                        selectionLabel = preferredLabel,
                         today = today,
                         tomorrow = tomorrow,
                         messageOverride = primaryError.message
-                            ?: "Couldn't read the selected file. Showing the app downloads rota instead."
+                            ?: "Couldn't load the selected rota. Showing the app downloads copy instead.",
+                        remoteStatus = null
                     )
                 }.onFailure { fallbackError ->
                     emitLoadError(
                         message = fallbackError.message
                             ?: primaryError.message
                             ?: "Failed to load rota data.",
-                        selectionLabel = preferredLabel ?: "Custom rota"
+                        selectionLabel = preferredLabel ?: "Custom rota",
+                        selectionType = selection.type,
+                        remoteUrl = if (selection.type == MenuSelectionType.REMOTE_LINK) selection.reference else null
                     )
                 }
             } else {
@@ -304,7 +356,9 @@ class MenuViewModel(
 
     private suspend fun emitLoadError(
         message: String,
-        selectionLabel: String
+        selectionLabel: String,
+        selectionType: MenuSelectionType? = null,
+        remoteUrl: String? = null
     ) {
         selectedWeekId = null
         _uiState.emit(
@@ -312,7 +366,10 @@ class MenuViewModel(
                 isLoading = false,
                 setupMessage = SetupMessage(message, true),
                 hasMenuData = false,
-                selectedSourceLabel = selectionLabel
+                selectedSourceLabel = selectionLabel,
+                selectedSourceType = selectionType,
+                remoteStatus = null,
+                remoteUrl = remoteUrl
             )
         )
         refreshWidgets()
@@ -320,11 +377,12 @@ class MenuViewModel(
 
     private suspend fun updateStateWithMenu(
         menuData: RotoData,
-        selectionUri: Uri?,
+        selection: MenuSelection?,
         selectionLabel: String?,
         today: LocalDate,
         tomorrow: LocalDate,
-        messageOverride: String?
+        messageOverride: String?,
+        remoteStatus: RemoteSourceStatus?
     ) {
         val todayMenu = getMenuForDate(menuData, today)
         val tomorrowMenu = getMenuForDate(menuData, tomorrow)
@@ -337,9 +395,18 @@ class MenuViewModel(
             selectedWeekId = null
         }
 
-        val label = selectionLabel ?: selectionUri?.lastPathSegment ?: "Chosen rota"
+        val label = selectionLabel ?: buildDefaultLabel(selection)
 
         val message = messageOverride?.let { SetupMessage(it, true) }
+
+        val remoteUi = remoteStatus?.let {
+            RemoteStatusUi(
+                url = it.url,
+                lastSyncedEpochMillis = it.lastSyncedEpochMillis,
+                isUsingCache = it.isFromCache
+            )
+        }
+        val remoteUrl = selection?.takeIf { it.type == MenuSelectionType.REMOTE_LINK }?.reference
 
         _uiState.emit(
             MenuUiState(
@@ -350,6 +417,9 @@ class MenuViewModel(
                 todayMenu = todayMenu,
                 tomorrowMenu = tomorrowMenu,
                 selectedSourceLabel = label,
+                selectedSourceType = selection?.type,
+                remoteStatus = remoteUi,
+                remoteUrl = remoteUrl,
                 coverageStatus = coverageStatus,
                 weekMenus = weekMenus,
                 selectedWeekMenu = activeWeek,
@@ -438,4 +508,25 @@ class MenuViewModel(
                 if (index != -1 && cursor.moveToFirst()) cursor.getString(index) else null
             }
         }.getOrNull()
+
+    private fun deriveRemoteLabel(uri: Uri): String {
+        val candidate = uri.lastPathSegment?.takeIf { it.isNotBlank() }
+            ?: uri.path?.substringAfterLast('/')?.takeIf { it.isNotBlank() }
+            ?: uri.host
+        return candidate ?: "Shared link"
+    }
+
+    private fun buildDefaultLabel(selection: MenuSelection?): String =
+        when (selection?.type) {
+            MenuSelectionType.LOCAL_FILE -> runCatching { Uri.parse(selection.reference).lastPathSegment }
+                .getOrNull()
+                ?.takeIf { it.isNotBlank() }
+                ?: selection?.displayName
+                ?: "Chosen rota"
+            MenuSelectionType.REMOTE_LINK -> selection.displayName
+                ?: runCatching { Uri.parse(selection.reference).host }.getOrNull()
+                    ?.let { "$it link" }
+                ?: "Shared link"
+            null -> "Chosen rota"
+        }
 }

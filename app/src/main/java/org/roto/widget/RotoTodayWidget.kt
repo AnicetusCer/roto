@@ -1,7 +1,6 @@
 package org.roto.widget
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -183,7 +182,7 @@ private suspend fun computeWidgetState(context: Context): WidgetState =
         val today = LocalDate.now()
         val tomorrow = today.plusDays(1)
         val rotaResult = repository.loadMenu(
-            preferredUri = selection?.uriString?.let(Uri::parse),
+            selection = selection,
             allowDownloadsFallback = false
         )
 

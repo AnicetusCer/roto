@@ -32,6 +32,8 @@ project_primer:
         description: "Persist the rota JSON locally so data survives app restarts and works offline."
       - key: human_editable_data
         description: "Support pasting or importing JSON that any user can tweak or regenerate with an AI."
+      - key: shared_link_rotas
+        description: "Accept GitHub Gist (or other HTTPS) links as read-only rota sources while caching the last good JSON for offline use."
       - key: browse_week_rota
         description: "Allow users to open any published week pattern and inspect all configured days (weekday or weekend)."
     stretch_goals:
@@ -54,6 +56,7 @@ project_primer:
       - "DayDefinition provides slots[] (ordered {label, text, tags[]}) plus optional notes[]."
       - "Optional cycle.repeat{start_date, start_week_id} enables the rota to loop indefinitely without enumerating future Mondays."
       - "overrides{} maps ISO dates to OverrideDay with closed/reason/slots/notes for one-off changes."
+      - "\"source\" metadata records whether the active rota came from a local document or remote gist (uri, last_synced_epoch, cache_uri)."
     design_rationale: "Supports any repeating rota (meals, clubs, duties) while staying human-editable for users and organisers."
 
   rotation_logic:
@@ -64,13 +67,20 @@ project_primer:
       - "If nothing explicit matches and cycle.repeat is set, compute the week by looping from repeat.start_date onward."
       - "Resolve the day's slots by weekday key (monday…sunday) or ISO-specific key."
       - "If nothing matches, show a friendly 'No rota found for this date' message."
+    timezone_policy: "Treat 'today' and 'tomorrow' strictly as the device's current local date; users can rely on their device clock for any travel or DST adjustments."
 
   tech_foundation:
     platform: "Android (minSdk 24, Kotlin, Jetpack Compose)."
-    storage: "Keep JSON in user-managed files; remember the chosen URI via Preferences DataStore so the app can reload it."
+    storage: >
+      Keep JSON in user-managed files; remember the chosen URI via Preferences DataStore so the app can reload it.
+      Mirror any remote gist download into an app-private cache file plus metadata so the UI can fall back to the last successful sync.
     dependency_constraints:
       - "Avoid Google Play Services and proprietary analytics for F-Droid compliance."
       - "Keep the build reproducible with FLOSS-friendly tooling."
+    network_and_caching:
+      client: "Introduce an HTTP stack (OkHttp or Ktor Client) that can fetch GitHub Gist raw URLs without Play Services."
+      sync_policy: "On setup or manual refresh, download the gist JSON, validate schema 0.3, then persist both the payload and a last_synced timestamp."
+      offline_behavior: "If a gist fetch fails, continue showing the cached payload and surface a non-blocking warning."
 
   architecture_and_ui:
     layers:
@@ -79,6 +89,8 @@ project_primer:
           - load_rota_json_from_selected_source
           - remember_selected_rota_reference
           - parse_json_to_models (schema 0.3)
+          - fetch_rota_from_gist_url_and_validate
+          - cache_remote_payload_for_offline_use
       - name: domain_layer
         responsibilities:
           - get_rota_for_date (override + rotation lookup)
@@ -99,10 +111,17 @@ project_primer:
             - slot_list (ordered slots with tags)
             - reason_or_notes (override/day/global notes)
             - button_view_other_day
+            - button_refresh_remote (visible only when a gist source is configured; triggers background sync and status pill)
       - pick_a_day_screen:
           purpose: "Browse any date's rota via date picker or next/prev controls."
       - setup_screen:
           purpose: "Initial and repeat JSON import/edit experience with validation."
+          modes:
+            - "Pick a local JSON file (existing flow)."
+            - "Paste or edit a GitHub Gist URL (expects the raw JSON endpoint)."
+          helpers:
+            - "Show last synced timestamp and cache size when a remote link is active."
+            - "Provide 'Use cached copy' fallback if the latest download fails."
     orientation:
       lock_to_portrait: "Keep the app in a non-rotating, vertical layout so the UI stays consistent for parents."
 
@@ -159,7 +178,7 @@ project_primer:
       manual_testing_hints:
         - "Toggle dark theme and large font."
         - "Adjust date/time to simulate rota changes."
-        - "Rotate orientation via emulator toolbar."
+        - "Orientation is portrait-only; rotate the emulator to confirm the UI remains locked vertically."
     project_location_strategy:
       preferred_path_windows: "C:\\dev\\roto-app"
       preferred_path_wsl: "/mnt/c/dev/roto-app"
@@ -183,12 +202,15 @@ project_primer:
           - "Tomorrow's rota populated with the correct slots/notes (including overrides)."
           - "Changing emulator date updates the displayed rota."
           - "Weekends or unmatched dates show a polite no-rota message."
+          - "Gist-backed rotas load, refresh on demand, and remain readable when the device switches offline."
 
   execution_plan:
     immediate_next_steps:
       - "Harden schema 0.3 validation and surface friendly error messages when required fields are missing."
       - "Remember last-opened week/tab state for faster browsing."
       - "Polish accessibility copy and consider larger text spacing for the setup instructions."
+      - "Prototype GitHub Gist onboarding (URL entry, validation, storage metadata, manual refresh controls)."
+      - "Add HTTP client + background sync job that caches gist payloads for offline continuity."
     upcoming_milestones:
       - "Offer optional pretty-print/report of the JSON structure for manual editors."
       - "Add automated tests around repository failure handling and week browsing edge cases."
@@ -200,6 +222,7 @@ project_primer:
     - "Tomorrow view and pick-a-day both display accurate slots or graceful no-rota messaging."
     - "Invalid dates, overrides, and weekends are handled without crashes."
     - "Project remains F-Droid friendly (no analytics, ads, or Play Services)."
+    - "GitHub Gist-sourced rotas sync successfully at least once, warn about staleness, and keep serving the cached copy offline."
 
   collaboration_notes:
     purpose_of_file: "Primary shared memory for mission, environment, and workflow; update after major decisions."
@@ -219,7 +242,23 @@ project_primer:
       - "Parents paste the prompt into any AI assistant, supply their current rota PDF/photo/text, and request the JSON conversion."
       - "AI output should be saved as a `.json` file (the app suggests `RotoRota.json`, but any filename works)."
       - "Parents either load the file through the app or drop it into the app-scoped Downloads folder; the app remembers the selection and can be cleared to return to setup."
+      - "For easy sharing, parents (or schools) can publish that JSON in a GitHub Gist and send the raw link to caretakers; the app treats it as a read-only, cacheable source."
       - "Sample rotas live in app/src/main/assets/sample_rotas for demos or quick testing; keep them tidy and valid."
+
+  shared_link_strategy:
+    rationale: "Many families receive a rota from a coordinator; a shared link removes the need to manually pass JSON files around."
+    supported_sources:
+      - "GitHub Gist raw URLs (https://gist.githubusercontent.com/<user>/<gist-id>/raw/<revision>/rota.json)."
+      - "Other HTTPS endpoints that return schema 0.3 JSON without auth; structure the abstraction so more sources can be plugged in later."
+    ux_considerations:
+      - "Setup screen offers two tabs: Local File and Shared Link; both store their latest success in Preferences DataStore."
+      - "Show validation feedback if the pasted link is not HTTPS or does not point at JSON."
+      - "Expose last synced timestamp + 'Refresh now' affordance on home/pick-a-day screens for remote sources."
+    caching_rules:
+      - "Every successful download writes the payload to app-specific storage along with url + etag/hash metadata."
+      - "Offline state keeps delivering the cached payload and surfaces a subtle 'Using cached link from <date/time>' message."
+      - "If a download fails or the payload is invalid, block the switch to remote mode until the user retries or reverts to local."
+    sample_data: "Add a developer gist (link tracked in docs or .env) so QA can test shared-link mode without external dependencies."
 
   references:
     source_documents:

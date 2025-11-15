@@ -33,6 +33,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -53,11 +54,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 import org.roto.R
 import org.roto.data.MenuSelection
+import org.roto.data.MenuSelectionType
 import org.roto.domain.DayDataSource
 import org.roto.domain.DayResult
 import org.roto.domain.SlotEntry
@@ -90,6 +95,7 @@ fun MenuRoot(
         state = state,
         onRefresh = viewModel::refresh,
         onChooseFile = { openDocumentLauncher.launch(arrayOf("application/json", "text/plain")) },
+        onSubmitSharedLink = viewModel::submitSharedLink,
         onCopyInstructions = {
             clipboard.setText(AnnotatedString(viewModel.getAiInstructions()))
         },
@@ -108,6 +114,7 @@ fun MenuScreen(
     state: MenuUiState,
     onRefresh: () -> Unit,
     onChooseFile: () -> Unit,
+    onSubmitSharedLink: (String) -> Unit,
     onCopyInstructions: () -> Unit,
     onCopySample: (String) -> Unit,
     onApplySampleSelection: (MenuSelection) -> Unit,
@@ -118,6 +125,18 @@ fun MenuScreen(
     modifier: Modifier = Modifier
 ) {
     val hasSelection = state.selectedSourceLabel != "No rota selected"
+    var showSharedLinkDialog by remember { mutableStateOf(false) }
+
+    if (showSharedLinkDialog) {
+        SharedLinkDialog(
+            initialValue = state.remoteUrl.orEmpty(),
+            onSubmit = {
+                onSubmitSharedLink(it)
+                showSharedLinkDialog = false
+            },
+            onDismiss = { showSharedLinkDialog = false }
+        )
+    }
 
     when {
         state.isLoading -> LoadingState(modifier)
@@ -125,6 +144,7 @@ fun MenuScreen(
             state = state,
             onRefresh = onRefresh,
             onChooseFile = onChooseFile,
+            onUseSharedLink = { showSharedLinkDialog = true },
             onClearMenu = onClearMenu,
             onSelectWeek = onSelectWeek,
             onClearWeek = onClearWeek,
@@ -132,6 +152,7 @@ fun MenuScreen(
         )
         else -> SetupState(
             onChooseFile = onChooseFile,
+            onUseSharedLink = { showSharedLinkDialog = true },
             onCopyInstructions = onCopyInstructions,
             onCopySample = onCopySample,
             onApplySampleSelection = onApplySampleSelection,
@@ -139,6 +160,9 @@ fun MenuScreen(
             showClear = hasSelection,
             onClearMenu = onClearMenu,
             sourceLabel = state.selectedSourceLabel,
+            sourceType = state.selectedSourceType,
+            remoteStatus = state.remoteStatus,
+            remoteUrl = state.remoteUrl,
             message = state.setupMessage,
             sampleCopyPrompt = state.sampleCopyPrompt,
             modifier = modifier
@@ -164,6 +188,7 @@ private fun LoadingState(modifier: Modifier = Modifier) {
 @Composable
 private fun SetupState(
     onChooseFile: () -> Unit,
+    onUseSharedLink: () -> Unit,
     onCopyInstructions: () -> Unit,
     onCopySample: (String) -> Unit,
     onApplySampleSelection: (MenuSelection) -> Unit,
@@ -171,6 +196,9 @@ private fun SetupState(
     showClear: Boolean,
     onClearMenu: () -> Unit,
     sourceLabel: String,
+    sourceType: MenuSelectionType?,
+    remoteStatus: RemoteStatusUi?,
+    remoteUrl: String?,
     message: SetupMessage?,
     sampleCopyPrompt: SampleCopyPrompt?,
     modifier: Modifier = Modifier
@@ -247,6 +275,21 @@ private fun SetupState(
             Text("Load rota file")
         }
 
+        Button(
+            onClick = onUseSharedLink,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Use shared link")
+        }
+
+        if (sourceType == MenuSelectionType.REMOTE_LINK) {
+            RemoteStatusInfo(
+                status = remoteStatus,
+                fallbackUrl = remoteUrl,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
         if (showClear) {
             TextButton(onClick = onClearMenu) {
                 Text("Clear saved rota")
@@ -285,6 +328,7 @@ private fun MenuContent(
     state: MenuUiState,
     onRefresh: () -> Unit,
     onChooseFile: () -> Unit,
+    onUseSharedLink: () -> Unit,
     onClearMenu: () -> Unit,
     onSelectWeek: (String) -> Unit,
     onClearWeek: () -> Unit,
@@ -322,6 +366,10 @@ private fun MenuContent(
 
         SourceControls(
             selectedSourceLabel = state.selectedSourceLabel,
+            selectedSourceType = state.selectedSourceType,
+            remoteStatus = state.remoteStatus,
+            remoteUrl = state.remoteUrl,
+            onUseSharedLink = onUseSharedLink,
             onChooseFile = onChooseFile,
             showClear = state.selectedSourceLabel != "No rota selected",
             onClearMenu = onClearMenu
@@ -415,6 +463,10 @@ private fun MenuContent(
 @Composable
 private fun SourceControls(
     selectedSourceLabel: String,
+    selectedSourceType: MenuSelectionType?,
+    remoteStatus: RemoteStatusUi?,
+    remoteUrl: String?,
+    onUseSharedLink: () -> Unit,
     onChooseFile: () -> Unit,
     showClear: Boolean,
     onClearMenu: () -> Unit
@@ -426,11 +478,101 @@ private fun SourceControls(
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = onChooseFile) { Text("Load rota file") }
+            Button(onClick = onUseSharedLink) { Text("Use shared link") }
             if (showClear) {
                 TextButton(onClick = onClearMenu) { Text("Clear rota") }
             }
         }
+        if (selectedSourceType == MenuSelectionType.REMOTE_LINK) {
+            RemoteStatusInfo(
+                status = remoteStatus,
+                fallbackUrl = remoteUrl,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
+}
+
+@Composable
+private fun RemoteStatusInfo(
+    status: RemoteStatusUi?,
+    fallbackUrl: String?,
+    modifier: Modifier = Modifier
+) {
+    val (message, color) = when {
+        status == null -> "Shared link saved. Tap Refresh to download the latest rota." to MaterialTheme.colorScheme.primary
+        status.isUsingCache -> "Using cached copy from ${formatLastSynced(status.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.tertiary
+        else -> "Last synced ${formatLastSynced(status.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.primary
+    }
+    Card(
+        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.12f)),
+        modifier = modifier
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodySmall,
+                color = color
+            )
+            status?.let {
+                Text(
+                    text = it.url,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = color.copy(alpha = 0.8f)
+                )
+            } ?: fallbackUrl?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = color.copy(alpha = 0.8f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SharedLinkDialog(
+    initialValue: String,
+    onSubmit: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var url by remember(initialValue) { mutableStateOf(initialValue) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onSubmit(url)
+                }
+            ) { Text("Save link") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+        title = { Text("Use shared link") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "Paste a GitHub Gist raw URL or another HTTPS JSON link. We'll download it and keep a cached copy for offline use.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                OutlinedTextField(
+                    value = url,
+                    onValueChange = { url = it },
+                    label = { Text("Shared rota link") },
+                    singleLine = true,
+                    placeholder = { Text("https://gist.githubusercontent.com/.../raw/rota.json") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    )
+}
+
+private fun formatLastSynced(epochMillis: Long): String {
+    val formatter = DateTimeFormatter.ofPattern("d MMM yyyy HH:mm", Locale.getDefault())
+    return formatter.format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))
 }
 
 @Composable

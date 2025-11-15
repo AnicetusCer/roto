@@ -1,36 +1,69 @@
 package org.roto.data
 
 import android.content.Context
-import android.net.Uri
 import android.os.Environment
 import androidx.annotation.VisibleForTesting
 import java.io.File
 import kotlinx.serialization.SerializationException
+import android.net.Uri
 
 enum class MenuSourceType {
     EXTERNAL_SELECTION,
-    SCOPED_DOWNLOADS
+    SCOPED_DOWNLOADS,
+    REMOTE_LINK
 }
 
 data class MenuLoadResult(
     val data: RotoData,
-    val sourceType: MenuSourceType
+    val sourceType: MenuSourceType,
+    val remoteStatus: RemoteSourceStatus? = null
+)
+
+data class RemoteSourceStatus(
+    val url: String,
+    val lastSyncedEpochMillis: Long,
+    val isFromCache: Boolean
 )
 
 class MenuRepository(
     private val context: Context,
+    private val remoteFetcher: RemoteMenuFetcher = RemoteMenuFetcher(context),
     private val downloadsFileName: String = DEFAULT_DOWNLOADS_FILE_NAME
 ) {
 
-    fun loadMenu(preferredUri: Uri?, allowDownloadsFallback: Boolean = true): Result<MenuLoadResult> =
+    fun loadMenu(selection: MenuSelection?, allowDownloadsFallback: Boolean = true): Result<MenuLoadResult> =
         runCatching {
-            val (rawJson, sourceType) = when {
-                preferredUri != null -> readExternalFile(preferredUri)?.let { it to MenuSourceType.EXTERNAL_SELECTION }
-                    ?: throw IllegalStateException("Unable to read the selected rota file.")
-                allowDownloadsFallback -> readDownloadsMenu()?.let { it to MenuSourceType.SCOPED_DOWNLOADS }
-                    ?: throw IllegalStateException("No rota file found. Choose a file manually or place one in the app's downloads folder.")
-                else -> throw IllegalStateException("No rota file selected. Load one in the app first.")
+            val rawResult = when (selection?.type) {
+                MenuSelectionType.LOCAL_FILE -> {
+                    val uri = runCatching { Uri.parse(selection.reference) }.getOrNull()
+                        ?: throw IllegalStateException("Invalid file reference. Choose the rota file again.")
+                    val json = readExternalFile(uri) ?: throw IllegalStateException("Unable to read the selected rota file.")
+                    RawMenuResult(
+                        rawJson = json,
+                        sourceType = MenuSourceType.EXTERNAL_SELECTION
+                    )
+                }
+                MenuSelectionType.REMOTE_LINK -> {
+                    val fetchResult = remoteFetcher.fetch(selection.reference)
+                    RawMenuResult(
+                        rawJson = fetchResult.rawJson,
+                        sourceType = MenuSourceType.REMOTE_LINK,
+                        remoteStatus = fetchResult.status
+                    )
+                }
+                null -> {
+                    if (!allowDownloadsFallback) {
+                        throw IllegalStateException("No rota file selected. Load one in the app first.")
+                    }
+                    val json = readDownloadsMenu()
+                        ?: throw IllegalStateException("No rota file found. Choose a file manually or place one in the app's downloads folder.")
+                    RawMenuResult(
+                        rawJson = json,
+                        sourceType = MenuSourceType.SCOPED_DOWNLOADS
+                    )
+                }
             }
+            val (rawJson, sourceType, remoteStatus) = rawResult
             val parsed = try {
                 RotoJsonParser.parse(rawJson)
             } catch (e: SerializationException) {
@@ -50,7 +83,8 @@ class MenuRepository(
             }
             MenuLoadResult(
                 data = parsed,
-                sourceType = sourceType
+                sourceType = sourceType,
+                remoteStatus = remoteStatus
             )
         }
 
@@ -75,6 +109,12 @@ class MenuRepository(
         const val DEFAULT_DOWNLOADS_FILE_NAME = "RotoRota.json"
     }
 }
+
+private data class RawMenuResult(
+    val rawJson: String,
+    val sourceType: MenuSourceType,
+    val remoteStatus: RemoteSourceStatus? = null
+)
 
 @VisibleForTesting
 internal fun readFirstExisting(files: List<File>): String? =

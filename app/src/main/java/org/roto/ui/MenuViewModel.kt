@@ -404,7 +404,6 @@ class MenuViewModel(
                 remoteStatus = result.remoteStatus
             )
         }.onFailure { primaryError ->
-            val remoteMessage = buildFallbackRemoteMessage(primaryError.message)
             if (selection != null && selection.type == MenuSelectionType.REMOTE_LINK) {
                 val cachedResult = withContext(Dispatchers.IO) {
                     repository.loadMenu(
@@ -414,17 +413,24 @@ class MenuViewModel(
                     ).getOrNull()
                 }
                 cachedResult?.let { cached ->
+                    val fallbackStatus = (cached.remoteStatus ?: selection.remoteUrl?.let { url ->
+                        RemoteSourceStatus(
+                            url = url,
+                            lastSyncedEpochMillis = System.currentTimeMillis(),
+                            isFromCache = true
+                        )
+                    })?.copy(isFromCache = true)
                     updateStateWithMenu(
                         menuData = cached.data,
                         selection = selection,
                         selectionLabel = preferredLabel,
                         today = today,
                         tomorrow = tomorrow,
-                        messageOverride = remoteMessage,
-                        remoteStatus = cached.remoteStatus?.copy(isFromCache = true)
+                        messageOverride = buildFallbackRemoteMessage(primaryError.message, fallbackStatus),
+                        remoteStatus = fallbackStatus
                     )
                 } ?: emitLoadError(
-                    message = remoteMessage,
+                    message = buildFallbackRemoteMessage(primaryError.message, null),
                     selectionLabel = preferredLabel ?: "Shared link",
                     selectionType = selection.type,
                     remoteUrl = selection.remoteUrl
@@ -663,6 +669,10 @@ private fun formatTimestamp(epochMillis: Long): String {
     return formatter.format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))
 }
 
-private fun buildFallbackRemoteMessage(sourceMessage: String?): String =
-    sourceMessage?.takeIf { it.isNotBlank() }
-        ?: "Shared link unreachable. Showing the last downloaded copy."
+private fun buildFallbackRemoteMessage(sourceMessage: String?, status: RemoteSourceStatus?): String {
+    val suffix = status?.takeIf { it.isFromCache }?.let {
+        " Last downloaded copy from ${formatTimestamp(it.lastSyncedEpochMillis)}."
+    } ?: ""
+    val base = sourceMessage?.takeIf { it.isNotBlank() } ?: "Shared link unreachable."
+    return base + suffix
+}

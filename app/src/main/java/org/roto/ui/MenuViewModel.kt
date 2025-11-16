@@ -193,6 +193,13 @@ class MenuViewModel(
         }
     }
 
+    fun onAppForeground() {
+        val selection = currentSelection
+        if (selection?.type == MenuSelectionType.REMOTE_LINK) {
+            refresh()
+        }
+    }
+
     fun onExternalFileChosen(context: Context, uri: Uri) {
         viewModelScope.launch {
             val label = resolveDisplayName(context, uri)

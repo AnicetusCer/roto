@@ -34,6 +34,11 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        menuViewModel.onAppForeground()
+    }
 }
 
 private val RotoColorScheme = lightColorScheme(

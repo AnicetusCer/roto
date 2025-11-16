@@ -25,10 +25,16 @@ class RemoteMenuFetcher(
 
     fun fetch(originalUrl: String, forceNetwork: Boolean = false): RemoteFetchResult {
         val normalizedUrl = normalizeUrl(originalUrl)
+        val requestUrl = if (forceNetwork) {
+            val delimiter = if (normalizedUrl.contains("?")) "&" else "?"
+            "$normalizedUrl${delimiter}t=${System.currentTimeMillis()}"
+        } else {
+            normalizedUrl
+        }
         val cacheFile = cacheFileFor(normalizedUrl)
         return try {
             val request = Request.Builder()
-                .url(normalizedUrl)
+                .url(requestUrl)
                 .header("Accept", "application/json")
                 .header("User-Agent", "Roto/1.0")
                 .apply {

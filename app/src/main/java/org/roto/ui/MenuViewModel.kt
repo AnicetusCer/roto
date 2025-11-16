@@ -13,7 +13,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import java.io.File
 import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.temporal.TemporalAdjusters
 import kotlinx.coroutines.Dispatchers
@@ -505,6 +508,9 @@ class MenuViewModel(
         val label = selectionLabel ?: buildDefaultLabel(selection)
 
         val message = messageOverride?.let { SetupMessage(it, true) }
+            ?: selection?.takeIf { it.type == MenuSelectionType.REMOTE_LINK }?.let {
+                fallbackMessageForRemote(remoteStatus)
+            }
 
         val remoteUi = remoteStatus?.let {
             RemoteStatusUi(
@@ -641,4 +647,18 @@ class MenuViewModel(
                 ?: "Shared link"
             null -> "Chosen rota"
         }
+}
+
+private fun fallbackMessageForRemote(status: RemoteSourceStatus?): SetupMessage? {
+    if (status == null || !status.isFromCache) return null
+    val formatted = formatTimestamp(status.lastSyncedEpochMillis)
+    return SetupMessage(
+        text = "Shared link unreachable. Showing the last downloaded copy from $formatted.",
+        isError = true
+    )
+}
+
+private fun formatTimestamp(epochMillis: Long): String {
+    val formatter = DateTimeFormatter.ofPattern("d MMM yyyy HH:mm")
+    return formatter.format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))
 }

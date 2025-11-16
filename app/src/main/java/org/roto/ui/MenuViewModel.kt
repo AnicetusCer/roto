@@ -420,13 +420,16 @@ class MenuViewModel(
                     ).getOrNull()
                 }
                 cachedResult?.let { cached ->
-                    val fallbackStatus = (cached.remoteStatus ?: selection.remoteUrl?.let { url ->
-                        RemoteSourceStatus(
-                            url = url,
-                            lastSyncedEpochMillis = System.currentTimeMillis(),
-                            isFromCache = true
-                        )
-                    })?.copy(isFromCache = true)
+                    val previousStatus = _uiState.value.remoteStatus?.toSourceStatus()
+                    val fallbackStatus = (cached.remoteStatus
+                        ?: selection.remoteUrl?.let { url ->
+                            RemoteSourceStatus(
+                                url = url,
+                                lastSyncedEpochMillis = System.currentTimeMillis(),
+                                isFromCache = true
+                            )
+                        }
+                        ?: previousStatus)?.copy(isFromCache = true)
                     updateStateWithMenu(
                         menuData = cached.data,
                         selection = selection,
@@ -675,6 +678,9 @@ private fun formatTimestamp(epochMillis: Long): String {
     val formatter = DateTimeFormatter.ofPattern("d MMM yyyy HH:mm")
     return formatter.format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))
 }
+
+private fun RemoteStatusUi.toSourceStatus(): RemoteSourceStatus =
+    RemoteSourceStatus(url = url, lastSyncedEpochMillis = lastSyncedEpochMillis, isFromCache = isUsingCache)
 
 private fun buildFallbackRemoteMessage(sourceMessage: String?, status: RemoteSourceStatus?): String {
     status?.takeIf { it.isFromCache }?.let {

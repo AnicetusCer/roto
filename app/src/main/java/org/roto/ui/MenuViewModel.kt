@@ -404,7 +404,7 @@ class MenuViewModel(
                 remoteStatus = result.remoteStatus
             )
         }.onFailure { primaryError ->
-            val remoteMessage = primaryError.message ?: "Shared link unreachable. Showing the last downloaded copy."
+            val remoteMessage = buildFallbackRemoteMessage(primaryError.message)
             if (selection != null && selection.type == MenuSelectionType.REMOTE_LINK) {
                 val cachedResult = withContext(Dispatchers.IO) {
                     repository.loadMenu(
@@ -662,3 +662,7 @@ private fun formatTimestamp(epochMillis: Long): String {
     val formatter = DateTimeFormatter.ofPattern("d MMM yyyy HH:mm")
     return formatter.format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))
 }
+
+private fun buildFallbackRemoteMessage(sourceMessage: String?): String =
+    sourceMessage?.takeIf { it.isNotBlank() }
+        ?: "Shared link unreachable. Showing the last downloaded copy."

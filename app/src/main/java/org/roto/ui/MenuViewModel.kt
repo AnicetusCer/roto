@@ -401,10 +401,27 @@ class MenuViewModel(
                 remoteStatus = result.remoteStatus
             )
         }.onFailure { primaryError ->
+            val remoteMessage = primaryError.message ?: "Shared link unreachable. Showing the last downloaded copy."
             if (selection != null && selection.type == MenuSelectionType.REMOTE_LINK) {
-                emitLoadError(
-                    message = primaryError.message
-                        ?: "Couldn't download the shared rota. Check the link and try again.",
+                val cachedResult = withContext(Dispatchers.IO) {
+                    repository.loadMenu(
+                        selection = selection,
+                        allowDownloadsFallback = false,
+                        forceRemoteRefresh = false
+                    ).getOrNull()
+                }
+                cachedResult?.let { cached ->
+                    updateStateWithMenu(
+                        menuData = cached.data,
+                        selection = selection,
+                        selectionLabel = preferredLabel,
+                        today = today,
+                        tomorrow = tomorrow,
+                        messageOverride = remoteMessage,
+                        remoteStatus = cached.remoteStatus?.copy(isFromCache = true)
+                    )
+                } ?: emitLoadError(
+                    message = remoteMessage,
                     selectionLabel = preferredLabel ?: "Shared link",
                     selectionType = selection.type,
                     remoteUrl = selection.remoteUrl

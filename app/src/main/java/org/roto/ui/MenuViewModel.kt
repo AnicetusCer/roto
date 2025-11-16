@@ -376,12 +376,19 @@ class MenuViewModel(
         selection: MenuSelection?,
         isManualRefresh: Boolean = false
     ) {
+        if (!isManualRefresh) {
         _uiState.emit(
             _uiState.value.copy(
-                isLoading = true,
-                setupMessage = if (isManualRefresh) null else _uiState.value.setupMessage
+                isLoading = true
             )
         )
+        } else {
+            _uiState.emit(
+                _uiState.value.copy(
+                    isLoading = true
+                )
+            )
+        }
 
         val today = LocalDate.now()
         val tomorrow = today.plusDays(1)
@@ -670,9 +677,9 @@ private fun formatTimestamp(epochMillis: Long): String {
 }
 
 private fun buildFallbackRemoteMessage(sourceMessage: String?, status: RemoteSourceStatus?): String {
-    val suffix = status?.takeIf { it.isFromCache }?.let {
-        " Last downloaded copy from ${formatTimestamp(it.lastSyncedEpochMillis)}."
-    } ?: " Last downloaded copy will be used."
+    status?.takeIf { it.isFromCache }?.let {
+        return "Shared link unreachable. Using cached copy from ${formatTimestamp(it.lastSyncedEpochMillis)}."
+    }
     val base = sourceMessage?.takeIf { it.isNotBlank() } ?: "Shared link unreachable."
-    return base + suffix
+    return "$base Using the last downloaded copy."
 }

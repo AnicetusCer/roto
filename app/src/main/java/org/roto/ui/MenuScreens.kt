@@ -373,6 +373,7 @@ private fun MenuContent(
             remoteUrl = state.remoteUrl,
             onUseSharedLink = onUseSharedLink,
             onChooseFile = onChooseFile,
+            onRefresh = onRefresh,
             showClear = state.selectedSourceLabel != "No rota selected",
             onClearMenu = onClearMenu
         )
@@ -483,6 +484,7 @@ private fun SourceControls(
     remoteUrl: String?,
     onUseSharedLink: () -> Unit,
     onChooseFile: () -> Unit,
+    onRefresh: () -> Unit,
     showClear: Boolean,
     onClearMenu: () -> Unit
 ) {
@@ -504,6 +506,12 @@ private fun SourceControls(
                 fallbackUrl = remoteUrl,
                 modifier = Modifier.fillMaxWidth()
             )
+            Button(
+                onClick = onRefresh,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Refresh shared link")
+            }
         }
     }
 }

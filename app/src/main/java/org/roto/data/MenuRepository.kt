@@ -51,26 +51,16 @@ class MenuRepository(
                     val uri = runCatching { Uri.parse(selection.reference) }.getOrNull()
                         ?: throw IllegalStateException("Invalid mirror reference. Reload the shared link.")
                     val remoteUrl = selection.remoteUrl ?: throw IllegalStateException("Missing shared link URL.")
-                    val shouldSync = forceRemoteRefresh
-                    if (shouldSync) {
-                        val fetchResult = runCatching { remoteFetcher.fetch(remoteUrl, forceNetwork = true) }.getOrNull()
-                        if (fetchResult != null) {
-                            if (!context.writeTextToUri(uri, fetchResult.rawJson)) {
-                                throw IllegalStateException("Couldn't update the shared rota file.")
-                            }
-                            RawMenuResult(
-                                rawJson = fetchResult.rawJson,
-                                sourceType = MenuSourceType.REMOTE_LINK,
-                                remoteStatus = fetchResult.status
-                            )
-                        } else {
-                            val cached = readExternalFile(uri)
-                                ?: throw IllegalStateException("Shared link unreachable and no saved copy found.")
-                            RawMenuResult(
-                                rawJson = cached,
-                                sourceType = MenuSourceType.REMOTE_LINK
-                            )
+                    if (forceRemoteRefresh) {
+                        val fetchResult = remoteFetcher.fetch(remoteUrl, forceNetwork = true)
+                        if (!context.writeTextToUri(uri, fetchResult.rawJson)) {
+                            throw IllegalStateException("Couldn't update the shared rota file.")
                         }
+                        RawMenuResult(
+                            rawJson = fetchResult.rawJson,
+                            sourceType = MenuSourceType.REMOTE_LINK,
+                            remoteStatus = fetchResult.status
+                        )
                     } else {
                         val cached = readExternalFile(uri)
                             ?: throw IllegalStateException("Shared link file missing. Refresh to download it again.")

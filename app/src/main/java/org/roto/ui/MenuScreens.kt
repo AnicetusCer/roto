@@ -694,14 +694,14 @@ private fun InstructionsDialog(
                 examples.forEach { example ->
                     Text("- $example")
                 }
-                Text("The rota schema (a JSON structure) can be created by hand, but it’s much faster and easier to ask an AI to build it for you. Copy the helper prompt below, paste it into your favourite AI, then follow its instructions—I’ve tested this with photos, text docs, and simple chats.")
-                Text("At the end of the conversation the AI will provide text output (the JSON schema); save this to a file. Even though the data is JSON, it’s fine to store it as .txt for readability on Android—the app only cares that the structure is valid.")
-                Text("Once saved somewhere, you can load the file in the app, share it offline with others, or post it to a website and share the link (GitHub Gist works well).")
-                Text("The \"Copy Prompt\" button remains available even after you’ve loaded a rota. Use it any time you want AI to tweak an existing file: paste the current JSON into the AI, describe the changes you want, and repeat as needed.")
-                Text("Please double-check any rota details an AI generates—AI can get things wrong. If something looks off, ask the AI to fix it and then tap Refresh in Roto.")
+                Text("The rota schema (a JSON structure) can be created by hand, but it’s much faster and easier to ask an AI to build it for you. Copy the helper prompt below, paste it into your favorite AI (ChatGPT, Gemini etc), then follow its instructions—I’ve tested this with photos, text docs, and simple chats.")
+                Text("At the end of the conversation the AI will provide text output (the JSON template); save this to a file. Even though the data is JSON, it’s fine to store it as .txt for readability on Android—the app only cares that the structure is valid.")
+                Text("Once saved, you can load the file in the app, share it with others or post it to a website and share the link (I recommend GitHub Gist).")
+                Text("The \"Copy Prompt\" button remains available even after you’ve loaded a rota. Use it any time you want AI to tweak an existing file: paste the current rota file contents into the AI prompt, describe the changes you want, and repeat as needed.")
+                Text("Please double-check any rota details an AI generates—AI can get things wrong. If something looks off, ask the AI to fix it save the updated file (keep the same name) and then tap Refresh in Roto.")
                 Text(
-                    text = "WARNING: Apart from optional shared links and AI (these are your choice to use), Roto is private and offline, If you’re not comfortable sharing your rota publicly don't just share the file in a way which you control to limit the audience, there are sample files below to use as a template—it’s slower, but totally private.",
-                    color = MaterialTheme.colorScheme.error,
+                    text = "NOTE: Apart from optional shared links and AI (these are your choice to use), Roto is private and offline, If you’re not comfortable sharing your rota publicly, then share the file in a way which you control to limit the audience, there are sample files below to use as a template—it’s slower, but totally private.",
+                    color = MaterialTheme.colorScheme.info,
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text("RECOMMENDATION: Add the Roto widget! so you can instantly see what is upcoming, no need to open the app.")

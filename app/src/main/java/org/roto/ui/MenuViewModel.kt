@@ -322,7 +322,15 @@ class MenuViewModel(
                 remoteStatus = result.remoteStatus
             )
         }.onFailure { primaryError ->
-            if (selection != null) {
+            if (selection != null && selection.type == MenuSelectionType.REMOTE_LINK) {
+                emitLoadError(
+                    message = primaryError.message
+                        ?: "Couldn't download the shared rota. Check the link and try again.",
+                    selectionLabel = preferredLabel ?: "Shared link",
+                    selectionType = selection.type,
+                    remoteUrl = selection.reference
+                )
+            } else if (selection != null) {
                 val fallbackResult = withContext(Dispatchers.IO) {
                     repository.loadMenu(null)
                 }

@@ -672,7 +672,7 @@ private fun formatTimestamp(epochMillis: Long): String {
 private fun buildFallbackRemoteMessage(sourceMessage: String?, status: RemoteSourceStatus?): String {
     val suffix = status?.takeIf { it.isFromCache }?.let {
         " Last downloaded copy from ${formatTimestamp(it.lastSyncedEpochMillis)}."
-    } ?: ""
+    } ?: " Last downloaded copy will be used."
     val base = sourceMessage?.takeIf { it.isNotBlank() } ?: "Shared link unreachable."
     return base + suffix
 }

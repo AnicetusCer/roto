@@ -694,10 +694,12 @@ private fun InstructionsDialog(
                 examples.forEach { example ->
                     Text("- $example")
                 }
-                Text("The rota schema (a JSON structure) can be created by hand, but it’s much faster to let an AI build it using the helper prompt below.")
-                Text("Feel free to give your favourite AI a photo or file of your existing rota. If the result isn’t quite right, ask the AI to fix it and then tap refresh in Roto. You can also share the finished rota by sending the JSON file to someone else—they just load it in the app.")
+                Text("The rota schema (a JSON structure) can be created by hand, but it’s much faster and easier to ask an AI to build it for you. To do this copy the AI prompt below into your favorite AI and follow it's instructions (I have created test rotas from photo's, text docs and just chatting this way, just tell it what you want.)")
+                Text("At the end of the conversation the AI will provide text output (the json schema) you then save this to a file (make it a .txt for readability on android if you like, the app only cares the structure is correct), you then load this file into the app, share it offline with others or post it to a website and share the link if you want to update the rota file centrally.
+                Text("The "Copy Prompt" button is always available to reuse within the app if you need AI to help make changes to the file in future")
+                TEXT("Please, double check any rota details an AI makes, AI gets stuff wrong. If you do find the result isn’t quite right, ask the AI to fix it and then tap refresh in Roto.
                 Text(
-                    text = "WARNING: Roto is private and offline, but your chosen AI might not be. If you’re not comfortable sharing your rota with an online service, use the sample files below as a template and edit them manually—it’s slower, but private.",
+                    text = "WARNING: Apart from optional shared links and AI (these are your choice to use), Roto is private and offline, If you’re not comfortable sharing your rota publicly don't just share the file in a way which you control to limit the audience, there are sample files below to use as a template—it’s slower, but totally private.",
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyMedium
                 )

@@ -1,6 +1,7 @@
 package org.roto.data
 
 import android.content.Context
+import android.net.Uri
 import java.io.File
 import java.io.IOException
 import java.security.MessageDigest
@@ -20,11 +21,12 @@ class RemoteMenuFetcher(
         File(context.filesDir, "remote_rotas").apply { if (!exists()) mkdirs() }
     }
 
-    fun fetch(url: String): RemoteFetchResult {
-        val cacheFile = cacheFileFor(url)
+    fun fetch(originalUrl: String): RemoteFetchResult {
+        val normalizedUrl = normalizeUrl(originalUrl)
+        val cacheFile = cacheFileFor(normalizedUrl)
         return try {
             val request = Request.Builder()
-                .url(url)
+                .url(normalizedUrl)
                 .header("Accept", "application/json")
                 .header("User-Agent", "Roto/1.0")
                 .build()
@@ -39,7 +41,7 @@ class RemoteMenuFetcher(
             RemoteFetchResult(
                 rawJson = body,
                 status = RemoteSourceStatus(
-                    url = url,
+                    url = normalizedUrl,
                     lastSyncedEpochMillis = cacheFile.lastModified(),
                     isFromCache = false
                 )
@@ -53,7 +55,7 @@ class RemoteMenuFetcher(
             RemoteFetchResult(
                 rawJson = cachedJson,
                 status = RemoteSourceStatus(
-                    url = url,
+                    url = normalizedUrl,
                     lastSyncedEpochMillis = cacheFile.lastModified(),
                     isFromCache = true
                 )
@@ -68,5 +70,31 @@ class RemoteMenuFetcher(
         val digest = MessageDigest.getInstance("SHA-256")
         val bytes = digest.digest(toByteArray())
         return bytes.joinToString("") { "%02x".format(it) }
+    }
+
+    private fun normalizeUrl(url: String): String {
+        val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return url
+        val host = uri.host?.lowercase() ?: return url
+        if (host != "gist.github.com") return url
+
+        val segments = uri.pathSegments
+        if (segments.size < 2) return url
+        val author = segments[0]
+        val gistId = segments[1]
+        val remaining = if (segments.size > 2) {
+            segments.subList(2, segments.size).joinToString("/")
+        } else ""
+
+        return buildString {
+            append("https://gist.githubusercontent.com/")
+            append(author)
+            append('/')
+            append(gistId)
+            append("/raw")
+            if (remaining.isNotEmpty()) {
+                append('/')
+                append(remaining)
+            }
+        }
     }
 }

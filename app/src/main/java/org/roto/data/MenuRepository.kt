@@ -52,7 +52,8 @@ class MenuRepository(
                     RawMenuResult(
                         rawJson = fetchResult.rawJson,
                         sourceType = MenuSourceType.REMOTE_LINK,
-                        remoteStatus = fetchResult.status
+                        remoteStatus = fetchResult.status,
+                        persistAction = fetchResult.persistCache
                     )
                 }
                 null -> {
@@ -84,6 +85,9 @@ class MenuRepository(
                 throw IllegalStateException(
                     "The rota file is missing some required details:\n$bulletList\nPlease fix these and try again."
                 )
+            }
+            if (sourceType == MenuSourceType.REMOTE_LINK && remoteStatus?.isFromCache == false) {
+                rawResult.persistAction?.invoke()
             }
             MenuLoadResult(
                 data = parsed,
@@ -117,7 +121,8 @@ class MenuRepository(
 private data class RawMenuResult(
     val rawJson: String,
     val sourceType: MenuSourceType,
-    val remoteStatus: RemoteSourceStatus? = null
+    val remoteStatus: RemoteSourceStatus? = null,
+    val persistAction: (() -> Unit)? = null
 )
 
 @VisibleForTesting

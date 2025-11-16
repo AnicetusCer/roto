@@ -11,7 +11,8 @@ import okhttp3.CacheControl
 
 data class RemoteFetchResult(
     val rawJson: String,
-    val status: RemoteSourceStatus
+    val status: RemoteSourceStatus,
+    val persistCache: (() -> Unit)? = null
 )
 
 class RemoteMenuFetcher(
@@ -44,15 +45,19 @@ class RemoteMenuFetcher(
                 }
                 response.body?.string() ?: throw IOException("Empty response from shared rota.")
             }
-            cacheFile.writeText(body)
-            cacheFile.setLastModified(System.currentTimeMillis())
+            val timestamp = System.currentTimeMillis()
+            val persistAction: () -> Unit = {
+                cacheFile.writeText(body)
+                cacheFile.setLastModified(timestamp)
+            }
             RemoteFetchResult(
                 rawJson = body,
                 status = RemoteSourceStatus(
                     url = normalizedUrl,
-                    lastSyncedEpochMillis = cacheFile.lastModified(),
+                    lastSyncedEpochMillis = timestamp,
                     isFromCache = false
-                )
+                ),
+                persistCache = persistAction
             )
         } catch (error: Exception) {
             if (!cacheFile.exists()) {

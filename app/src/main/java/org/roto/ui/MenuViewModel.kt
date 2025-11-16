@@ -28,6 +28,7 @@ import org.roto.data.MenuPreferencesDataSource
 import org.roto.data.MenuRepository
 import org.roto.data.MenuSelection
 import org.roto.data.MenuSelectionType
+import org.roto.data.RemoteMenuFetcher
 import org.roto.data.RemoteSourceStatus
 import org.roto.data.RotoData
 import org.roto.domain.DayResult
@@ -44,6 +45,12 @@ data class SampleCopyPrompt(
 private data class SampleCopyOutcome(
     val locationHint: String,
     val selection: MenuSelection?
+)
+
+private data class MirrorFileResult(
+    val uriString: String,
+    val displayName: String,
+    val locationHint: String
 )
 
 data class MenuUiState(
@@ -116,6 +123,48 @@ class MenuViewModel(
         }
     }
 
+    private fun writeJsonToDownloads(app: Application, targetName: String, contents: String): MirrorFileResult {
+        val relativePath = Environment.DIRECTORY_DOWNLOADS + "/Roto/"
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val resolver = app.contentResolver
+            resolver.delete(
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                "${MediaStore.MediaColumns.DISPLAY_NAME}=? AND ${MediaStore.MediaColumns.RELATIVE_PATH}=?",
+                arrayOf(targetName, relativePath)
+            )
+            val values = ContentValues().apply {
+                put(MediaStore.Downloads.DISPLAY_NAME, targetName)
+                put(MediaStore.Downloads.MIME_TYPE, "application/json")
+                put(MediaStore.Downloads.RELATIVE_PATH, relativePath)
+            }
+            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                ?: throw IllegalStateException("Unable to create shared rota file in Downloads.")
+            resolver.openOutputStream(uri, "wt")?.use { output ->
+                output.writer().use { writer ->
+                    writer.write(contents)
+                }
+            } ?: throw IllegalStateException("Unable to open Downloads output stream.")
+            MirrorFileResult(
+                uriString = uri.toString(),
+                displayName = targetName,
+                locationHint = "Downloads/Roto/$targetName"
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                ?: throw IllegalStateException("Public Downloads directory unavailable.")
+            val rotoDir = File(downloadsDir, "Roto").apply { if (!exists()) mkdirs() }
+            val target = File(rotoDir, targetName)
+            target.writeText(contents)
+            MediaScannerConnection.scanFile(app, arrayOf(target.absolutePath), arrayOf("application/json"), null)
+            MirrorFileResult(
+                uriString = Uri.fromFile(target).toString(),
+                displayName = targetName,
+                locationHint = "Downloads/Roto/$targetName"
+            )
+        }
+    }
+
     fun applySampleSelection(selection: MenuSelection) {
         viewModelScope.launch {
             persistSelection(selection)
@@ -183,7 +232,10 @@ class MenuViewModel(
     private suspend fun persistSelection(selection: MenuSelection) {
         when (selection.type) {
             MenuSelectionType.LOCAL_FILE -> preferences.saveLocalSelection(selection.reference, selection.displayName)
-            MenuSelectionType.REMOTE_LINK -> preferences.saveRemoteSelection(selection.reference, selection.displayName)
+            MenuSelectionType.REMOTE_LINK -> {
+                val remoteUrl = selection.remoteUrl ?: return
+                preferences.saveRemoteSelection(selection.reference, selection.displayName, remoteUrl)
+            }
         }
     }
 
@@ -221,13 +273,33 @@ class MenuViewModel(
             return
         }
         viewModelScope.launch {
-            preferences.saveRemoteSelection(trimmed, deriveRemoteLabel(uri))
-            _uiState.update { state ->
-                state.copy(
-                    setupMessage = SetupMessage("Saved shared link. Loading the latest rota…", false)
-                )
+            val app = getApplication<Application>()
+            val fetcher = RemoteMenuFetcher(app)
+            _uiState.update { it.copy(setupMessage = SetupMessage("Downloading shared link…", false)) }
+            val fetchOutcome = withContext(Dispatchers.IO) {
+                runCatching { fetcher.fetch(trimmed, forceNetwork = true) }
             }
-            refreshWidgets()
+            fetchOutcome.onSuccess { remote ->
+                val remoteUrl = remote.status.url
+                val fileName = deriveRemoteFileName(remoteUrl)
+                val mirror = withContext(Dispatchers.IO) {
+                    writeJsonToDownloads(app, fileName, remote.rawJson)
+                }
+                preferences.saveRemoteSelection(mirror.uriString, mirror.displayName, remoteUrl)
+                _uiState.update {
+                    it.copy(
+                        setupMessage = SetupMessage("Saved shared rota to ${mirror.locationHint}.", false)
+                    )
+                }
+                refreshWidgets()
+            }.onFailure { error ->
+                val reason = error.message ?: "Unknown error"
+                _uiState.update {
+                    it.copy(
+                        setupMessage = SetupMessage("Couldn't download shared rota: $reason", true)
+                    )
+                }
+            }
         }
     }
 
@@ -335,7 +407,7 @@ class MenuViewModel(
                         ?: "Couldn't download the shared rota. Check the link and try again.",
                     selectionLabel = preferredLabel ?: "Shared link",
                     selectionType = selection.type,
-                    remoteUrl = selection.reference
+                    remoteUrl = selection.remoteUrl
                 )
             } else if (selection != null) {
                 val fallbackResult = withContext(Dispatchers.IO) {
@@ -359,7 +431,7 @@ class MenuViewModel(
                             ?: "Failed to load rota data.",
                         selectionLabel = preferredLabel ?: "Custom rota",
                         selectionType = selection.type,
-                        remoteUrl = if (selection.type == MenuSelectionType.REMOTE_LINK) selection.reference else null
+                        remoteUrl = selection.remoteUrl
                     )
                 }
             } else {
@@ -424,7 +496,7 @@ class MenuViewModel(
                 isUsingCache = it.isFromCache
             )
         }
-        val remoteUrl = selection?.takeIf { it.type == MenuSelectionType.REMOTE_LINK }?.reference
+        val remoteUrl = selection?.remoteUrl
 
         _uiState.emit(
             MenuUiState(
@@ -532,6 +604,11 @@ class MenuViewModel(
             ?: uri.path?.substringAfterLast('/')?.takeIf { it.isNotBlank() }
             ?: uri.host
         return candidate ?: "Shared link"
+    }
+
+    private fun deriveRemoteFileName(url: String): String {
+        val sanitized = url.substringAfterLast('/').substringBefore('?').ifBlank { "RemoteRota.json" }
+        return if (sanitized.endsWith(".json")) sanitized else "$sanitized.json"
     }
 
     private fun buildDefaultLabel(selection: MenuSelection?): String =

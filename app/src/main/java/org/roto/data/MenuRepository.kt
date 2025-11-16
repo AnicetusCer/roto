@@ -48,13 +48,37 @@ class MenuRepository(
                     )
                 }
                 MenuSelectionType.REMOTE_LINK -> {
-                    val fetchResult = remoteFetcher.fetch(selection.reference, forceNetwork = forceRemoteRefresh)
-                    RawMenuResult(
-                        rawJson = fetchResult.rawJson,
-                        sourceType = MenuSourceType.REMOTE_LINK,
-                        remoteStatus = fetchResult.status,
-                        persistAction = fetchResult.persistCache
-                    )
+                    val uri = runCatching { Uri.parse(selection.reference) }.getOrNull()
+                        ?: throw IllegalStateException("Invalid mirror reference. Reload the shared link.")
+                    val remoteUrl = selection.remoteUrl ?: throw IllegalStateException("Missing shared link URL.")
+                    val shouldSync = forceRemoteRefresh
+                    if (shouldSync) {
+                        val fetchResult = runCatching { remoteFetcher.fetch(remoteUrl, forceNetwork = true) }.getOrNull()
+                        if (fetchResult != null) {
+                            if (!context.writeTextToUri(uri, fetchResult.rawJson)) {
+                                throw IllegalStateException("Couldn't update the shared rota file.")
+                            }
+                            RawMenuResult(
+                                rawJson = fetchResult.rawJson,
+                                sourceType = MenuSourceType.REMOTE_LINK,
+                                remoteStatus = fetchResult.status
+                            )
+                        } else {
+                            val cached = readExternalFile(uri)
+                                ?: throw IllegalStateException("Shared link unreachable and no saved copy found.")
+                            RawMenuResult(
+                                rawJson = cached,
+                                sourceType = MenuSourceType.REMOTE_LINK
+                            )
+                        }
+                    } else {
+                        val cached = readExternalFile(uri)
+                            ?: throw IllegalStateException("Shared link file missing. Refresh to download it again.")
+                        RawMenuResult(
+                            rawJson = cached,
+                            sourceType = MenuSourceType.REMOTE_LINK
+                        )
+                    }
                 }
                 null -> {
                     if (!allowDownloadsFallback) {
@@ -85,9 +109,6 @@ class MenuRepository(
                 throw IllegalStateException(
                     "The rota file is missing some required details:\n$bulletList\nPlease fix these and try again."
                 )
-            }
-            if (sourceType == MenuSourceType.REMOTE_LINK && remoteStatus?.isFromCache == false) {
-                rawResult.persistAction?.invoke()
             }
             MenuLoadResult(
                 data = parsed,
@@ -121,8 +142,7 @@ class MenuRepository(
 private data class RawMenuResult(
     val rawJson: String,
     val sourceType: MenuSourceType,
-    val remoteStatus: RemoteSourceStatus? = null,
-    val persistAction: (() -> Unit)? = null
+    val remoteStatus: RemoteSourceStatus? = null
 )
 
 @VisibleForTesting
@@ -132,3 +152,20 @@ internal fun readFirstExisting(files: List<File>): String? =
             if (file.exists() && file.canRead()) file.readText() else null
         }.getOrNull()
     }
+
+private fun Context.writeTextToUri(uri: Uri, text: String): Boolean =
+    runCatching {
+        if ("content".equals(uri.scheme, ignoreCase = true)) {
+            contentResolver.openOutputStream(uri, "wt")?.use { stream ->
+                stream.writer().use { writer ->
+                    writer.write(text)
+                }
+                true
+            } ?: false
+        } else {
+            val filePath = uri.path ?: return@runCatching false
+            val targetFile = File(filePath)
+            targetFile.writeText(text)
+            true
+        }
+    }.getOrDefault(false)

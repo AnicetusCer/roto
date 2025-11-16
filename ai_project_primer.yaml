@@ -7,6 +7,10 @@ project_primer:
       patterns (Week 1 / Week 2 / Week 3 …).
     core_question: "What's on the rota tomorrow?"
     status: "Interactive Compose app in place with JSON import, tomorrow/today view, week browser, and override-aware domain logic."
+    maintainer: "AnicetusCer"
+    website: "https://anicetuscer.github.io/roto/"
+    privacy_policy_url: "https://anicetuscer.github.io/roto/PRIVACY.html"
+    repo: "https://github.com/AnicetusCer/roto"
     audience:
       primary:
         - people managing personal or family rotas
@@ -75,7 +79,7 @@ project_primer:
       Keep JSON in user-managed files; remember the chosen URI via Preferences DataStore so the app can reload it.
       Mirrored remote rotas are saved alongside other files in Downloads/Roto (scoped storage aware) so the system, widgets, and the user all point at the same document.
     dependency_constraints:
-      - "Avoid Google Play Services and proprietary analytics for F-Droid compliance."
+      - "Avoid Google Play Services and proprietary analytics for F-Droid friendliness and Play Store privacy compliance."
       - "Keep the build reproducible with FLOSS-friendly tooling."
     network_and_caching:
       client: "OkHttp-based fetcher that can resolve gist page links to their raw JSON without Play Services."
@@ -131,7 +135,7 @@ project_primer:
       editor: "VS Code connected to the WSL workspace."
       build_side: "WSL builds the APK via Gradle using Linux SDK and JDK."
       test_side: "Windows 11 runs the Android Emulator for interactive testing."
-      privacy_target: "No Play Services dependency; deliver an F-Droid friendly offline app."
+      privacy_target: "No Play Services dependency; deliver an offline app that is F-Droid friendly and Play Store compliant with a public privacy policy at https://anicetuscer.github.io/roto/PRIVACY.html."
     wsl_fedora_setup:
       sdk_root: "/home/Mile/Android/sdk"
       java:
@@ -223,6 +227,7 @@ project_primer:
     - "Invalid dates, overrides, and weekends are handled without crashes."
     - "Project remains F-Droid friendly (no analytics, ads, or Play Services)."
     - "GitHub Gist-sourced rotas sync successfully at least once, warn about staleness, and keep serving the cached copy offline."
+    - "Public GitHub Pages site at https://anicetuscer.github.io/roto/ links privacy policy, legal summary, and source code for store listings."
 
   collaboration_notes:
     purpose_of_file: "Primary shared memory for mission, environment, and workflow; update after major decisions."
@@ -264,3 +269,7 @@ project_primer:
     source_documents:
       - ai_post_env_setup_primer.yaml
       - ai_mission_primer.yaml
+      - docs/PRIVACY.md
+      - docs/LEGAL.md
+      - docs/index.md
+      - docs/fdroid-metadata-template.yml

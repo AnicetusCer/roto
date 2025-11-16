@@ -321,6 +321,7 @@ private fun SetupState(
 
         Spacer(modifier = Modifier.weight(1f))
         TipJarLinks()
+        LegalLinks()
     }
 }
 
@@ -473,6 +474,7 @@ private fun MenuContent(
         }
 
         TipJarLinks(modifier = Modifier.fillMaxWidth())
+        LegalLinks(modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -1001,6 +1003,26 @@ private fun BrowseWeeksSection(
             WeekMenuCard(week)
             TextButton(onClick = onClearWeek) { Text("Clear selection") }
         }
+    }
+}
+
+@Composable
+private fun LegalLinks(modifier: Modifier = Modifier) {
+    val uriHandler = LocalUriHandler.current
+    val onOpenLink: (String) -> Unit = remember(uriHandler) {
+        { url ->
+            runCatching { uriHandler.openUri(url) }
+        }
+    }
+    val appSiteUrl = "https://anicetuscer.github.io/roto/"
+    TextButton(
+        onClick = { onOpenLink(appSiteUrl) },
+        modifier = modifier
+    ) {
+        Text(
+            text = "Privacy & legal information",
+            style = MaterialTheme.typography.bodySmall
+        )
     }
 }
 

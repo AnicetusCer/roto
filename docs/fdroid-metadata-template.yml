@@ -1,0 +1,38 @@
+Categories:
+  - Time
+  - Office
+License: Apache-2.0
+SourceCode: https://github.com/AnicetusCer/roto
+IssueTracker: https://github.com/AnicetusCer/roto/issues
+Changelog: https://github.com/AnicetusCer/roto/releases
+
+Summary: Offline rotating rota viewer
+Description: |
+  Roto is a privacy-first Android app that answers one simple question:
+  “What’s on the rota tomorrow?”.
+
+  - Shows today’s and tomorrow’s rota at a glance
+  - Supports arbitrary rotating week patterns (Week 1 / Week 2 / Week 3…)
+  - Handles per-date overrides (closures, special events) without changing the base cycle
+  - Stores everything on-device in a human-editable JSON file
+  - Can mirror JSON from a user-provided HTTPS link for convenient sharing
+  - Includes a homescreen widget for quick access
+
+  No analytics, no tracking, and no proprietary dependencies. All rota data
+  stays on the device.
+
+RepoType: git
+Repo: https://github.com/AnicetusCer/roto.git
+
+Builds:
+  - versionName: "1.0"
+    versionCode: 1
+    commit: v1.0.0
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+VercodeOperation: "+1"
+

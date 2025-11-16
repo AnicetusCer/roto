@@ -183,7 +183,8 @@ private suspend fun computeWidgetState(context: Context): WidgetState =
         val tomorrow = today.plusDays(1)
         val rotaResult = repository.loadMenu(
             selection = selection,
-            allowDownloadsFallback = false
+            allowDownloadsFallback = false,
+            forceRemoteRefresh = true
         )
 
         rotaResult.fold(

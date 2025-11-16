@@ -145,6 +145,7 @@ fun MenuScreen(
             onRefresh = onRefresh,
             onChooseFile = onChooseFile,
             onUseSharedLink = { showSharedLinkDialog = true },
+            onCopyInstructions = onCopyInstructions,
             onClearMenu = onClearMenu,
             onSelectWeek = onSelectWeek,
             onClearWeek = onClearWeek,
@@ -329,6 +330,7 @@ private fun MenuContent(
     onRefresh: () -> Unit,
     onChooseFile: () -> Unit,
     onUseSharedLink: () -> Unit,
+    onCopyInstructions: () -> Unit,
     onClearMenu: () -> Unit,
     onSelectWeek: (String) -> Unit,
     onClearWeek: () -> Unit,
@@ -430,7 +432,8 @@ private fun MenuContent(
         if (state.weekMenus.isNotEmpty()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Button(onClick = {
                     showBrowse = !showBrowse
@@ -439,6 +442,9 @@ private fun MenuContent(
                     }
                 }) {
                     Text(if (showBrowse) "Hide full rota" else "Browse full rota")
+                }
+                TextButton(onClick = onCopyInstructions) {
+                    Text("Copy AI instructions")
                 }
             }
             if (showBrowse) {
@@ -449,6 +455,15 @@ private fun MenuContent(
                     onSelectWeek = onSelectWeek,
                     onClearWeek = onClearWeek
                 )
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onCopyInstructions) {
+                    Text("Copy AI instructions")
+                }
             }
         }
 

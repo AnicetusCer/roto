@@ -31,7 +31,11 @@ class MenuRepository(
     private val downloadsFileName: String = DEFAULT_DOWNLOADS_FILE_NAME
 ) {
 
-    fun loadMenu(selection: MenuSelection?, allowDownloadsFallback: Boolean = true): Result<MenuLoadResult> =
+    fun loadMenu(
+        selection: MenuSelection?,
+        allowDownloadsFallback: Boolean = true,
+        forceRemoteRefresh: Boolean = false
+    ): Result<MenuLoadResult> =
         runCatching {
             val rawResult = when (selection?.type) {
                 MenuSelectionType.LOCAL_FILE -> {
@@ -44,7 +48,7 @@ class MenuRepository(
                     )
                 }
                 MenuSelectionType.REMOTE_LINK -> {
-                    val fetchResult = remoteFetcher.fetch(selection.reference)
+                    val fetchResult = remoteFetcher.fetch(selection.reference, forceNetwork = forceRemoteRefresh)
                     RawMenuResult(
                         rawJson = fetchResult.rawJson,
                         sourceType = MenuSourceType.REMOTE_LINK,

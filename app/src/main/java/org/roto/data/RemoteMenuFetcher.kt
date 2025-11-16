@@ -7,6 +7,7 @@ import java.io.IOException
 import java.security.MessageDigest
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.CacheControl
 
 data class RemoteFetchResult(
     val rawJson: String,
@@ -21,7 +22,7 @@ class RemoteMenuFetcher(
         File(context.filesDir, "remote_rotas").apply { if (!exists()) mkdirs() }
     }
 
-    fun fetch(originalUrl: String): RemoteFetchResult {
+    fun fetch(originalUrl: String, forceNetwork: Boolean = false): RemoteFetchResult {
         val normalizedUrl = normalizeUrl(originalUrl)
         val cacheFile = cacheFileFor(normalizedUrl)
         return try {
@@ -29,6 +30,13 @@ class RemoteMenuFetcher(
                 .url(normalizedUrl)
                 .header("Accept", "application/json")
                 .header("User-Agent", "Roto/1.0")
+                .apply {
+                    if (forceNetwork) {
+                        cacheControl(CacheControl.FORCE_NETWORK)
+                        header("Cache-Control", "no-cache")
+                        header("Pragma", "no-cache")
+                    }
+                }
                 .build()
             val body = client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {

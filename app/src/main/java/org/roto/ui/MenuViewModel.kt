@@ -306,7 +306,10 @@ class MenuViewModel(
         val preferredLabel = selection?.displayName
 
         val primaryResult = withContext(Dispatchers.IO) {
-            repository.loadMenu(selection)
+            repository.loadMenu(
+                selection = selection,
+                forceRemoteRefresh = selection?.type == MenuSelectionType.REMOTE_LINK
+            )
         }
         primaryResult.onSuccess { result ->
             updateStateWithMenu(

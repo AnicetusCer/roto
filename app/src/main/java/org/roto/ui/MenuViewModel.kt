@@ -377,9 +377,11 @@ class MenuViewModel(
         isManualRefresh: Boolean = false
     ) {
         if (!isManualRefresh) {
+        val warning = _uiState.value.setupMessage?.takeIf { it.isError && it.text.contains("cached", ignoreCase = true) }
         _uiState.emit(
             _uiState.value.copy(
-                isLoading = true
+                isLoading = true,
+                setupMessage = warning
             )
         )
         } else {

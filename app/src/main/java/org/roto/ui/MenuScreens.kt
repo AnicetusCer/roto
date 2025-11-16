@@ -700,7 +700,7 @@ private fun InstructionsDialog(
                 Text("The \"Copy Prompt\" button remains available even after you’ve loaded a rota. Use it any time you want AI to tweak an existing file: paste the current rota file contents into the AI prompt, describe the changes you want, and repeat as needed.")
                 Text("Please double-check any rota details an AI generates—AI can get things wrong. If something looks off, ask the AI to fix it save the updated file (keep the same name) and then tap Refresh in Roto.")
                 Text(
-                    text = "NOTE: Alone Roto is private and offline, It is your choice to use an AI to help build a rota file, it is also your choice how you share the file to others. This app collects no data.",
+                    text = "NOTE: Alone, Roto is private and offline, It is your choice to use an AI to help build a rota file, it is also your choice how you share the file to others. This app collects no data.",
                     color = MaterialTheme.colorScheme.tertiary,
                     style = MaterialTheme.typography.bodyMedium
                 )

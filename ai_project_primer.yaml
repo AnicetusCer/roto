@@ -33,7 +33,7 @@ project_primer:
       - key: human_editable_data
         description: "Support pasting or importing JSON that any user can tweak or regenerate with an AI."
       - key: shared_link_rotas
-        description: "Accept GitHub Gist (or other HTTPS) links as read-only rota sources while caching the last good JSON for offline use."
+        description: "Accept GitHub Gist (or other HTTPS) links, mirror the downloaded JSON into the Downloads/Roto folder, and treat it exactly like a local file with automatic refresh + offline fallback."
       - key: browse_week_rota
         description: "Allow users to open any published week pattern and inspect all configured days (weekday or weekend)."
     stretch_goals:
@@ -73,14 +73,14 @@ project_primer:
     platform: "Android (minSdk 24, Kotlin, Jetpack Compose)."
     storage: >
       Keep JSON in user-managed files; remember the chosen URI via Preferences DataStore so the app can reload it.
-      Mirror any remote gist download into an app-private cache file plus metadata so the UI can fall back to the last successful sync.
+      Mirrored remote rotas are saved alongside other files in Downloads/Roto (scoped storage aware) so the system, widgets, and the user all point at the same document.
     dependency_constraints:
       - "Avoid Google Play Services and proprietary analytics for F-Droid compliance."
       - "Keep the build reproducible with FLOSS-friendly tooling."
     network_and_caching:
-      client: "Introduce an HTTP stack (OkHttp or Ktor Client) that can fetch GitHub Gist raw URLs without Play Services."
-      sync_policy: "On setup or manual refresh, download the gist JSON, validate schema 0.3, then persist both the payload and a last_synced timestamp."
-      offline_behavior: "If a gist fetch fails, continue showing the cached payload and surface a non-blocking warning."
+      client: "OkHttp-based fetcher that can resolve gist page links to their raw JSON without Play Services."
+      sync_policy: "On setup or manual/auto refresh, download the gist JSON, validate schema 0.3, then overwrite the mirrored file and update last_synced metadata."
+      offline_behavior: "If a gist fetch fails (404/offline), surface a persistent warning, mark the remote status as cached, and keep using the last downloaded copy until the link recovers."
 
   architecture_and_ui:
     layers:
@@ -111,7 +111,7 @@ project_primer:
             - slot_list (ordered slots with tags)
             - reason_or_notes (override/day/global notes)
             - button_view_other_day
-            - button_refresh_remote (visible only when a gist source is configured; triggers background sync and status pill)
+            - button_refresh_remote (visible only when a shared link is configured; triggers background sync, updates warning banner if the link is unreachable)
       - pick_a_day_screen:
           purpose: "Browse any date's rota via date picker or next/prev controls."
       - setup_screen:
@@ -120,8 +120,8 @@ project_primer:
             - "Pick a local JSON file (existing flow)."
             - "Paste or edit a GitHub Gist URL (expects the raw JSON endpoint)."
           helpers:
-            - "Show last synced timestamp and cache size when a remote link is active."
-            - "Provide 'Use cached copy' fallback if the latest download fails."
+            - "Show last synced timestamp and cached-warning state when a remote link is active."
+            - "Surface a permanent banner if the remote link fails while keeping the mirrored file active."
     orientation:
       lock_to_portrait: "Keep the app in a non-rotating, vertical layout so the UI stays consistent for parents."
 

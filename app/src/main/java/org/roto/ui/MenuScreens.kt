@@ -524,7 +524,7 @@ private fun RemoteStatusInfo(
 ) {
     val (message, color) = when {
         status == null -> "Shared link saved. Tap Refresh to download the latest available rota." to MaterialTheme.colorScheme.primary
-        status.isUsingCache -> "Using cached copy from ${formatLastSynced(status.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.tertiary
+        status.isUsingCache -> "Remote link unavailable. Using cached copy from ${formatLastSynced(status.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.tertiary
         else -> "Last synced ${formatLastSynced(status.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.primary
     }
     Card(
@@ -548,6 +548,13 @@ private fun RemoteStatusInfo(
                     text = it,
                     style = MaterialTheme.typography.labelSmall,
                     color = color.copy(alpha = 0.8f)
+                )
+            }
+            if (status?.isUsingCache == true) {
+                Text(
+                    text = "The last downloaded file is still active until the link returns.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = color
                 )
             }
         }

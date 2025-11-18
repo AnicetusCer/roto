@@ -64,7 +64,6 @@ apksigner verify --verbose --print-certs app/build/outputs/apk/release/app-relea
 
 ```bash
 ./gradlew :app:bundleRelease
-apksigner verify --verbose --print-certs app/build/outputs/bundle/release/app-release.aab
 ```
 
 Note: The Play Console only needs the `.aab`. F-Droid rebuilds their own copy from source, but you can upload the signed APK to checkpoints or share it for testing.

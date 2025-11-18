@@ -271,7 +271,7 @@ class MenuViewModel(
         }
         val uri = runCatching { Uri.parse(trimmed) }.getOrNull()
         val scheme = uri?.scheme?.lowercase()
-        if (uri == null || scheme !in setOf("https", "http")) {
+        if (uri == null || scheme != "https") {
             _uiState.update { it.copy(setupMessage = SetupMessage("Shared links must start with https://", true)) }
             return
         }

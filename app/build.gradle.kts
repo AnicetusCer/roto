@@ -23,7 +23,7 @@ android {
         minSdk = 24
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
     }
 
     compileOptions {
@@ -50,19 +50,21 @@ android {
     val signingProps = loadSigningProps()
 
     signingConfigs {
-        create("release") {
-            signingProps?.let { props ->
+        signingProps?.let { props ->
+            create("release") {
                 storeFile = file(props["storeFile"] as String)
                 storePassword = props["storePassword"] as String
                 keyAlias = props["keyAlias"] as String
                 keyPassword = props["keyPassword"] as String
-            } ?: logger.warn("Release signing props not found; APK will be unsigned.")
+            }
         }
     }
-    
+
     buildTypes {
         getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
+            if (signingProps != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

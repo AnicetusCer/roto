@@ -1,0 +1,1 @@
+Initial F-Droid-ready release: offline rota viewer with widget, sample JSON rotas, and privacy-first design.

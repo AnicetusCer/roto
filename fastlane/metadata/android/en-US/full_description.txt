@@ -1,0 +1,10 @@
+Roto is an offline, privacy-first way to keep any rotating schedule on-device. Load a JSON rota, pin the widget, and check today or tomorrow at a glance—no accounts or trackers.
+
+- Works fully offline; optional one-time download from a user-provided HTTPS link
+- Handles repeating week cycles (Week 1/Week 2/Week 3...) anchored to real calendar Mondays
+- Supports per-date overrides without editing the base cycle
+- Flexible slots with labels, tags, and notes for menus, shifts, or duties
+- Homescreen widget for today/tomorrow
+- Ships with sample rotas and an AI-friendly prompt to generate your own JSON quickly
+
+All data stays local; dependencies are open source and F-Droid friendly.

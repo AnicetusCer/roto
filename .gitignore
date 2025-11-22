@@ -1,7 +1,6 @@
 # Gradle & build outputs
 .gradle/
 **/build/
-gradle/wrapper/*.jar
 
 # Android Studio / IntelliJ
 .idea/

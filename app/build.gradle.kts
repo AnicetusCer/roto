@@ -67,6 +67,10 @@ android {
             }
             isMinifyEnabled = true
             isShrinkResources = true
+            ndk {
+                // Generate native debug symbols ZIP for Play Console crash decoding.
+                debugSymbolLevel = "SYMBOL_TABLE"
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

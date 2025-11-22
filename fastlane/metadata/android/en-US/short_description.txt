@@ -1,1 +1,1 @@
-Offline rota and shift viewer with today/tomorrow focus, widget, and zero tracking.
+Offline rota and shift viewer with today/tomorrow focus, widget, zero tracking.

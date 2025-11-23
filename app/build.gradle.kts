@@ -86,6 +86,18 @@ android {
 }
 
 dependencies {
+    // Copy the assembled release APK to a versioned filename for release uploads.
+    tasks.register<Copy>("copyVersionedReleaseApk") {
+        val versionName = android.defaultConfig.versionName ?: "unspecified"
+        dependsOn("assembleRelease")
+        from(layout.buildDirectory.file("outputs/apk/release/app-release.apk"))
+        into(layout.buildDirectory.dir("outputs/apk/release"))
+        rename { "roto-v$versionName.apk" }
+    }
+    tasks.named("assembleRelease").configure {
+        finalizedBy("copyVersionedReleaseApk")
+    }
+
     val composeBom = platform("androidx.compose:compose-bom:2024.02.01")
     implementation(composeBom)
     androidTestImplementation(composeBom)

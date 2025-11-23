@@ -47,6 +47,11 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    dependenciesInfo {
+        // Disable dependency metadata signing block so F-Droid scans pass.
+        includeInApk = false
+        includeInBundle = false
+    }
     val signingProps = loadSigningProps()
 
     signingConfigs {

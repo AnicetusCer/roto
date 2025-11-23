@@ -91,8 +91,9 @@ afterEvaluate {
         val versionName = android.defaultConfig.versionName ?: "unspecified"
         dependsOn("assembleRelease")
         from(layout.buildDirectory.file("outputs/apk/release/app-release.apk"))
-        into(layout.buildDirectory.dir("outputs/apk/release"))
+        into(layout.buildDirectory.dir("outputs/apk/release/versioned"))
         rename { "roto-v$versionName.apk" }
+        mustRunAfter("createReleaseApkListingFileRedirect")
     }
     tasks.named("assembleRelease").configure {
         finalizedBy("copyVersionedReleaseApk")

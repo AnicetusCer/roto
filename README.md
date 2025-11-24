@@ -21,14 +21,14 @@ Roto is an offline, privacy-first Android app that answers one simple question: 
 - **Offline JSON import** – Load any rota via **Load rota (JSON)** or by placing `RotoRota.json` in the app’s scoped Downloads directory.
 - **Shared link rotas** – Paste a GitHub Gist (or other HTTPS) link; the app converts standard gist URLs to their raw JSON endpoints, downloads once, caches locally, and keeps serving the cached copy offline.
 - **AI helper prompt** – The setup screen’s **Copy AI Instructions** button gives anyone a ready-made prompt to turn a PDF/photo into valid JSON with their favourite assistant.
-- **Privacy by default** – No analytics, tracking, or proprietary dependencies; the app runs happily offline and is F-Droid friendly.
+- **Privacy by default** – No analytics, tracking, or proprietary dependencies; the app runs happily offline and is F-Droid friendly. Build is pinned and reproducible-friendly (Gradle SHA pinned; dependency metadata signing block disabled for F-Droid).
 
 ## Getting Started
 
 1. **Install the app on your phone**
    - Side-load the latest APK (release builds live in `app/build/outputs/apk/release`).
    - Or generate your own signed build by following the [build guide](docs/BUILDING.md).
-   - F-Droid and Google Play listings are planned; once live you can install directly from those stores.
+   - F-Droid and Google Play listings are planned; once live you can install directly from those stores. Release APKs are published as `roto-v<version>.apk` on GitHub to match F-Droid’s Binaries pattern.
 2. **Generate the rota JSON**
    - On the setup screen tap **Copy AI Instructions**.
    - Paste the prompt into your preferred assistant (ChatGPT, Claude, Copilot, etc.) and either have a conversation with the AI or share an existing rota you have, such as a PDF/photo/text so it can build your rota file.

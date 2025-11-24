@@ -23,6 +23,7 @@ project_primer:
       - privacy: "No analytics, tracking, or ads; F-Droid-friendly dependencies only."
       - human_editable_data: "Users can paste and edit a human-readable JSON rota."
       - predictable: "If there is no rota for a date, surface a clear 'No rota found' message."
+      - reproducible_builds: "Pin Gradle wrapper with distributionSha256Sum, disable dependency metadata signing blocks, and name release APKs roto-v<version>.apk to align with F-Droid binaries."
 
   product_scope:
     core_features:

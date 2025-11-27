@@ -325,6 +325,7 @@ private fun SetupState(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun MenuContent(
     state: MenuUiState,
@@ -989,6 +990,7 @@ private fun TipJarTextButton(label: String, onClick: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun BrowseWeeksSection(
     weekMenus: List<WeekMenu>,

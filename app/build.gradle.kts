@@ -45,6 +45,8 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            // Drop library baseline profile assets for reproducible builds.
+            excludes += "assets/dexopt/baseline.prof"
         }
     }
     dependenciesInfo {

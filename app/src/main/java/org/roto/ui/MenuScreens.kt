@@ -340,10 +340,17 @@ private fun MenuContent(
     val appTitle = state.rotaName.ifBlank { "Roto" }
     val scrollState = rememberScrollState()
     var showBrowse by remember { mutableStateOf(false) }
+    val weekCardBringIntoView = remember { BringIntoViewRequester() }
 
     LaunchedEffect(state.weekMenus.size) {
         if (state.weekMenus.isEmpty()) {
             showBrowse = false
+        }
+    }
+
+    LaunchedEffect(state.selectedWeekMenu?.id, showBrowse) {
+        if (showBrowse && state.selectedWeekMenu != null) {
+            weekCardBringIntoView.bringIntoView()
         }
     }
 
@@ -455,7 +462,8 @@ private fun MenuContent(
                     weekMenus = state.weekMenus,
                     selectedWeekMenu = state.selectedWeekMenu,
                     onSelectWeek = onSelectWeek,
-                    onClearWeek = onClearWeek
+                    onClearWeek = onClearWeek,
+                    bringIntoViewRequester = weekCardBringIntoView
                 )
             }
         } else {
@@ -986,7 +994,8 @@ private fun BrowseWeeksSection(
     weekMenus: List<WeekMenu>,
     selectedWeekMenu: WeekMenu?,
     onSelectWeek: (String) -> Unit,
-    onClearWeek: () -> Unit
+    onClearWeek: () -> Unit,
+    bringIntoViewRequester: BringIntoViewRequester? = null
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
@@ -1000,7 +1009,8 @@ private fun BrowseWeeksSection(
             }
         }
         selectedWeekMenu?.let { week ->
-            WeekMenuCard(week)
+            val cardModifier = bringIntoViewRequester?.let { Modifier.bringIntoViewRequester(it) } ?: Modifier
+            WeekMenuCard(week, modifier = cardModifier)
             TextButton(onClick = onClearWeek) { Text("Clear selection") }
         }
     }
@@ -1027,10 +1037,10 @@ private fun LegalLinks(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun WeekMenuCard(weekMenu: WeekMenu) {
+private fun WeekMenuCard(weekMenu: WeekMenu, modifier: Modifier = Modifier) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         Column(
             modifier = Modifier

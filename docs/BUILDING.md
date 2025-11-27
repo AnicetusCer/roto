@@ -64,7 +64,7 @@ For F-Droid reproducibility and scans:
 
 - The Gradle wrapper is pinned with `distributionSha256Sum` to verify the Gradle download.
 - `dependenciesInfo { includeInApk = false; includeInBundle = false }` is set in `app/build.gradle.kts` to disable the dependency metadata signing block.
-- Release APKs uploaded to GitHub are named `roto-v<versionName>.apk` (e.g. `roto-v1.0.1.apk`) to match the `Binaries` URL pattern used in fdroiddata.
+- Release APKs uploaded to GitHub are named `roto-v<versionName>.apk` (e.g. `roto-v1.0.2.apk`) to match the `Binaries` URL pattern used in fdroiddata.
 
 ### App Bundle (Google Play)
 

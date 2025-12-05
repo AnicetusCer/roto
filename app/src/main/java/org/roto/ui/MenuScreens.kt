@@ -178,14 +178,11 @@ fun MenuScreen(
             onChooseFile = onChooseFile,
             onUseSharedLink = { showSharedLinkDialog = true },
             onCopyInstructions = onCopyInstructions,
-            onClearMenu = onClearMenu,
-            onSelectWeek = onSelectWeek,
-            onClearWeek = onClearWeek,
-            themeOption = themeOption,
-            onThemeChange = onThemeChange,
-            onOpenSettings = { showSettings = true },
-            modifier = modifier
-        )
+        onClearMenu = onClearMenu,
+        onSelectWeek = onSelectWeek,
+        onClearWeek = onClearWeek,
+        modifier = modifier
+    )
         else -> SetupState(
             onChooseFile = onChooseFile,
             onUseSharedLink = { showSharedLinkDialog = true },
@@ -198,7 +195,6 @@ fun MenuScreen(
             sourceLabel = state.selectedSourceLabel,
             sourceType = state.selectedSourceType,
             remoteStatus = state.remoteStatus,
-            remoteUrl = state.remoteUrl,
             message = state.setupMessage,
             sampleCopyPrompt = state.sampleCopyPrompt,
             onOpenSettings = { showSettings = true },
@@ -283,7 +279,6 @@ private fun SetupState(
     sourceLabel: String,
     sourceType: MenuSelectionType?,
     remoteStatus: RemoteStatusUi?,
-    remoteUrl: String?,
     message: SetupMessage?,
     sampleCopyPrompt: SampleCopyPrompt?,
     onOpenSettings: () -> Unit,
@@ -376,7 +371,6 @@ private fun SetupState(
         if (sourceType == MenuSelectionType.REMOTE_LINK) {
             RemoteStatusInfo(
                 status = remoteStatus,
-                fallbackUrl = remoteUrl,
                 onRefresh = {},
                 modifier = Modifier.fillMaxWidth()
             )
@@ -507,9 +501,6 @@ private fun MenuContent(
     onClearMenu: () -> Unit,
     onSelectWeek: (String) -> Unit,
     onClearWeek: () -> Unit,
-    themeOption: ThemeOption,
-    onThemeChange: (ThemeOption) -> Unit,
-    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val appTitle = state.rotaName.ifBlank { "Roto" }
@@ -554,7 +545,6 @@ private fun MenuContent(
             selectedSourceLabel = state.selectedSourceLabel,
             selectedSourceType = state.selectedSourceType,
             remoteStatus = state.remoteStatus,
-            remoteUrl = state.remoteUrl,
             onUseSharedLink = onUseSharedLink,
             onChooseFile = onChooseFile,
             onRefresh = onRefresh,
@@ -669,14 +659,12 @@ private fun SourceControls(
     selectedSourceLabel: String,
     selectedSourceType: MenuSelectionType?,
     remoteStatus: RemoteStatusUi?,
-    remoteUrl: String?,
     onUseSharedLink: () -> Unit,
     onChooseFile: () -> Unit,
     onRefresh: () -> Unit,
     showClear: Boolean,
     onClearMenu: () -> Unit,
-    onOpenSettings: (() -> Unit)?,
-    showSettingsButton: Boolean = true
+    onOpenSettings: (() -> Unit)?
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
         Text(
@@ -719,21 +707,19 @@ private fun SourceControls(
                 }
             }
         }
-        if (selectedSourceType == MenuSelectionType.REMOTE_LINK) {
-        RemoteStatusInfo(
-            status = remoteStatus,
-            fallbackUrl = remoteUrl,
-            onRefresh = onRefresh,
-            modifier = Modifier.fillMaxWidth()
-        )
-        }
+    if (selectedSourceType == MenuSelectionType.REMOTE_LINK) {
+    RemoteStatusInfo(
+        status = remoteStatus,
+        onRefresh = onRefresh,
+        modifier = Modifier.fillMaxWidth()
+    )
+    }
     }
 }
 
 @Composable
 private fun RemoteStatusInfo(
     status: RemoteStatusUi?,
-    fallbackUrl: String?,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -1291,7 +1277,6 @@ private fun deriveRecentLabel(recent: RecentRota): String =
             recent.displayName?.takeIf { it.isNotBlank() }
                 ?: recent.remoteUrl?.takeIf { it.isNotBlank() }
                 ?: hostOrLast(recent.reference)
-                ?: "Shared link"
         }
         MenuSelectionType.LOCAL_FILE -> {
             recent.displayName?.takeIf { it.isNotBlank() }

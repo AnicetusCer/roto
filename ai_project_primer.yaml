@@ -41,6 +41,8 @@ project_primer:
         description: "Accept GitHub Gist (or other HTTPS) links, mirror the downloaded JSON into the Downloads/Roto folder, and treat it exactly like a local file with automatic refresh + offline fallback."
       - key: browse_week_rota
         description: "Allow users to open any published week pattern and inspect all configured days (weekday or weekend)."
+      - key: recent_rotas
+        description: "Keep a recents list of the last 5–10 rotas (local or shared links) for one-tap reopening, with a clear/reset option."
     stretch_goals:
       - key: home_screen_widget
         description: "Android widget showing tomorrow's rota summary."
@@ -86,7 +88,7 @@ project_primer:
     network_and_caching:
       client: "OkHttp-based fetcher that can resolve gist page links to their raw JSON without Play Services."
       sync_policy: "On setup or manual/auto refresh, download the gist JSON, validate schema 0.3, then overwrite the mirrored file and update last_synced metadata."
-      offline_behavior: "If a gist fetch fails (404/offline), surface a persistent warning, mark the remote status as cached, and keep using the last downloaded copy until the link recovers."
+      offline_behavior: "If a gist fetch fails (404/offline), surface a persistent warning, mark the remote status as cached, and keep using the last downloaded copy until the link recovers. Widget Today/Tomorrow toggles use the local copy for responsiveness; the Refresh action triggers the network fetch."
 
   architecture_and_ui:
     layers:

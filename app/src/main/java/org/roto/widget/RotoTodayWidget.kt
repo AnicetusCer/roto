@@ -45,6 +45,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.text.TextAlign
 import androidx.glance.unit.ColorProvider
+import android.content.res.Configuration
 import org.roto.data.RotoData
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentHashMap
@@ -56,6 +57,8 @@ import org.roto.MainActivity
 import org.roto.data.MenuPreferencesDataSource
 import org.roto.data.MenuRepository
 import org.roto.data.MenuSelection
+import org.roto.data.ThemeOption
+import org.roto.data.ThemePreferencesDataSource
 import org.roto.domain.DayResult
 import org.roto.domain.getMenuForDate
 import kotlinx.serialization.Serializable
@@ -175,6 +178,7 @@ private suspend fun loadWidgetState(
 private suspend fun computeWidgetState(context: Context): WidgetState =
     withContext(Dispatchers.IO) {
         val preferences = MenuPreferencesDataSource(context)
+        val themePreferences = ThemePreferencesDataSource(context)
         val repository = MenuRepository(context)
         val selection: MenuSelection? = runCatching {
             preferences.menuSelectionFlow.firstOrNull()
@@ -182,6 +186,21 @@ private suspend fun computeWidgetState(context: Context): WidgetState =
 
         val today = LocalDate.now()
         val tomorrow = today.plusDays(1)
+        val systemDark = context.isSystemInDarkMode()
+        val themeOption: ThemeOption = runCatching {
+            themePreferences.themeOptionFlow.firstOrNull()
+        }.getOrNull() ?: ThemeOption.SYSTEM
+        val resolvedDark = when (themeOption) {
+            ThemeOption.SYSTEM -> systemDark
+            ThemeOption.DARK -> true
+            ThemeOption.LIGHT -> false
+            ThemeOption.FOREST,
+            ThemeOption.SUNSET,
+            ThemeOption.OCEAN,
+            ThemeOption.BLOSSOM,
+            ThemeOption.MIDNIGHT,
+            ThemeOption.SAND -> systemDark
+        }
         val rotaResult = repository.loadMenu(
             selection = selection,
             allowDownloadsFallback = false,
@@ -203,6 +222,9 @@ private suspend fun computeWidgetState(context: Context): WidgetState =
                         fallbackMessage = nextAvailable?.let {
                             "No rota entries for today. Next rota: ${it.dateLabel}"
                         } ?: "No rota entries available."
+                        ,
+                        themeOption = themeOption,
+                        isDark = resolvedDark
                     )
                 } else {
                     Log.d(TAG, "computeWidgetState: todayPresent=${todayResult != null}, tomorrowPresent=${tomorrowResult != null}")
@@ -210,7 +232,9 @@ private suspend fun computeWidgetState(context: Context): WidgetState =
                         rotaName = data.rotaName.ifBlank { "Roto" },
                         today = todayResult?.toSummary("Today", DayFocus.TODAY),
                         tomorrow = tomorrowResult?.toSummary("Tomorrow", DayFocus.TOMORROW),
-                        fallbackMessage = null
+                        fallbackMessage = null,
+                        themeOption = themeOption,
+                        isDark = resolvedDark
                     )
                 }
             },
@@ -219,7 +243,9 @@ private suspend fun computeWidgetState(context: Context): WidgetState =
                     rotaName = "Roto",
                     today = null,
                     tomorrow = null,
-                    fallbackMessage = error.message ?: "Add a rota in the app to populate the widget."
+                    fallbackMessage = error.message ?: "Add a rota in the app to populate the widget.",
+                    themeOption = themeOption,
+                    isDark = resolvedDark
                 )
             }
         )
@@ -229,7 +255,9 @@ private data class WidgetState(
     val rotaName: String,
     val today: DaySummary?,
     val tomorrow: DaySummary?,
-    val fallbackMessage: String?
+    val fallbackMessage: String?,
+    val themeOption: ThemeOption = ThemeOption.SYSTEM,
+    val isDark: Boolean = false
 )
 
 private data class DaySummary(
@@ -247,7 +275,9 @@ private data class CachedWidgetState(
     val rotaName: String,
     val today: CachedDaySummary?,
     val tomorrow: CachedDaySummary?,
-    val fallbackMessage: String?
+    val fallbackMessage: String?,
+    val themeOption: ThemeOption = ThemeOption.SYSTEM,
+    val isDark: Boolean = false
 )
 
 @Serializable
@@ -266,7 +296,9 @@ private fun CachedWidgetState.toWidgetState(): WidgetState =
         rotaName = rotaName,
         today = today?.toDaySummary(),
         tomorrow = tomorrow?.toDaySummary(),
-        fallbackMessage = fallbackMessage
+        fallbackMessage = fallbackMessage,
+        themeOption = themeOption,
+        isDark = isDark
     )
 
 private fun CachedDaySummary.toDaySummary(): DaySummary =
@@ -285,7 +317,9 @@ private fun WidgetState.toCached(): CachedWidgetState =
         rotaName = rotaName,
         today = today?.toCached(),
         tomorrow = tomorrow?.toCached(),
-        fallbackMessage = fallbackMessage
+        fallbackMessage = fallbackMessage,
+        themeOption = themeOption,
+        isDark = isDark
     )
 
 private fun DaySummary.toCached(): CachedDaySummary =
@@ -306,31 +340,33 @@ private fun RotoWidgetContent(
     summary: DaySummary?,
     modifier: GlanceModifier = GlanceModifier
 ) {
+    val palette = paletteForTheme(state.themeOption, state.isDark)
     val openAppAction = actionStartActivity<MainActivity>()
     Column(
         modifier = modifier
-            .background(BackgroundColor)
+            .background(palette.background)
             .cornerRadius(10.dp)
             .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
         Text(
             text = state.rotaName,
-            style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TitleColor)
+            style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold, color = palette.titleColor)
         )
         Spacer(modifier = GlanceModifier.height(8.dp))
-        ToggleRow(activeFocus = focus)
+        ToggleRow(activeFocus = focus, palette = palette)
         Spacer(modifier = GlanceModifier.height(6.dp))
         Row(
             modifier = GlanceModifier.fillMaxWidth(),
             horizontalAlignment = Alignment.Horizontal.End
         ) {
-            OpenAppLink(openAppAction)
+            OpenAppLink(openAppAction, palette)
         }
         Spacer(modifier = GlanceModifier.height(8.dp))
         if (summary != null) {
-            val background = if (focus == DayFocus.TODAY) TodayBackground else TomorrowBackground
+            val background = if (focus == DayFocus.TODAY) palette.todayBackground else palette.tomorrowBackground
             DaySection(
                 summary = summary,
+                palette = palette,
                 background = background,
                 modifier = GlanceModifier
                     .defaultWeight()
@@ -341,7 +377,7 @@ private fun RotoWidgetContent(
                 ?: "There is no rota data for ${focus.displayLabel().lowercase()}."
             Text(
                 text = message,
-                style = TextStyle(fontSize = 12.sp, color = SecondaryTextColor)
+                style = TextStyle(fontSize = 12.sp, color = palette.secondaryTextColor)
             )
         }
     }
@@ -350,6 +386,7 @@ private fun RotoWidgetContent(
 @Composable
 private fun DaySection(
     summary: DaySummary,
+    palette: WidgetPalette,
     background: ColorProvider,
     modifier: GlanceModifier = GlanceModifier
 ) {
@@ -361,21 +398,21 @@ private fun DaySection(
     ) {
         Text(
             text = summary.title,
-            style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold, color = PrimaryTextColor)
+            style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold, color = palette.primaryTextColor)
         )
         Text(
             text = summary.dateLabel,
-            style = TextStyle(fontSize = 12.sp, color = SecondaryTextColor)
+            style = TextStyle(fontSize = 12.sp, color = palette.secondaryTextColor)
         )
         Spacer(modifier = GlanceModifier.height(4.dp))
         summary.specialEvent?.takeIf { it.isNotBlank() }?.let {
-            SpecialEventBadge(text = it)
+            SpecialEventBadge(text = it, palette = palette)
             Spacer(modifier = GlanceModifier.height(6.dp))
         }
         if (summary.isClosed) {
             Text(
                 text = summary.closedReason?.takeIf { it.isNotBlank() } ?: "Closed day",
-                style = TextStyle(fontSize = 12.sp, color = PrimaryTextColor)
+                style = TextStyle(fontSize = 12.sp, color = palette.primaryTextColor)
             )
             Spacer(modifier = GlanceModifier.defaultWeight())
         } else {
@@ -388,7 +425,7 @@ private fun DaySection(
                     item {
                         Text(
                             text = "No entries recorded.",
-                            style = TextStyle(fontSize = 12.sp, color = PrimaryTextColor)
+                            style = TextStyle(fontSize = 12.sp, color = palette.primaryTextColor)
                         )
                     }
                 } else {
@@ -401,18 +438,18 @@ private fun DaySection(
                                     style = TextStyle(
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = PrimaryTextColor
+                                        color = palette.primaryTextColor
                                     )
                                 )
                                 Text(
                                     text = " " + parts[1],
-                                    style = TextStyle(fontSize = 12.sp, color = PrimaryTextColor)
+                                    style = TextStyle(fontSize = 12.sp, color = palette.primaryTextColor)
                                 )
                             }
                         } else {
                             Text(
                                 text = line,
-                                style = TextStyle(fontSize = 12.sp, color = PrimaryTextColor)
+                                style = TextStyle(fontSize = 12.sp, color = palette.primaryTextColor)
                             )
                         }
                     }
@@ -424,29 +461,30 @@ private fun DaySection(
 
 @Composable
 private fun SpecialEventBadge(
-    text: String
+    text: String,
+    palette: WidgetPalette
 ) {
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .background(SpecialBadgeBackground)
+            .background(palette.specialBadgeBackground)
             .cornerRadius(8.dp)
             .padding(horizontal = 10.dp, vertical = 6.dp)
     ) {
         Text(
             text = text,
-            style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Medium, color = PrimaryTextColor)
+            style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Medium, color = palette.primaryTextColor)
         )
     }
 }
 
 @Composable
-private fun OpenAppLink(action: Action) {
+private fun OpenAppLink(action: Action, palette: WidgetPalette) {
     Text(
         text = "Open App",
-        style = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.Medium, color = PrimaryTextColor),
+        style = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.Medium, color = palette.primaryTextColor),
         modifier = GlanceModifier
-            .background(ChipUnselectedBackground)
+            .background(palette.chipUnselectedBackground)
             .cornerRadius(8.dp)
             .padding(horizontal = 8.dp, vertical = 4.dp)
             .clickable(action)
@@ -481,23 +519,231 @@ private fun findNextAvailableDay(data: RotoData, startDate: LocalDate): DaySumma
     return null
 }
 
-private val BackgroundColor = ColorProvider(color = Color(0xFFF4FBFA))
+private data class WidgetPalette(
+    val background: ColorProvider,
+    val titleColor: ColorProvider,
+    val primaryTextColor: ColorProvider,
+    val secondaryTextColor: ColorProvider,
+    val todayBackground: ColorProvider,
+    val tomorrowBackground: ColorProvider,
+    val chipSelectedBackground: ColorProvider,
+    val chipUnselectedBackground: ColorProvider,
+    val chipSelectedText: ColorProvider,
+    val chipUnselectedText: ColorProvider,
+    val specialBadgeBackground: ColorProvider
+)
 
-private val TitleColor = ColorProvider(color = Color(0xFF132327))
+private fun paletteForTheme(option: ThemeOption, isDark: Boolean): WidgetPalette =
+    when (option) {
+        ThemeOption.SYSTEM -> if (isDark) defaultDarkPalette else defaultLightPalette
+        ThemeOption.LIGHT -> defaultLightPalette
+        ThemeOption.DARK -> defaultDarkPalette
+        ThemeOption.FOREST -> if (isDark) forestDarkPalette else forestLightPalette
+        ThemeOption.SUNSET -> if (isDark) sunsetDarkPalette else sunsetLightPalette
+        ThemeOption.OCEAN -> if (isDark) oceanDarkPalette else oceanLightPalette
+        ThemeOption.BLOSSOM -> if (isDark) blossomDarkPalette else blossomLightPalette
+        ThemeOption.MIDNIGHT -> if (isDark) midnightDarkPalette else midnightLightPalette
+        ThemeOption.SAND -> if (isDark) sandDarkPalette else sandLightPalette
+    }
 
-private val PrimaryTextColor = ColorProvider(color = Color(0xFF132327))
+private val defaultLightPalette = WidgetPalette(
+    background = ColorProvider(Color(0xFFF4FBFA)),
+    titleColor = ColorProvider(Color(0xFF132327)),
+    primaryTextColor = ColorProvider(Color(0xFF132327)),
+    secondaryTextColor = ColorProvider(Color(0xFF2B4548)),
+    todayBackground = ColorProvider(Color(0xFFD7F2EB)),
+    tomorrowBackground = ColorProvider(Color(0xFFFFF3D6)),
+    chipSelectedBackground = ColorProvider(Color(0xFF00BF93)),
+    chipUnselectedBackground = ColorProvider(Color(0xFFE0EEEB)),
+    chipSelectedText = ColorProvider(Color(0xFF00382B)),
+    chipUnselectedText = ColorProvider(Color(0xFF2B4548)),
+    specialBadgeBackground = ColorProvider(Color(0xFFEAF3FF))
+)
 
-private val SecondaryTextColor = ColorProvider(color = Color(0xFF2B4548))
+private val defaultDarkPalette = WidgetPalette(
+    background = ColorProvider(Color(0xFF0E1A1D)),
+    titleColor = ColorProvider(Color(0xFFE3F0EE)),
+    primaryTextColor = ColorProvider(Color(0xFFE3F0EE)),
+    secondaryTextColor = ColorProvider(Color(0xFFC2D7D6)),
+    todayBackground = ColorProvider(Color(0xFF234244)),
+    tomorrowBackground = ColorProvider(Color(0xFF1B2F33)),
+    chipSelectedBackground = ColorProvider(Color(0xFF66E6C7)),
+    chipUnselectedBackground = ColorProvider(Color(0xFF234244)),
+    chipSelectedText = ColorProvider(Color(0xFF00241C)),
+    chipUnselectedText = ColorProvider(Color(0xFFC2D7D6)),
+    specialBadgeBackground = ColorProvider(Color(0xFF1B2F33))
+)
 
-private val TodayBackground = ColorProvider(color = Color(0xFFD7F2EB))
+private val forestLightPalette = WidgetPalette(
+    background = ColorProvider(Color(0xFFF1F6F2)),
+    titleColor = ColorProvider(Color(0xFF1E3326)),
+    primaryTextColor = ColorProvider(Color(0xFF1E3326)),
+    secondaryTextColor = ColorProvider(Color(0xFF2E4A35)),
+    todayBackground = ColorProvider(Color(0xFFDCE7DD)),
+    tomorrowBackground = ColorProvider(Color(0xFFEDF3EC)),
+    chipSelectedBackground = ColorProvider(Color(0xFF2F7D4B)),
+    chipUnselectedBackground = ColorProvider(Color(0xFFDCE7DD)),
+    chipSelectedText = ColorProvider(Color(0xFFFFFFFF)),
+    chipUnselectedText = ColorProvider(Color(0xFF2E4A35)),
+    specialBadgeBackground = ColorProvider(Color(0xFFE3F0E9))
+)
 
-private val TomorrowBackground = ColorProvider(color = Color(0xFFFFF3D6))
+private val forestDarkPalette = WidgetPalette(
+    background = ColorProvider(Color(0xFF0E1912)),
+    titleColor = ColorProvider(Color(0xFFE2F0E6)),
+    primaryTextColor = ColorProvider(Color(0xFFE2F0E6)),
+    secondaryTextColor = ColorProvider(Color(0xFFCBE3D2)),
+    todayBackground = ColorProvider(Color(0xFF2B4733)),
+    tomorrowBackground = ColorProvider(Color(0xFF1A2B1E)),
+    chipSelectedBackground = ColorProvider(Color(0xFF7FD1A2)),
+    chipUnselectedBackground = ColorProvider(Color(0xFF2B4733)),
+    chipSelectedText = ColorProvider(Color(0xFF00321C)),
+    chipUnselectedText = ColorProvider(Color(0xFFCBE3D2)),
+    specialBadgeBackground = ColorProvider(Color(0xFF1E3324))
+)
 
-private val ChipSelectedBackground = ColorProvider(color = Color(0xFF00BF93))
-private val ChipUnselectedBackground = ColorProvider(color = Color(0xFFE0EEEB))
-private val ChipSelectedText = ColorProvider(color = Color(0xFF00382B))
-private val ChipUnselectedText = ColorProvider(color = Color(0xFF2B4548))
-private val SpecialBadgeBackground = ColorProvider(color = Color(0xFFEAF3FF))
+private val sunsetLightPalette = WidgetPalette(
+    background = ColorProvider(Color(0xFFFFF6F2)),
+    titleColor = ColorProvider(Color(0xFF2E1B16)),
+    primaryTextColor = ColorProvider(Color(0xFF2E1B16)),
+    secondaryTextColor = ColorProvider(Color(0xFF5A3E35)),
+    todayBackground = ColorProvider(Color(0xFFF2DFD7)),
+    tomorrowBackground = ColorProvider(Color(0xFFFFE8D9)),
+    chipSelectedBackground = ColorProvider(Color(0xFFCE4D53)),
+    chipUnselectedBackground = ColorProvider(Color(0xFFF2DFD7)),
+    chipSelectedText = ColorProvider(Color(0xFFFFFFFF)),
+    chipUnselectedText = ColorProvider(Color(0xFF5A3E35)),
+    specialBadgeBackground = ColorProvider(Color(0xFFF8E9DF))
+)
+
+private val sunsetDarkPalette = WidgetPalette(
+    background = ColorProvider(Color(0xFF1B1210)),
+    titleColor = ColorProvider(Color(0xFFF6E8E3)),
+    primaryTextColor = ColorProvider(Color(0xFFF6E8E3)),
+    secondaryTextColor = ColorProvider(Color(0xFFE3CFC8)),
+    todayBackground = ColorProvider(Color(0xFF3C2B27)),
+    tomorrowBackground = ColorProvider(Color(0xFF2A1D19)),
+    chipSelectedBackground = ColorProvider(Color(0xFFFFA6A9)),
+    chipUnselectedBackground = ColorProvider(Color(0xFF3C2B27)),
+    chipSelectedText = ColorProvider(Color(0xFF3D0209)),
+    chipUnselectedText = ColorProvider(Color(0xFFE3CFC8)),
+    specialBadgeBackground = ColorProvider(Color(0xFF2A1D19))
+)
+
+private val oceanLightPalette = WidgetPalette(
+    background = ColorProvider(Color(0xFFF2F8FC)),
+    titleColor = ColorProvider(Color(0xFF0D2430)),
+    primaryTextColor = ColorProvider(Color(0xFF0D2430)),
+    secondaryTextColor = ColorProvider(Color(0xFF274556)),
+    todayBackground = ColorProvider(Color(0xFFD7E8F3)),
+    tomorrowBackground = ColorProvider(Color(0xFFE5F3FC)),
+    chipSelectedBackground = ColorProvider(Color(0xFF0E88C8)),
+    chipUnselectedBackground = ColorProvider(Color(0xFFD7E8F3)),
+    chipSelectedText = ColorProvider(Color(0xFFFFFFFF)),
+    chipUnselectedText = ColorProvider(Color(0xFF274556)),
+    specialBadgeBackground = ColorProvider(Color(0xFFE5F3FC))
+)
+
+private val oceanDarkPalette = WidgetPalette(
+    background = ColorProvider(Color(0xFF0A1620)),
+    titleColor = ColorProvider(Color(0xFFE3EFF7)),
+    primaryTextColor = ColorProvider(Color(0xFFE3EFF7)),
+    secondaryTextColor = ColorProvider(Color(0xFFC7D8E4)),
+    todayBackground = ColorProvider(Color(0xFF1E3342)),
+    tomorrowBackground = ColorProvider(Color(0xFF132534)),
+    chipSelectedBackground = ColorProvider(Color(0xFF6BCBFF)),
+    chipUnselectedBackground = ColorProvider(Color(0xFF1E3342)),
+    chipSelectedText = ColorProvider(Color(0xFF00263A)),
+    chipUnselectedText = ColorProvider(Color(0xFFC7D8E4)),
+    specialBadgeBackground = ColorProvider(Color(0xFF132534))
+)
+
+private val blossomLightPalette = WidgetPalette(
+    background = ColorProvider(Color(0xFFFDF6F8)),
+    titleColor = ColorProvider(Color(0xFF2F1921)),
+    primaryTextColor = ColorProvider(Color(0xFF2F1921)),
+    secondaryTextColor = ColorProvider(Color(0xFF503741)),
+    todayBackground = ColorProvider(Color(0xFFEED9E1)),
+    tomorrowBackground = ColorProvider(Color(0xFFF7E6ED)),
+    chipSelectedBackground = ColorProvider(Color(0xFFD65C7A)),
+    chipUnselectedBackground = ColorProvider(Color(0xFFEED9E1)),
+    chipSelectedText = ColorProvider(Color(0xFFFFFFFF)),
+    chipUnselectedText = ColorProvider(Color(0xFF503741)),
+    specialBadgeBackground = ColorProvider(Color(0xFFF7E6ED))
+)
+
+private val blossomDarkPalette = WidgetPalette(
+    background = ColorProvider(Color(0xFF1A1116)),
+    titleColor = ColorProvider(Color(0xFFF4E8ED)),
+    primaryTextColor = ColorProvider(Color(0xFFF4E8ED)),
+    secondaryTextColor = ColorProvider(Color(0xFFE2CED7)),
+    todayBackground = ColorProvider(Color(0xFF3A2A32)),
+    tomorrowBackground = ColorProvider(Color(0xFF291C23)),
+    chipSelectedBackground = ColorProvider(Color(0xFFF29CB7)),
+    chipUnselectedBackground = ColorProvider(Color(0xFF3A2A32)),
+    chipSelectedText = ColorProvider(Color(0xFF430C24)),
+    chipUnselectedText = ColorProvider(Color(0xFFE2CED7)),
+    specialBadgeBackground = ColorProvider(Color(0xFF291C23))
+)
+
+private val midnightLightPalette = WidgetPalette(
+    background = ColorProvider(Color(0xFFF3F4FB)),
+    titleColor = ColorProvider(Color(0xFF111424)),
+    primaryTextColor = ColorProvider(Color(0xFF111424)),
+    secondaryTextColor = ColorProvider(Color(0xFF2C304A)),
+    todayBackground = ColorProvider(Color(0xFFDDE0F1)),
+    tomorrowBackground = ColorProvider(Color(0xFFEBEDFA)),
+    chipSelectedBackground = ColorProvider(Color(0xFF3A4E8C)),
+    chipUnselectedBackground = ColorProvider(Color(0xFFDDE0F1)),
+    chipSelectedText = ColorProvider(Color(0xFFFFFFFF)),
+    chipUnselectedText = ColorProvider(Color(0xFF2C304A)),
+    specialBadgeBackground = ColorProvider(Color(0xFFEBEDFA))
+)
+
+private val midnightDarkPalette = WidgetPalette(
+    background = ColorProvider(Color(0xFF0A0D18)),
+    titleColor = ColorProvider(Color(0xFFE6EAFF)),
+    primaryTextColor = ColorProvider(Color(0xFFE6EAFF)),
+    secondaryTextColor = ColorProvider(Color(0xFFC7CCE5)),
+    todayBackground = ColorProvider(Color(0xFF1F2539)),
+    tomorrowBackground = ColorProvider(Color(0xFF13192B)),
+    chipSelectedBackground = ColorProvider(Color(0xFF8FA4FF)),
+    chipUnselectedBackground = ColorProvider(Color(0xFF1F2539)),
+    chipSelectedText = ColorProvider(Color(0xFF0A1028)),
+    chipUnselectedText = ColorProvider(Color(0xFFC7CCE5)),
+    specialBadgeBackground = ColorProvider(Color(0xFF13192B))
+)
+
+private val sandLightPalette = WidgetPalette(
+    background = ColorProvider(Color(0xFFFBF5EB)),
+    titleColor = ColorProvider(Color(0xFF2A1E10)),
+    primaryTextColor = ColorProvider(Color(0xFF2A1E10)),
+    secondaryTextColor = ColorProvider(Color(0xFF4F412F)),
+    todayBackground = ColorProvider(Color(0xFFE9DDCD)),
+    tomorrowBackground = ColorProvider(Color(0xFFF5EADA)),
+    chipSelectedBackground = ColorProvider(Color(0xFFC48A3A)),
+    chipUnselectedBackground = ColorProvider(Color(0xFFE9DDCD)),
+    chipSelectedText = ColorProvider(Color(0xFFFFFFFF)),
+    chipUnselectedText = ColorProvider(Color(0xFF4F412F)),
+    specialBadgeBackground = ColorProvider(Color(0xFFF5EADA))
+)
+
+private val sandDarkPalette = WidgetPalette(
+    background = ColorProvider(Color(0xFF171008)),
+    titleColor = ColorProvider(Color(0xFFEFE2CF)),
+    primaryTextColor = ColorProvider(Color(0xFFEFE2CF)),
+    secondaryTextColor = ColorProvider(Color(0xFFE0CDB4)),
+    todayBackground = ColorProvider(Color(0xFF3A2D1F)),
+    tomorrowBackground = ColorProvider(Color(0xFF251A10)),
+    chipSelectedBackground = ColorProvider(Color(0xFFF0C27D)),
+    chipUnselectedBackground = ColorProvider(Color(0xFF3A2D1F)),
+    chipSelectedText = ColorProvider(Color(0xFF3A2700)),
+    chipUnselectedText = ColorProvider(Color(0xFFE0CDB4)),
+    specialBadgeBackground = ColorProvider(Color(0xFF251A10))
+)
+
+private fun Context.isSystemInDarkMode(): Boolean =
+    resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
 
 @Serializable
 private enum class DayFocus {
@@ -509,7 +755,8 @@ private enum class DayFocus {
 
 @Composable
 private fun ToggleRow(
-    activeFocus: DayFocus
+    activeFocus: DayFocus,
+    palette: WidgetPalette
 ) {
     val todayAction = actionRunCallback<ShowTodayCallback>()
     val tomorrowAction = actionRunCallback<ShowTomorrowCallback>()
@@ -520,19 +767,22 @@ private fun ToggleRow(
             isSelected = activeFocus == DayFocus.TODAY,
             modifier = GlanceModifier
                 .padding(end = 6.dp),
-            onClick = todayAction
+            onClick = todayAction,
+            palette = palette
         )
         ToggleChip(
             label = "Tomorrow",
             isSelected = activeFocus == DayFocus.TOMORROW,
             modifier = GlanceModifier
                 .padding(start = 6.dp, end = 6.dp),
-            onClick = tomorrowAction
+            onClick = tomorrowAction,
+            palette = palette
         )
         ActionChip(
             label = "Refresh",
             modifier = GlanceModifier,
-            onClick = refreshAction
+            onClick = refreshAction,
+            palette = palette
         )
     }
 }
@@ -542,10 +792,11 @@ private fun ToggleChip(
     label: String,
     isSelected: Boolean,
     modifier: GlanceModifier,
-    onClick: Action?
+    onClick: Action?,
+    palette: WidgetPalette
 ) {
     val baseModifier = modifier
-        .background(if (isSelected) ChipSelectedBackground else ChipUnselectedBackground)
+        .background(if (isSelected) palette.chipSelectedBackground else palette.chipUnselectedBackground)
         .cornerRadius(12.dp)
         .padding(horizontal = 10.dp, vertical = 7.dp)
     val clickableModifier = if (onClick != null) baseModifier.clickable(onClick) else baseModifier
@@ -558,7 +809,7 @@ private fun ToggleChip(
             style = TextStyle(
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
-                color = if (isSelected) ChipSelectedText else ChipUnselectedText,
+                color = if (isSelected) palette.chipSelectedText else palette.chipUnselectedText,
                 textAlign = TextAlign.Center
             )
         )
@@ -569,11 +820,12 @@ private fun ToggleChip(
 private fun ActionChip(
     label: String,
     modifier: GlanceModifier,
-    onClick: Action
+    onClick: Action,
+    palette: WidgetPalette
 ) {
     Column(
         modifier = modifier
-            .background(ChipUnselectedBackground)
+            .background(palette.chipUnselectedBackground)
             .cornerRadius(12.dp)
             .padding(horizontal = 10.dp, vertical = 7.dp)
             .clickable(onClick),
@@ -584,7 +836,7 @@ private fun ActionChip(
             style = TextStyle(
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
-                color = ChipUnselectedText,
+                color = palette.chipUnselectedText,
                 textAlign = TextAlign.Center
             )
         )

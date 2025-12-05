@@ -22,6 +22,7 @@ Roto is an offline, privacy-first Android app that answers one simple question: 
 - **Shared link rotas** – Paste a GitHub Gist (or other HTTPS) link; the app converts standard gist URLs to their raw JSON endpoints, downloads once, caches locally, and keeps serving the cached copy offline.
 - **AI helper prompt** – The setup screen’s **Copy AI Instructions** button gives anyone a ready-made prompt to turn a PDF/photo into valid JSON with their favourite assistant.
 - **Privacy by default** – No analytics, tracking, or proprietary dependencies; the app runs happily offline and is F-Droid friendly. Build is pinned and reproducible-friendly (Gradle SHA pinned; dependency metadata signing block disabled for F-Droid).
+- **Custom themes (app + widget)** – Pick from Light/Dark/System plus Forest, Sunset, Ocean, Blossom, Midnight, and Sand. The widget automatically follows your selected theme.
 
 ## Getting Started
 
@@ -45,6 +46,11 @@ Roto is an offline, privacy-first Android app that answers one simple question: 
 > **Week anchor tip:** Rotating schedules are anchored to real calendar Mondays. Set `cycle.repeat.start_date` to the Monday that should count as “Week 1” and the app will cycle forwards (and backwards) automatically from that date.
 >
 > If your rota naturally starts mid-week (say, a Wednesday-to-Wednesday shift), anchor it to the nearest Monday and split the data across two weeks so the app can keep the cycle aligned until the any-day anchor feature lands.
+
+## Themes
+
+- Open **Settings → Theme** on the setup screen to switch between System, Light, Dark, Forest, Sunset, Ocean, Blossom, Midnight, and Sand palettes.
+- The in-app UI and the homescreen widget both apply the same theme automatically.
 
 ## Permissions
 

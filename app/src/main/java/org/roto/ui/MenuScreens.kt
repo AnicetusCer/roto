@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -25,6 +26,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -35,6 +37,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,6 +56,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
@@ -71,11 +76,14 @@ import org.roto.data.MenuSelectionType
 import org.roto.domain.DayDataSource
 import org.roto.domain.DayResult
 import org.roto.domain.SlotEntry
+import org.roto.data.ThemeOption
 import kotlinx.coroutines.launch
 
 @Composable
 fun MenuRoot(
     viewModel: MenuViewModel,
+    themeOption: ThemeOption,
+    onThemeChange: (ThemeOption) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -110,6 +118,8 @@ fun MenuRoot(
         onClearMenu = viewModel::clearMenuSelection,
         onSelectWeek = viewModel::selectWeek,
         onClearWeek = viewModel::clearSelectedWeek,
+        themeOption = themeOption,
+        onThemeChange = onThemeChange,
         modifier = modifier
     )
 }
@@ -127,10 +137,13 @@ fun MenuScreen(
     onClearMenu: () -> Unit,
     onSelectWeek: (String) -> Unit,
     onClearWeek: () -> Unit,
+    themeOption: ThemeOption,
+    onThemeChange: (ThemeOption) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val hasSelection = state.selectedSourceLabel != "No rota selected"
     var showSharedLinkDialog by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
 
     if (showSharedLinkDialog) {
         SharedLinkDialog(
@@ -154,6 +167,9 @@ fun MenuScreen(
             onClearMenu = onClearMenu,
             onSelectWeek = onSelectWeek,
             onClearWeek = onClearWeek,
+            themeOption = themeOption,
+            onThemeChange = onThemeChange,
+            onOpenSettings = { showSettings = true },
             modifier = modifier
         )
         else -> SetupState(
@@ -171,9 +187,41 @@ fun MenuScreen(
             remoteUrl = state.remoteUrl,
             message = state.setupMessage,
             sampleCopyPrompt = state.sampleCopyPrompt,
+            onOpenSettings = { showSettings = true },
             modifier = modifier
         )
     }
+
+    if (showSettings) {
+        SettingsDialog(
+            themeOption = themeOption,
+            onThemeChange = onThemeChange,
+            onDismiss = { showSettings = false }
+        )
+    }
+}
+
+@Composable
+private fun SettingsDialog(
+    themeOption: ThemeOption,
+    onThemeChange: (ThemeOption) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Close") }
+        },
+        title = { Text("Settings") },
+        text = {
+            ThemeSelector(
+                selected = themeOption,
+                onSelect = {
+                    onThemeChange(it)
+                }
+            )
+        }
+    )
 }
 
 @Composable
@@ -207,6 +255,7 @@ private fun SetupState(
     remoteUrl: String?,
     message: SetupMessage?,
     sampleCopyPrompt: SampleCopyPrompt?,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -292,6 +341,7 @@ private fun SetupState(
             RemoteStatusInfo(
                 status = remoteStatus,
                 fallbackUrl = remoteUrl,
+                onRefresh = {},
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -307,6 +357,12 @@ private fun SetupState(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Instructions & sample rotas")
+        }
+        TextButton(
+            onClick = onOpenSettings,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Settings")
         }
 
         message?.let {
@@ -324,7 +380,6 @@ private fun SetupState(
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
         TipJarLinks()
         LegalLinks()
     }
@@ -341,6 +396,9 @@ private fun MenuContent(
     onClearMenu: () -> Unit,
     onSelectWeek: (String) -> Unit,
     onClearWeek: () -> Unit,
+    themeOption: ThemeOption,
+    onThemeChange: (ThemeOption) -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val appTitle = state.rotaName.ifBlank { "Roto" }
@@ -364,8 +422,8 @@ private fun MenuContent(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(horizontal = 16.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
         Text(
             text = appTitle,
@@ -376,7 +434,7 @@ private fun MenuContent(
             painter = painterResource(id = R.drawable.logo_roto),
             contentDescription = null,
             modifier = Modifier
-                .size(96.dp)
+                .size(56.dp)
                 .align(Alignment.CenterHorizontally)
         )
 
@@ -389,7 +447,8 @@ private fun MenuContent(
             onChooseFile = onChooseFile,
             onRefresh = onRefresh,
             showClear = state.selectedSourceLabel != "No rota selected",
-            onClearMenu = onClearMenu
+            onClearMenu = onClearMenu,
+            onOpenSettings = null
         )
 
         state.setupMessage?.let { msg ->
@@ -404,11 +463,14 @@ private fun MenuContent(
             }
         }
 
-        state.coverageStatus?.let {
-            InfoCard(it.message)
-        }
+        state.coverageStatus?.let { InfoCard(it.message) }
 
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 0.dp)
+        ) {
             Text(
                 text = "Today's Rota",
                 style = MaterialTheme.typography.titleMedium,
@@ -483,9 +545,7 @@ private fun MenuContent(
             }
         }
 
-        Button(onClick = onRefresh) {
-            Text("Refresh rota")
-        }
+        Button(onClick = onRefresh) { Text("Refresh rota") }
 
         TipJarLinks(modifier = Modifier.fillMaxWidth())
         LegalLinks(modifier = Modifier.fillMaxWidth())
@@ -502,32 +562,58 @@ private fun SourceControls(
     onChooseFile: () -> Unit,
     onRefresh: () -> Unit,
     showClear: Boolean,
-    onClearMenu: () -> Unit
+    onClearMenu: () -> Unit,
+    onOpenSettings: (() -> Unit)?,
+    showSettingsButton: Boolean = true
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
         Text(
             text = "Rota source: $selectedSourceLabel",
             style = MaterialTheme.typography.bodySmall
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = onChooseFile) { Text("Load rota file") }
-            Button(onClick = onUseSharedLink) { Text("Use shared link") }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val buttonPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+            Button(
+                onClick = onChooseFile,
+                contentPadding = buttonPadding,
+                modifier = Modifier.heightIn(min = 36.dp)
+            ) { Text("Load rota file") }
+            Button(
+                onClick = onUseSharedLink,
+                contentPadding = buttonPadding,
+                modifier = Modifier.heightIn(min = 36.dp)
+            ) { Text("Use shared link") }
+            Spacer(modifier = Modifier.weight(1f))
             if (showClear) {
-                TextButton(onClick = onClearMenu) { Text("Clear rota") }
+                TextButton(
+                    onClick = onClearMenu,
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
+                    modifier = Modifier.heightIn(min = 28.dp)
+                ) {
+                    Text("Clear", style = MaterialTheme.typography.labelSmall)
+                }
+            }
+            onOpenSettings?.let { open ->
+                TextButton(
+                    onClick = open,
+                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
+                    modifier = Modifier.heightIn(min = 28.dp)
+                ) {
+                    Text("Settings", style = MaterialTheme.typography.labelSmall)
+                }
             }
         }
         if (selectedSourceType == MenuSelectionType.REMOTE_LINK) {
-            RemoteStatusInfo(
-                status = remoteStatus,
-                fallbackUrl = remoteUrl,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Button(
-                onClick = onRefresh,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Refresh shared link")
-            }
+        RemoteStatusInfo(
+            status = remoteStatus,
+            fallbackUrl = remoteUrl,
+            onRefresh = onRefresh,
+            modifier = Modifier.fillMaxWidth()
+        )
         }
     }
 }
@@ -536,43 +622,38 @@ private fun SourceControls(
 private fun RemoteStatusInfo(
     status: RemoteStatusUi?,
     fallbackUrl: String?,
+    onRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val (message, color) = when {
-        status == null -> "Shared link saved. Tap Refresh to download the latest available rota." to MaterialTheme.colorScheme.primary
-        status.isUsingCache -> "Remote link unavailable. Using cached copy from ${formatLastSynced(status.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.tertiary
+        status == null -> "Shared link ready. Refresh to pull latest." to MaterialTheme.colorScheme.primary
+        status.isUsingCache -> "Using cached link from ${formatLastSynced(status.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.tertiary
         else -> "Last synced ${formatLastSynced(status.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.primary
     }
-    Card(
-        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.12f)),
-        modifier = modifier
+    Row(
+        modifier = modifier.padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(1.dp)
+        ) {
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodySmall,
-                color = color
+                color = color,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-            status?.let {
-                Text(
-                    text = it.url,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = color.copy(alpha = 0.8f)
-                )
-            } ?: fallbackUrl?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = color.copy(alpha = 0.8f)
-                )
-            }
-            if (status?.isUsingCache == true) {
-                Text(
-                    text = "The last downloaded file is still active until the link returns.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = color
-                )
-            }
+            // URL/extra info omitted to keep height minimal
+        }
+        TextButton(
+            onClick = onRefresh,
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+            modifier = Modifier.heightIn(min = 28.dp)
+        ) {
+            Text("Refresh")
         }
     }
 }
@@ -638,6 +719,55 @@ private fun InfoCard(message: String) {
             Text(text = message, style = MaterialTheme.typography.bodyMedium)
         }
     }
+}
+
+@Composable
+private fun ThemeSelector(
+    selected: ThemeOption,
+    onSelect: (ThemeOption) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = "Theme",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold
+        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.horizontalScroll(rememberScrollState())
+        ) {
+            ThemeChip(label = "System", option = ThemeOption.SYSTEM, selected = selected, onSelect = onSelect)
+            ThemeChip(label = "Light", option = ThemeOption.LIGHT, selected = selected, onSelect = onSelect)
+            ThemeChip(label = "Dark", option = ThemeOption.DARK, selected = selected, onSelect = onSelect)
+            ThemeChip(label = "Forest", option = ThemeOption.FOREST, selected = selected, onSelect = onSelect)
+            ThemeChip(label = "Sunset", option = ThemeOption.SUNSET, selected = selected, onSelect = onSelect)
+            ThemeChip(label = "Ocean", option = ThemeOption.OCEAN, selected = selected, onSelect = onSelect)
+            ThemeChip(label = "Blossom", option = ThemeOption.BLOSSOM, selected = selected, onSelect = onSelect)
+            ThemeChip(label = "Midnight", option = ThemeOption.MIDNIGHT, selected = selected, onSelect = onSelect)
+            ThemeChip(label = "Sand", option = ThemeOption.SAND, selected = selected, onSelect = onSelect)
+        }
+    }
+}
+
+@Composable
+private fun ThemeChip(
+    label: String,
+    option: ThemeOption,
+    selected: ThemeOption,
+    onSelect: (ThemeOption) -> Unit
+) {
+    FilterChip(
+        selected = selected == option,
+        onClick = { onSelect(option) },
+        label = { Text(label) },
+        leadingIcon = if (selected == option) {
+            { Icon(imageVector = Icons.Filled.Check, contentDescription = null) }
+        } else null
+    )
 }
 
 @Composable

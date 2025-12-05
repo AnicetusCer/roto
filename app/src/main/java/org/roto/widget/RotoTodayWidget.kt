@@ -234,6 +234,7 @@ private data class WidgetState(
 private data class DaySummary(
     val title: String,
     val dateLabel: String,
+    val specialEvent: String? = null,
     val lines: List<String>,
     val isClosed: Boolean,
     val closedReason: String?,
@@ -252,6 +253,7 @@ private data class CachedWidgetState(
 private data class CachedDaySummary(
     val title: String,
     val dateLabel: String,
+    val specialEvent: String? = null,
     val lines: List<String>,
     val isClosed: Boolean,
     val closedReason: String?,
@@ -270,6 +272,7 @@ private fun CachedDaySummary.toDaySummary(): DaySummary =
     DaySummary(
         title = title,
         dateLabel = dateLabel,
+        specialEvent = specialEvent,
         lines = lines,
         isClosed = isClosed,
         closedReason = closedReason,
@@ -288,6 +291,7 @@ private fun DaySummary.toCached(): CachedDaySummary =
     CachedDaySummary(
         title = title,
         dateLabel = dateLabel,
+        specialEvent = specialEvent,
         lines = lines,
         isClosed = isClosed,
         closedReason = closedReason,
@@ -363,6 +367,10 @@ private fun DaySection(
             style = TextStyle(fontSize = 12.sp, color = SecondaryTextColor)
         )
         Spacer(modifier = GlanceModifier.height(4.dp))
+        summary.specialEvent?.takeIf { it.isNotBlank() }?.let {
+            SpecialEventBadge(text = it)
+            Spacer(modifier = GlanceModifier.height(6.dp))
+        }
         if (summary.isClosed) {
             Text(
                 text = summary.closedReason?.takeIf { it.isNotBlank() } ?: "Closed day",
@@ -414,6 +422,24 @@ private fun DaySection(
 }
 
 @Composable
+private fun SpecialEventBadge(
+    text: String
+) {
+    Row(
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .background(SpecialBadgeBackground)
+            .cornerRadius(8.dp)
+            .padding(horizontal = 10.dp, vertical = 6.dp)
+    ) {
+        Text(
+            text = text,
+            style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Medium, color = PrimaryTextColor)
+        )
+    }
+}
+
+@Composable
 private fun OpenAppLink(action: Action) {
     Text(
         text = "Open app",
@@ -435,6 +461,7 @@ private fun DayResult.toSummary(title: String, focus: DayFocus): DaySummary {
     return DaySummary(
         title = title,
         dateLabel = formattedDate,
+        specialEvent = specialEvent?.takeIf { it.isNotBlank() },
         lines = lines,
         isClosed = isClosed,
         closedReason = closedReason,
@@ -469,6 +496,7 @@ private val ChipSelectedBackground = ColorProvider(color = Color(0xFF00BF93))
 private val ChipUnselectedBackground = ColorProvider(color = Color(0xFFE0EEEB))
 private val ChipSelectedText = ColorProvider(color = Color(0xFF00382B))
 private val ChipUnselectedText = ColorProvider(color = Color(0xFF2B4548))
+private val SpecialBadgeBackground = ColorProvider(color = Color(0xFFEAF3FF))
 
 @Serializable
 private enum class DayFocus {

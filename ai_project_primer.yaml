@@ -58,7 +58,7 @@ project_primer:
     structure_highlights:
       - "school_name string (display header) and optional notes[] for global messages."
       - "cycle.weeks[] with week_id, week_commencing[] (ISO Mondays), and days{} mapping weekday names or ISO dates to DayDefinition."
-      - "DayDefinition provides slots[] (ordered {label, text, tags[]}) plus optional notes[]."
+      - "DayDefinition provides slots[] (ordered {label, text, tags[]}) plus optional notes[]. A day/override can also set a single special_event string shown as a banner before the slots. For quick one-off banners without editing a day, use top-level special_events{\"YYYY-MM-DD\": \"message\"}."
       - "Optional cycle.repeat{start_date, start_week_id} enables the rota to loop indefinitely without enumerating future Mondays."
       - "overrides{} maps ISO dates to OverrideDay with closed/reason/slots/notes for one-off changes."
       - "\"source\" metadata records whether the active rota came from a local document or remote gist (uri, last_synced_epoch, cache_uri)."
@@ -73,6 +73,7 @@ project_primer:
       - "Resolve the day's slots by weekday key (monday…sunday) or ISO-specific key."
       - "If nothing matches, show a friendly 'No rota found for this date' message."
     timezone_policy: "Treat 'today' and 'tomorrow' strictly as the device's current local date; users can rely on their device clock for any travel or DST adjustments."
+    special_event_policy: "Priority: override.special_event → day.special_event → special_events[date]. Display it even when the day is closed so reminders remain visible, and allow a banner even if no slots are present."
 
   tech_foundation:
     platform: "Android (minSdk 24, Kotlin, Jetpack Compose)."

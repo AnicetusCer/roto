@@ -5,6 +5,9 @@
     "Hot meal and vegetarian alternative are offered every day.",
     "Fresh fruit, yoghurt, and water are always available."
   ],
+  "special_events": {
+    "2025-10-27": "Reminder: Forest School today — pack boots and a waterproof."
+  },
   "cycle": {
     "repeat": {
       "start_date": "2025-10-27",

@@ -6,6 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -43,6 +44,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -52,6 +54,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.time.Instant
@@ -786,6 +791,9 @@ private fun FormatInfoCard() {
           "schema_version": "0.3",
           "school_name": "Your Rota Name",
           "notes": ["Optional reminders"],
+          "special_events": {
+            "2025-10-20": "Special Event: World Book Day costumes today"
+          },
           "cycle": {
             "repeat": {
               "start_date": "2025-09-01",
@@ -882,6 +890,10 @@ private fun DayDetails(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        menu.specialEvent?.takeIf { it.isNotBlank() }?.let {
+            SpecialEventBanner(text = it)
+        }
+
         if (menu.isClosed) {
             Text(
                 text = "Closed",
@@ -926,6 +938,42 @@ private fun DayDetails(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun SpecialEventBanner(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = MaterialTheme.colorScheme.primary
+    val fillColor = borderColor.copy(alpha = 0.08f)
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .drawBehind {
+                val strokeWidth = 2.dp.toPx()
+                val cornerRadius = CornerRadius(12.dp.toPx(), 12.dp.toPx())
+                drawRoundRect(
+                    color = fillColor,
+                    cornerRadius = cornerRadius
+                )
+                drawRoundRect(
+                    color = borderColor,
+                    cornerRadius = cornerRadius,
+                    style = Stroke(
+                        width = strokeWidth,
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(14f, 10f))
+                    )
+                )
+            }
+            .padding(vertical = 10.dp, horizontal = 12.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
 

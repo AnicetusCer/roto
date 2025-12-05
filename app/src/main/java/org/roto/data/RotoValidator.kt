@@ -44,10 +44,21 @@ object RotoValidator {
         rotaData.overrides.forEach { (date, override) ->
             val hasContent = override.closed == true ||
                 !override.reason.isNullOrBlank() ||
+                !override.specialEvent.isNullOrBlank() ||
                 !override.notes.isEmpty() ||
                 !(override.slots.isNullOrEmpty())
             if (!hasContent) {
-                issues += "Override $date does not include closed=true, slots, reason, or notes."
+                issues += "Override $date does not include closed=true, slots, reason, special_event, or notes."
+            }
+        }
+
+        rotaData.specialEvents.forEach { (date, text) ->
+            val parsed = runCatching { java.time.LocalDate.parse(date) }.getOrNull()
+            if (parsed == null) {
+                issues += "special_events key \"$date\" is not a valid ISO date (YYYY-MM-DD)."
+            }
+            if (text.isBlank()) {
+                issues += "special_events \"$date\" message is blank."
             }
         }
 

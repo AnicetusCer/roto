@@ -6,6 +6,9 @@
     "Each night includes a senior nurse, a support nurse, and an admissions float.",
     "Use this sample to explore how the widget handles shift-style data."
   ],
+  "special_events": {
+    "2025-10-31": "Special Event: 23:30 skills drill on rapid response cart setup."
+  },
   "cycle": {
     "repeat": {
       "start_date": "2025-10-27",

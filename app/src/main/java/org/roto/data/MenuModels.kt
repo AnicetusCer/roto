@@ -10,6 +10,7 @@ data class RotoData(
     @SerialName("school_name") val rotaName: String,
     val notes: List<String> = emptyList(),
     val cycle: CycleData,
+    @SerialName("special_events") val specialEvents: Map<String, String> = emptyMap(),
     val overrides: Map<String, OverrideDay> = emptyMap()
 )
 
@@ -34,6 +35,7 @@ data class WeekEntry(
 
 @Serializable
 data class DayDefinition(
+    @SerialName("special_event") val specialEvent: String? = null,
     val slots: List<SlotItem> = emptyList(),
     val notes: List<String> = emptyList()
 )
@@ -49,6 +51,7 @@ data class SlotItem(
 data class OverrideDay(
     val closed: Boolean? = null,
     val reason: String? = null,
+    @SerialName("special_event") val specialEvent: String? = null,
     val slots: List<SlotItem>? = null,
     val notes: List<String> = emptyList()
 )

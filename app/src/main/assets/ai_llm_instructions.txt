@@ -41,6 +41,7 @@ STEP‑BY‑STEP FLOW (KEEP IT FRIENDLY)
 5. Add extra details where the rota clearly gives them:
    - Use `tags` for short markers like “vegetarian”, “vegan”, “contains nuts”, “Year 3–4”.
    - Use `notes` for short explanations like “Fruit alternative available” or “Subject to supplier change”.
+   - Use `special_events` (top-level map of `"YYYY-MM-DD": "message"`) for quick one-day banners. You can also set `special_event` inside a specific day/override; overrides take priority. Keep it short.
 6. Add one‑off changes as overrides:
    - If the rota has special days (inset days, holidays, theme days), use `overrides` with an exact date (`YYYY-MM-DD`).
    - Use `"closed": true` when nothing runs that day (for example “School closed”).
@@ -66,6 +67,9 @@ JSON SCHEMA EXAMPLE (VERSION 0.3)
   "schema_version": "0.3",
   "school_name": "Shown on the home screen header",
   "notes": ["Optional global notes"],
+  "special_events": {
+    "2025-11-03": "Special Event: World Book Day costumes today"
+  },
   "cycle": {
     "repeat": {
       "start_date": "2025-11-03",
@@ -99,6 +103,7 @@ JSON SCHEMA EXAMPLE (VERSION 0.3)
     },
     "2025-03-05": {
       "reason": "World Book Day",
+      "special_event": "Dress as your favourite character today",
       "slots": [
         { "label": "Theme", "text": "Dress as your favourite character" }
       ],

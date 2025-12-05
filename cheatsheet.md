@@ -1,17 +1,28 @@
-'# Android Emulator Cheat Sheet (Windows host)
+# Android Emulator + Build Cheat Sheet (Windows host + WSL build)
 
 ## Typical Workflow
 
-1. **Open PowerShell** in `C:\Users\Mile\GitHub\roto` (or wherever your repo lives on Windows).
-2. **Start the emulator** and leave the window running while you test:
-   ```powershell
-   emulator -avd PixelLikeApi34 -no-snapshot
+1. **Build in WSL (Fedora 43)** from `/home/Mile/GitHub/roto`:
+   ```bash
+   ./gradlew assembleDebug; ./gradlew testDebugUnitTest
    ```
-3. In another windows terminal, build the new app .\gradlew.bat assembleDebug ; .\gradlew.bat testDebugUnitTest
-4. In another PowerShell window run Gradle builds or install APKs with `adb install -r app\build\outputs\apk\debug\app-debug.apk`
-5. Upload any files you need to the emulator like so `adb push C:\Users\Mile\Downloads\RotoRota.json /sdcard/Download/RotoRota.json`
-6. List any file you need on the emulator like so `adb shell ls /sdcard/Android/data/org.roto/files/Download`
-7. Remove any file you need on the emulator like so `adb shell rm /sdcard/Android/data/org.roto/files/Download/somefile`
+2. **Start the Windows emulator** (PowerShell or cmd):
+   ```powershell
+   C:\Android\sdk\emulator\emulator.exe -avd PixelLikeApi34Play
+   ```
+3. **Install the fresh debug APK from WSL path** (Windows shell):
+   ```powershell
+   adb install -r \\wsl.localhost\FedoraLinux-43\home\Mile\GitHub\roto\app\build\outputs\apk\debug\app-debug.apk
+   ```
+4. Test on the emulator. Clear app data when switching rotas:
+   ```powershell
+   adb shell pm clear org.roto
+   ```
+5. When done, produce release artifacts (WSL):
+   ```bash
+   ./gradlew :app:assembleRelease      # signed APK, see docs/BUILDING.md for keystore props
+   ./gradlew :app:bundleRelease        # Play Store bundle
+   ```
 
 ## Useful Commands
 
@@ -20,14 +31,14 @@
 | List configured AVDs | `avdmanager list avd` |
 | **Create Pixel-like AVD (Google Play Store)** | ```powershell
 avdmanager create avd \`
-  --name "PixelLikeApi34" \`
+  --name "PixelLikeApi34Play" \`
   --package "system-images;android-34;google_apis_playstore;x86_64" \`
   --device "pixel_5"
 ``` |
-| Launch emulator | `emulator -avd PixelLikeApi34` |
-| Launch with cold boot | `emulator -avd PixelLikeApi34 -no-snapshot-load` |
+| Launch emulator | `emulator -avd PixelLikeApi34Play` |
+| Launch with cold boot | `emulator -avd PixelLikeApi34Play -no-snapshot-load` |
 | Verify device online | `adb devices` |
-| Install latest debug APK | `adb install -r app\build\outputs\apk\debug\app-debug.apk` |
+| Install latest debug APK | `adb install -r \\wsl.localhost\\FedoraLinux-43\\home\\Mile\\GitHub\\roto\\app\\build\\outputs\\apk\\debug\\app-debug.apk` |
 | Clear app data | `adb shell pm clear org.roto` |
 | Push rota JSON into app scope | `adb push RotoRota.json /sdcard/Android/data/org.roto/files/Download/` |
 | Pull crash logs | `adb logcat -d > logcat.txt` |
@@ -35,12 +46,11 @@ avdmanager create avd \`
 
 ## Reminders
 
+- Gradle wrapper is used everywhere; it’s pinned with `distributionSha256Sum` for reproducible downloads (see `gradle/wrapper/gradle-wrapper.properties` and `docs/BUILDING.md`).
+- Release signing pulls secrets from `~/.gradle/keystore-com.anicetuscer.roto.properties`; see `docs/BUILDING.md` for keystore layout and verification steps (the keystore can live under `~/.secrets/android/com.anicetuscer.roto/release.jks`).
 - If PowerShell can’t find `emulator` or `adb`, use the full paths (e.g. `"C:\Android\sdk\emulator\emulator.exe"`).
 - Change the emulator date/time to match the week you’re testing (Settings → System → Date & time).
-- Use the in-app **Clear rota** button or `adb shell pm clear org.roto` before importing a new JSON.
-- When returning from WSL, re-run `emulator -avd PixelLikeApi34` if the emulator isn’t already running.
-- If `avdmanager` says the package can’t be found, install it first with:
+- If `avdmanager` says the package can’t be found, install it first:
   ```powershell
   sdkmanager "system-images;android-34;google_apis_playstore;x86_64"
   ```
-'

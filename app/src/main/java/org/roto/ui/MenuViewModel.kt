@@ -32,6 +32,7 @@ import org.roto.data.MenuRepository
 import org.roto.data.MenuSelection
 import org.roto.data.MenuSelectionType
 import org.roto.data.RemoteMenuFetcher
+import org.roto.data.RecentRota
 import org.roto.data.RemoteSourceStatus
 import org.roto.data.RotoData
 import org.roto.domain.DayResult
@@ -71,7 +72,9 @@ data class MenuUiState(
     val coverageStatus: CoverageStatus? = null,
     val weekMenus: List<WeekMenu> = emptyList(),
     val selectedWeekMenu: WeekMenu? = null,
-    val globalNotes: List<String> = emptyList()
+    val globalNotes: List<String> = emptyList(),
+    val recentRotas: List<RecentRota> = emptyList(),
+    val recentLimit: Int = MenuPreferencesDataSource.DEFAULT_RECENT_LIMIT
 )
 
 data class CoverageStatus(
@@ -122,6 +125,16 @@ class MenuViewModel(
                 currentSelection = selection
                 selectedWeekId = null
                 performLoad(selection)
+            }
+        }
+        viewModelScope.launch {
+            preferences.recentRotasFlow.collectLatest { recents ->
+                _uiState.update { it.copy(recentRotas = recents) }
+            }
+        }
+        viewModelScope.launch {
+            preferences.recentLimitFlow.collectLatest { limit ->
+                _uiState.update { it.copy(recentLimit = limit) }
             }
         }
     }
@@ -347,12 +360,44 @@ class MenuViewModel(
         }
     }
 
+    fun setRecentLimit(limit: Int) {
+        viewModelScope.launch {
+            preferences.setRecentLimit(limit)
+        }
+    }
+
+    fun clearRecentRotas() {
+        viewModelScope.launch {
+            preferences.clearRecentRotas()
+            _uiState.update { it.copy(setupMessage = null) }
+        }
+    }
+
+    fun openRecent(recent: RecentRota) {
+        viewModelScope.launch {
+            when (recent.type) {
+                MenuSelectionType.LOCAL_FILE -> preferences.saveLocalSelection(recent.reference, recent.displayName)
+                MenuSelectionType.REMOTE_LINK -> {
+                    val remoteUrl = recent.remoteUrl
+                    if (remoteUrl.isNullOrBlank()) {
+                        _uiState.update { it.copy(setupMessage = SetupMessage("Link unavailable for this recent entry.", true)) }
+                        return@launch
+                    }
+                    preferences.saveRemoteSelection(recent.reference, recent.displayName, remoteUrl)
+                }
+            }
+            refreshWidgets()
+        }
+    }
+
     fun clearMenuSelection() {
         viewModelScope.launch {
             preferences.clearMenuSelection()
             currentSelection = null
             selectedWeekId = null
-            _uiState.emit(MenuUiState())
+            val recents = _uiState.value.recentRotas
+            val limit = _uiState.value.recentLimit
+            _uiState.emit(MenuUiState(recentRotas = recents, recentLimit = limit))
             refreshWidgets()
         }
     }
@@ -497,7 +542,9 @@ class MenuViewModel(
                 selectedSourceLabel = selectionLabel,
                 selectedSourceType = selectionType,
                 remoteStatus = null,
-                remoteUrl = remoteUrl
+                remoteUrl = remoteUrl,
+                recentRotas = _uiState.value.recentRotas,
+                recentLimit = _uiState.value.recentLimit
             )
         )
         refreshWidgets()
@@ -554,7 +601,9 @@ class MenuViewModel(
                 coverageStatus = coverageStatus,
                 weekMenus = weekMenus,
                 selectedWeekMenu = activeWeek,
-                globalNotes = menuData.notes
+                globalNotes = menuData.notes,
+                recentRotas = _uiState.value.recentRotas,
+                recentLimit = _uiState.value.recentLimit
             )
         )
         refreshWidgets()

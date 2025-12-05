@@ -1,10 +1,14 @@
 package org.roto.ui
 
 import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,30 +19,29 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,6 +52,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -56,12 +63,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.time.Instant
@@ -70,14 +73,15 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
+import kotlinx.coroutines.launch
 import org.roto.R
 import org.roto.data.MenuSelection
 import org.roto.data.MenuSelectionType
+import org.roto.data.RecentRota
+import org.roto.data.ThemeOption
 import org.roto.domain.DayDataSource
 import org.roto.domain.DayResult
 import org.roto.domain.SlotEntry
-import org.roto.data.ThemeOption
-import kotlinx.coroutines.launch
 
 @Composable
 fun MenuRoot(
@@ -120,6 +124,11 @@ fun MenuRoot(
         onClearWeek = viewModel::clearSelectedWeek,
         themeOption = themeOption,
         onThemeChange = onThemeChange,
+        recentRotas = state.recentRotas,
+        recentLimit = state.recentLimit,
+        onOpenRecent = viewModel::openRecent,
+        onRecentLimitChange = viewModel::setRecentLimit,
+        onClearRecent = viewModel::clearRecentRotas,
         modifier = modifier
     )
 }
@@ -139,6 +148,11 @@ fun MenuScreen(
     onClearWeek: () -> Unit,
     themeOption: ThemeOption,
     onThemeChange: (ThemeOption) -> Unit,
+    recentRotas: List<RecentRota>,
+    recentLimit: Int,
+    onOpenRecent: (RecentRota) -> Unit,
+    onRecentLimitChange: (Int) -> Unit,
+    onClearRecent: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val hasSelection = state.selectedSourceLabel != "No rota selected"
@@ -188,6 +202,10 @@ fun MenuScreen(
             message = state.setupMessage,
             sampleCopyPrompt = state.sampleCopyPrompt,
             onOpenSettings = { showSettings = true },
+            recentRotas = recentRotas,
+            recentLimit = recentLimit,
+            onOpenRecent = onOpenRecent,
+            onClearRecent = onClearRecent,
             modifier = modifier
         )
     }
@@ -196,6 +214,9 @@ fun MenuScreen(
         SettingsDialog(
             themeOption = themeOption,
             onThemeChange = onThemeChange,
+            recentLimit = recentLimit,
+            onRecentLimitChange = onRecentLimitChange,
+            onClearRecent = onClearRecent,
             onDismiss = { showSettings = false }
         )
     }
@@ -205,6 +226,9 @@ fun MenuScreen(
 private fun SettingsDialog(
     themeOption: ThemeOption,
     onThemeChange: (ThemeOption) -> Unit,
+    recentLimit: Int,
+    onRecentLimitChange: (Int) -> Unit,
+    onClearRecent: () -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
@@ -214,12 +238,19 @@ private fun SettingsDialog(
         },
         title = { Text("Settings") },
         text = {
-            ThemeSelector(
-                selected = themeOption,
-                onSelect = {
-                    onThemeChange(it)
-                }
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                ThemeSelector(
+                    selected = themeOption,
+                    onSelect = {
+                        onThemeChange(it)
+                    }
+                )
+                RecentListSettings(
+                    currentLimit = recentLimit,
+                    onLimitChange = onRecentLimitChange,
+                    onClearRecent = onClearRecent
+                )
+            }
         }
     )
 }
@@ -256,6 +287,10 @@ private fun SetupState(
     message: SetupMessage?,
     sampleCopyPrompt: SampleCopyPrompt?,
     onOpenSettings: () -> Unit,
+    recentRotas: List<RecentRota>,
+    recentLimit: Int,
+    onOpenRecent: (RecentRota) -> Unit,
+    onClearRecent: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -301,6 +336,7 @@ private fun SetupState(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -346,6 +382,15 @@ private fun SetupState(
             )
         }
 
+        if (recentRotas.isNotEmpty()) {
+            RecentRotasList(
+                recentRotas = recentRotas,
+                limit = recentLimit,
+                onOpenRecent = onOpenRecent,
+                onClearRecent = onClearRecent
+            )
+        }
+
         if (showClear) {
             TextButton(onClick = onClearMenu) {
                 Text("Clear saved rota")
@@ -382,6 +427,72 @@ private fun SetupState(
 
         TipJarLinks()
         LegalLinks()
+    }
+}
+
+@Composable
+private fun RecentRotasList(
+    recentRotas: List<RecentRota>,
+    limit: Int,
+    onOpenRecent: (RecentRota) -> Unit,
+    onClearRecent: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = 320.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Recently opened (last $limit)",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            TextButton(
+                onClick = onClearRecent,
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+            ) {
+                Text("Clear list")
+            }
+        }
+        recentRotas.forEach { recent ->
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onOpenRecent(recent) }
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = recent.displayName?.takeIf { it.isNotBlank() }
+                            ?: deriveRecentLabel(recent),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = deriveRecentSubtitle(recent),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = if (recent.type == MenuSelectionType.REMOTE_LINK) "Shared link" else "Local file",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -431,10 +542,11 @@ private fun MenuContent(
             fontWeight = FontWeight.Bold
         )
         Image(
-            painter = painterResource(id = R.drawable.logo_roto),
+            painter = painterResource(id = R.drawable.roto_long_banner),
             contentDescription = null,
             modifier = Modifier
-                .size(56.dp)
+                .width(180.dp)
+                .height(54.dp)
                 .align(Alignment.CenterHorizontally)
         )
 
@@ -722,6 +834,31 @@ private fun InfoCard(message: String) {
 }
 
 @Composable
+private fun RecentListSettings(
+    currentLimit: Int,
+    onLimitChange: (Int) -> Unit,
+    onClearRecent: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "Recent rotas",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            LimitChip(label = "Last 5", value = 5, current = currentLimit, onSelect = onLimitChange)
+            LimitChip(label = "Last 10", value = 10, current = currentLimit, onSelect = onLimitChange)
+        }
+        TextButton(
+            onClick = onClearRecent,
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+        ) {
+            Text("Clear recent list")
+        }
+    }
+}
+
+@Composable
 private fun ThemeSelector(
     selected: ThemeOption,
     onSelect: (ThemeOption) -> Unit,
@@ -765,6 +902,23 @@ private fun ThemeChip(
         onClick = { onSelect(option) },
         label = { Text(label) },
         leadingIcon = if (selected == option) {
+            { Icon(imageVector = Icons.Filled.Check, contentDescription = null) }
+        } else null
+    )
+}
+
+@Composable
+private fun LimitChip(
+    label: String,
+    value: Int,
+    current: Int,
+    onSelect: (Int) -> Unit
+) {
+    FilterChip(
+        selected = current == value,
+        onClick = { onSelect(value) },
+        label = { Text(label) },
+        leadingIcon = if (current == value) {
             { Icon(imageVector = Icons.Filled.Check, contentDescription = null) }
         } else null
     )
@@ -1130,6 +1284,41 @@ private fun formatSource(source: DayDataSource): String =
         DayDataSource.ROTATION -> "Rotation"
         DayDataSource.OVERRIDE -> "Override"
     }
+
+private fun deriveRecentLabel(recent: RecentRota): String =
+    when (recent.type) {
+        MenuSelectionType.REMOTE_LINK -> {
+            recent.displayName?.takeIf { it.isNotBlank() }
+                ?: recent.remoteUrl?.takeIf { it.isNotBlank() }
+                ?: hostOrLast(recent.reference)
+                ?: "Shared link"
+        }
+        MenuSelectionType.LOCAL_FILE -> {
+            recent.displayName?.takeIf { it.isNotBlank() }
+                ?: runCatching { Uri.parse(recent.reference).lastPathSegment }.getOrNull()
+                ?: "Local file"
+        }
+    }
+
+private fun deriveRecentSubtitle(recent: RecentRota): String =
+    when (recent.type) {
+        MenuSelectionType.REMOTE_LINK -> recent.remoteUrl?.takeIf { it.isNotBlank() } ?: recent.reference
+        MenuSelectionType.LOCAL_FILE -> runCatching { Uri.parse(recent.reference).path?.substringAfterLast('/') }
+            .getOrNull()
+            ?.takeIf { it.isNotBlank() }
+            ?: recent.reference
+    }
+
+private fun hostOrLast(value: String): String {
+    val parsed = runCatching { Uri.parse(value) }.getOrNull()
+    val host = parsed?.host?.takeIf { it.isNotBlank() }
+    val last = parsed?.lastPathSegment?.takeIf { it.isNotBlank() }
+    return when {
+        host != null && last != null && host != last -> "$host/$last"
+        host != null -> host
+        else -> value
+    }
+}
 
 @Composable
 private fun TipJarLinks(modifier: Modifier = Modifier) {

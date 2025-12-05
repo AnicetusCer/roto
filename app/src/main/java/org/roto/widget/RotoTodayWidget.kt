@@ -38,6 +38,7 @@ import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
+import androidx.glance.layout.width
 import androidx.glance.layout.padding
 import androidx.glance.layout.wrapContentHeight
 import androidx.glance.text.FontWeight
@@ -57,6 +58,7 @@ import org.roto.MainActivity
 import org.roto.data.MenuPreferencesDataSource
 import org.roto.data.MenuRepository
 import org.roto.data.MenuSelection
+import org.roto.data.MenuSelectionType
 import org.roto.data.ThemeOption
 import org.roto.data.ThemePreferencesDataSource
 import org.roto.domain.DayResult
@@ -122,8 +124,8 @@ class RotoTodayWidget : GlanceAppWidget() {
             WidgetRefreshScheduler.scheduleDailyRefresh(context)
         }
 
-        suspend fun refreshSingle(context: Context, glanceId: GlanceId) {
-            val freshState = computeWidgetState(context)
+        suspend fun refreshSingle(context: Context, glanceId: GlanceId, forceRefresh: Boolean = true) {
+            val freshState = computeWidgetState(context, forceRefresh)
             val prefs = getAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId)
             val storedFocus = prefs[FOCUS_KEY]?.let { runCatching { DayFocus.valueOf(it) }.getOrNull() }
             val activeFocus = storedFocus ?: freshState.defaultFocus()
@@ -166,7 +168,7 @@ private suspend fun loadWidgetState(
         return cachedState.toWidgetState()
     }
 
-    val freshState = computeWidgetState(context)
+    val freshState = computeWidgetState(context, forceRefresh = false)
 
     updateAppWidgetState(context, glanceId) { mutablePrefs ->
         mutablePrefs[STATE_CACHE_KEY] = cacheJson.encodeToString(freshState.toCached())
@@ -175,7 +177,7 @@ private suspend fun loadWidgetState(
     return freshState
 }
 
-private suspend fun computeWidgetState(context: Context): WidgetState =
+private suspend fun computeWidgetState(context: Context, forceRefresh: Boolean = false): WidgetState =
     withContext(Dispatchers.IO) {
         val preferences = MenuPreferencesDataSource(context)
         val themePreferences = ThemePreferencesDataSource(context)
@@ -204,7 +206,7 @@ private suspend fun computeWidgetState(context: Context): WidgetState =
         val rotaResult = repository.loadMenu(
             selection = selection,
             allowDownloadsFallback = false,
-            forceRemoteRefresh = true
+            forceRemoteRefresh = forceRefresh && selection?.type == MenuSelectionType.REMOTE_LINK
         )
 
         rotaResult.fold(
@@ -342,6 +344,7 @@ private fun RotoWidgetContent(
 ) {
     val palette = paletteForTheme(state.themeOption, state.isDark)
     val openAppAction = actionStartActivity<MainActivity>()
+    val refreshAction = actionRunCallback<RefreshWidgetCallback>()
     Column(
         modifier = modifier
             .background(palette.background)
@@ -360,6 +363,13 @@ private fun RotoWidgetContent(
             horizontalAlignment = Alignment.Horizontal.End
         ) {
             OpenAppLink(openAppAction, palette)
+            Spacer(modifier = GlanceModifier.width(8.dp))
+            ActionChip(
+                label = "Refresh",
+                modifier = GlanceModifier,
+                onClick = refreshAction,
+                palette = palette
+            )
         }
         Spacer(modifier = GlanceModifier.height(8.dp))
         if (summary != null) {
@@ -760,30 +770,25 @@ private fun ToggleRow(
 ) {
     val todayAction = actionRunCallback<ShowTodayCallback>()
     val tomorrowAction = actionRunCallback<ShowTomorrowCallback>()
-    val refreshAction = actionRunCallback<RefreshWidgetCallback>()
     Row(modifier = GlanceModifier.fillMaxWidth()) {
-        ToggleChip(
-            label = "Today",
-            isSelected = activeFocus == DayFocus.TODAY,
-            modifier = GlanceModifier
-                .padding(end = 6.dp),
-            onClick = todayAction,
-            palette = palette
-        )
-        ToggleChip(
-            label = "Tomorrow",
-            isSelected = activeFocus == DayFocus.TOMORROW,
-            modifier = GlanceModifier
-                .padding(start = 6.dp, end = 6.dp),
-            onClick = tomorrowAction,
-            palette = palette
-        )
-        ActionChip(
-            label = "Refresh",
-            modifier = GlanceModifier,
-            onClick = refreshAction,
-            palette = palette
-        )
+        Column(modifier = GlanceModifier.defaultWeight()) {
+            ToggleChip(
+                label = "Today",
+                isSelected = activeFocus == DayFocus.TODAY,
+                modifier = GlanceModifier.fillMaxWidth(),
+                onClick = todayAction,
+                palette = palette
+            )
+        }
+        Column(modifier = GlanceModifier.defaultWeight()) {
+            ToggleChip(
+                label = "Tomorrow",
+                isSelected = activeFocus == DayFocus.TOMORROW,
+                modifier = GlanceModifier.fillMaxWidth(),
+                onClick = tomorrowAction,
+                palette = palette
+            )
+        }
     }
 }
 
@@ -796,6 +801,7 @@ private fun ToggleChip(
     palette: WidgetPalette
 ) {
     val baseModifier = modifier
+        .fillMaxWidth()
         .background(if (isSelected) palette.chipSelectedBackground else palette.chipUnselectedBackground)
         .cornerRadius(12.dp)
         .padding(horizontal = 10.dp, vertical = 7.dp)
@@ -907,7 +913,9 @@ class ShowTodayCallback : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         Log.d(TAG, "ShowTodayCallback.onAction for $glanceId")
         updateStoredFocus(context, glanceId, DayFocus.TODAY)
+        // First repaint immediately with cached state/focus, then refresh data in the background.
         RotoTodayWidget().update(context, glanceId)
+        RotoTodayWidget.refreshSingle(context, glanceId, forceRefresh = false)
     }
 }
 
@@ -916,6 +924,7 @@ class ShowTomorrowCallback : ActionCallback {
         Log.d(TAG, "ShowTomorrowCallback.onAction for $glanceId")
         updateStoredFocus(context, glanceId, DayFocus.TOMORROW)
         RotoTodayWidget().update(context, glanceId)
+        RotoTodayWidget.refreshSingle(context, glanceId, forceRefresh = false)
     }
 }
 

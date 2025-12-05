@@ -5,8 +5,9 @@
 </p>
 
 <p align="center">
-  <img src="app/src/main/assets/screenshots/roto-screenshot-1.jpg" alt="Roto app screenshot" width="280" />
-  <img src="app/src/main/assets/screenshots/roto-screenshot-2-widget.jpg" alt="Roto widget screenshot" width="280" />
+  <img src="app/src/main/assets/screenshots/InitialScreen.png" alt="Roto setup screen" width="280" />
+  <img src="app/src/main/assets/screenshots/LoadedRotaOcean.png" alt="Roto loaded rota" width="280" />
+  <img src="app/src/main/assets/screenshots/WidgetTodayMidnight.png" alt="Roto widget" width="280" />
 </p>
 
 Roto is an offline, privacy-first Android app that answers one simple question: **“What’s on the rota tomorrow?”** It keeps any rotating schedule on-device—school dinners, shift work, collections, rehearsals—honouring real calendar Mondays for Week 1/Week 2/Week 3... style cycles, and supports one-off overrides without ever touching the network.

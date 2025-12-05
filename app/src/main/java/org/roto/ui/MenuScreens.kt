@@ -78,6 +78,7 @@ import org.roto.R
 import org.roto.data.MenuSelection
 import org.roto.data.MenuSelectionType
 import org.roto.data.RecentRota
+import org.roto.data.ThemeMode
 import org.roto.data.ThemeOption
 import org.roto.domain.DayDataSource
 import org.roto.domain.DayResult
@@ -87,7 +88,9 @@ import org.roto.domain.SlotEntry
 fun MenuRoot(
     viewModel: MenuViewModel,
     themeOption: ThemeOption,
+    themeMode: ThemeMode,
     onThemeChange: (ThemeOption) -> Unit,
+    onThemeModeChange: (ThemeMode) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -124,6 +127,8 @@ fun MenuRoot(
         onClearWeek = viewModel::clearSelectedWeek,
         themeOption = themeOption,
         onThemeChange = onThemeChange,
+        themeMode = themeMode,
+        onThemeModeChange = onThemeModeChange,
         recentRotas = state.recentRotas,
         recentLimit = state.recentLimit,
         onOpenRecent = viewModel::openRecent,
@@ -147,7 +152,9 @@ fun MenuScreen(
     onSelectWeek: (String) -> Unit,
     onClearWeek: () -> Unit,
     themeOption: ThemeOption,
+    themeMode: ThemeMode,
     onThemeChange: (ThemeOption) -> Unit,
+    onThemeModeChange: (ThemeMode) -> Unit,
     recentRotas: List<RecentRota>,
     recentLimit: Int,
     onOpenRecent: (RecentRota) -> Unit,
@@ -178,11 +185,11 @@ fun MenuScreen(
             onChooseFile = onChooseFile,
             onUseSharedLink = { showSharedLinkDialog = true },
             onCopyInstructions = onCopyInstructions,
-        onClearMenu = onClearMenu,
-        onSelectWeek = onSelectWeek,
-        onClearWeek = onClearWeek,
-        modifier = modifier
-    )
+            onClearMenu = onClearMenu,
+            onSelectWeek = onSelectWeek,
+            onClearWeek = onClearWeek,
+            modifier = modifier
+        )
         else -> SetupState(
             onChooseFile = onChooseFile,
             onUseSharedLink = { showSharedLinkDialog = true },
@@ -210,6 +217,8 @@ fun MenuScreen(
         SettingsDialog(
             themeOption = themeOption,
             onThemeChange = onThemeChange,
+            themeMode = themeMode,
+            onThemeModeChange = onThemeModeChange,
             recentLimit = recentLimit,
             onRecentLimitChange = onRecentLimitChange,
             onClearRecent = onClearRecent,
@@ -222,6 +231,8 @@ fun MenuScreen(
 private fun SettingsDialog(
     themeOption: ThemeOption,
     onThemeChange: (ThemeOption) -> Unit,
+    themeMode: ThemeMode,
+    onThemeModeChange: (ThemeMode) -> Unit,
     recentLimit: Int,
     onRecentLimitChange: (Int) -> Unit,
     onClearRecent: () -> Unit,
@@ -235,6 +246,10 @@ private fun SettingsDialog(
         title = { Text("Settings") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                AppearanceSelector(
+                    selected = themeMode,
+                    onSelect = onThemeModeChange
+                )
                 ThemeSelector(
                     selected = themeOption,
                     onSelect = {
@@ -863,15 +878,31 @@ private fun ThemeSelector(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.horizontalScroll(rememberScrollState())
         ) {
-            ThemeChip(label = "System", option = ThemeOption.SYSTEM, selected = selected, onSelect = onSelect)
-            ThemeChip(label = "Light", option = ThemeOption.LIGHT, selected = selected, onSelect = onSelect)
-            ThemeChip(label = "Dark", option = ThemeOption.DARK, selected = selected, onSelect = onSelect)
             ThemeChip(label = "Forest", option = ThemeOption.FOREST, selected = selected, onSelect = onSelect)
             ThemeChip(label = "Sunset", option = ThemeOption.SUNSET, selected = selected, onSelect = onSelect)
             ThemeChip(label = "Ocean", option = ThemeOption.OCEAN, selected = selected, onSelect = onSelect)
             ThemeChip(label = "Blossom", option = ThemeOption.BLOSSOM, selected = selected, onSelect = onSelect)
             ThemeChip(label = "Midnight", option = ThemeOption.MIDNIGHT, selected = selected, onSelect = onSelect)
             ThemeChip(label = "Sand", option = ThemeOption.SAND, selected = selected, onSelect = onSelect)
+        }
+    }
+}
+
+@Composable
+private fun AppearanceSelector(
+    selected: ThemeMode,
+    onSelect: (ThemeMode) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "Appearance",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ModeChip(label = "System", mode = ThemeMode.SYSTEM, selected = selected, onSelect = onSelect)
+            ModeChip(label = "Light", mode = ThemeMode.LIGHT, selected = selected, onSelect = onSelect)
+            ModeChip(label = "Dark", mode = ThemeMode.DARK, selected = selected, onSelect = onSelect)
         }
     }
 }
@@ -888,6 +919,23 @@ private fun ThemeChip(
         onClick = { onSelect(option) },
         label = { Text(label) },
         leadingIcon = if (selected == option) {
+            { Icon(imageVector = Icons.Filled.Check, contentDescription = null) }
+        } else null
+    )
+}
+
+@Composable
+private fun ModeChip(
+    label: String,
+    mode: ThemeMode,
+    selected: ThemeMode,
+    onSelect: (ThemeMode) -> Unit
+) {
+    FilterChip(
+        selected = selected == mode,
+        onClick = { onSelect(mode) },
+        label = { Text(label) },
+        leadingIcon = if (selected == mode) {
             { Icon(imageVector = Icons.Filled.Check, contentDescription = null) }
         } else null
     )

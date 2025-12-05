@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.roto.data.ThemeMode
 import org.roto.data.ThemeOption
 import org.roto.ui.MenuRoot
 import org.roto.ui.MenuViewModel
@@ -28,8 +29,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val themeOption by themeViewModel.themeOption.collectAsStateWithLifecycle()
-            RotoTheme(themeOption) {
+            val themeState by themeViewModel.themeState.collectAsStateWithLifecycle()
+            val (themeOption, themeMode) = themeState
+            RotoTheme(themeOption, themeMode) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -37,7 +39,9 @@ class MainActivity : ComponentActivity() {
                     MenuRoot(
                         viewModel = menuViewModel,
                         themeOption = themeOption,
+                        themeMode = themeMode,
                         onThemeChange = themeViewModel::setTheme,
+                        onThemeModeChange = themeViewModel::setMode,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -70,10 +74,11 @@ private val RotoLightColorScheme = lightColorScheme(
 @Composable
 fun RotoTheme(
     themeOption: ThemeOption,
+    themeMode: ThemeMode,
     content: @Composable () -> Unit
 ) {
     val systemDark = isSystemInDarkTheme()
-    val colorScheme = colorSchemeFor(themeOption, systemDark)
+    val colorScheme = colorSchemeFor(themeOption, themeMode, systemDark)
     MaterialTheme(
         colorScheme = colorScheme,
         typography = MaterialTheme.typography,
@@ -81,18 +86,24 @@ fun RotoTheme(
     )
 }
 
-private fun colorSchemeFor(option: ThemeOption, systemDark: Boolean) =
-    when (option) {
-        ThemeOption.SYSTEM -> if (systemDark) RotoDarkColorScheme else RotoLightColorScheme
+private fun colorSchemeFor(option: ThemeOption, mode: ThemeMode, systemDark: Boolean): androidx.compose.material3.ColorScheme {
+    val isDark = when (mode) {
+        ThemeMode.SYSTEM -> systemDark
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+    }
+    return when (option) {
+        ThemeOption.SYSTEM -> if (isDark) RotoDarkColorScheme else RotoLightColorScheme
         ThemeOption.LIGHT -> RotoLightColorScheme
         ThemeOption.DARK -> RotoDarkColorScheme
-        ThemeOption.FOREST -> if (systemDark) ForestDarkColorScheme else ForestLightColorScheme
-        ThemeOption.SUNSET -> if (systemDark) SunsetDarkColorScheme else SunsetLightColorScheme
-        ThemeOption.OCEAN -> if (systemDark) OceanDarkColorScheme else OceanLightColorScheme
-        ThemeOption.BLOSSOM -> if (systemDark) BlossomDarkColorScheme else BlossomLightColorScheme
-        ThemeOption.MIDNIGHT -> if (systemDark) MidnightDarkColorScheme else MidnightLightColorScheme
-        ThemeOption.SAND -> if (systemDark) SandDarkColorScheme else SandLightColorScheme
+        ThemeOption.FOREST -> if (isDark) ForestDarkColorScheme else ForestLightColorScheme
+        ThemeOption.SUNSET -> if (isDark) SunsetDarkColorScheme else SunsetLightColorScheme
+        ThemeOption.OCEAN -> if (isDark) OceanDarkColorScheme else OceanLightColorScheme
+        ThemeOption.BLOSSOM -> if (isDark) BlossomDarkColorScheme else BlossomLightColorScheme
+        ThemeOption.MIDNIGHT -> if (isDark) MidnightDarkColorScheme else MidnightLightColorScheme
+        ThemeOption.SAND -> if (isDark) SandDarkColorScheme else SandLightColorScheme
     }
+}
 
 private val RotoDarkColorScheme = darkColorScheme(
     primary = Color(0xFF66E6C7),

@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 enum class ThemeOption { SYSTEM, LIGHT, DARK, FOREST, SUNSET, OCEAN, BLOSSOM, MIDNIGHT, SAND }
+enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
 val Context.themePreferencesDataStore by preferencesDataStore(name = "theme_preferences")
 
@@ -15,6 +16,7 @@ class ThemePreferencesDataSource(private val context: Context) {
 
     private object Keys {
         val THEME_OPTION = stringPreferencesKey("theme_option")
+        val THEME_MODE = stringPreferencesKey("theme_mode")
     }
 
     val themeOptionFlow: Flow<ThemeOption> =
@@ -24,9 +26,22 @@ class ThemePreferencesDataSource(private val context: Context) {
                 ?: ThemeOption.SYSTEM
         }
 
+    val themeModeFlow: Flow<ThemeMode> =
+        context.themePreferencesDataStore.data.map { prefs ->
+            prefs[Keys.THEME_MODE]
+                ?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
+                ?: ThemeMode.SYSTEM
+        }
+
     suspend fun saveTheme(option: ThemeOption) {
         context.themePreferencesDataStore.edit { prefs ->
             prefs[Keys.THEME_OPTION] = option.name
+        }
+    }
+
+    suspend fun saveMode(mode: ThemeMode) {
+        context.themePreferencesDataStore.edit { prefs ->
+            prefs[Keys.THEME_MODE] = mode.name
         }
     }
 }

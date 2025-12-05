@@ -59,6 +59,7 @@ import org.roto.data.MenuPreferencesDataSource
 import org.roto.data.MenuRepository
 import org.roto.data.MenuSelection
 import org.roto.data.MenuSelectionType
+import org.roto.data.ThemeMode
 import org.roto.data.ThemeOption
 import org.roto.data.ThemePreferencesDataSource
 import org.roto.domain.DayResult
@@ -185,23 +186,20 @@ private suspend fun computeWidgetState(context: Context, forceRefresh: Boolean =
         val selection: MenuSelection? = runCatching {
             preferences.menuSelectionFlow.firstOrNull()
         }.getOrNull()
+        val themeOption: ThemeOption = runCatching {
+            themePreferences.themeOptionFlow.firstOrNull()
+        }.getOrNull() ?: ThemeOption.SYSTEM
 
         val today = LocalDate.now()
         val tomorrow = today.plusDays(1)
         val systemDark = context.isSystemInDarkMode()
-        val themeOption: ThemeOption = runCatching {
-            themePreferences.themeOptionFlow.firstOrNull()
-        }.getOrNull() ?: ThemeOption.SYSTEM
-        val resolvedDark = when (themeOption) {
-            ThemeOption.SYSTEM -> systemDark
-            ThemeOption.DARK -> true
-            ThemeOption.LIGHT -> false
-            ThemeOption.FOREST,
-            ThemeOption.SUNSET,
-            ThemeOption.OCEAN,
-            ThemeOption.BLOSSOM,
-            ThemeOption.MIDNIGHT,
-            ThemeOption.SAND -> systemDark
+        val themeMode: ThemeMode = runCatching {
+            themePreferences.themeModeFlow.firstOrNull()
+        }.getOrNull() ?: ThemeMode.SYSTEM
+        val resolvedDark = when (themeMode) {
+            ThemeMode.SYSTEM -> systemDark
+            ThemeMode.LIGHT -> false
+            ThemeMode.DARK -> true
         }
         val rotaResult = repository.loadMenu(
             selection = selection,

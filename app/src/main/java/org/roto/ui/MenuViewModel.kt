@@ -706,7 +706,7 @@ class MenuViewModel(
             MenuSelectionType.LOCAL_FILE -> runCatching { Uri.parse(selection.reference).lastPathSegment }
                 .getOrNull()
                 ?.takeIf { it.isNotBlank() }
-                ?: selection?.displayName
+                ?: selection.displayName
                 ?: "Chosen rota"
             MenuSelectionType.REMOTE_LINK -> selection.displayName
                 ?: runCatching { Uri.parse(selection.reference).host }.getOrNull()

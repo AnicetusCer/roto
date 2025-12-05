@@ -48,6 +48,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -134,6 +135,7 @@ fun MenuRoot(
         onOpenRecent = viewModel::openRecent,
         onRecentLimitChange = viewModel::setRecentLimit,
         onClearRecent = viewModel::clearRecentRotas,
+        onRenameRecent = viewModel::renameRecent,
         modifier = modifier
     )
 }
@@ -160,6 +162,7 @@ fun MenuScreen(
     onOpenRecent: (RecentRota) -> Unit,
     onRecentLimitChange: (Int) -> Unit,
     onClearRecent: () -> Unit,
+    onRenameRecent: (RecentRota, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val hasSelection = state.selectedSourceLabel != "No rota selected"
@@ -205,13 +208,14 @@ fun MenuScreen(
             message = state.setupMessage,
             sampleCopyPrompt = state.sampleCopyPrompt,
             onOpenSettings = { showSettings = true },
-            recentRotas = recentRotas,
-            recentLimit = recentLimit,
-            onOpenRecent = onOpenRecent,
-            onClearRecent = onClearRecent,
-            modifier = modifier
-        )
-    }
+        recentRotas = recentRotas,
+        recentLimit = recentLimit,
+        onOpenRecent = onOpenRecent,
+        onClearRecent = onClearRecent,
+        onRenameRecent = onRenameRecent,
+        modifier = modifier
+    )
+}
 
     if (showSettings) {
         SettingsDialog(
@@ -301,6 +305,7 @@ private fun SetupState(
     recentLimit: Int,
     onOpenRecent: (RecentRota) -> Unit,
     onClearRecent: () -> Unit,
+    onRenameRecent: (RecentRota, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -396,7 +401,8 @@ private fun SetupState(
                 recentRotas = recentRotas,
                 limit = recentLimit,
                 onOpenRecent = onOpenRecent,
-                onClearRecent = onClearRecent
+                onClearRecent = onClearRecent,
+                onRenameRecent = onRenameRecent
             )
         }
 
@@ -444,8 +450,12 @@ private fun RecentRotasList(
     recentRotas: List<RecentRota>,
     limit: Int,
     onOpenRecent: (RecentRota) -> Unit,
-    onClearRecent: () -> Unit
+    onClearRecent: () -> Unit,
+    onRenameRecent: (RecentRota, String) -> Unit
 ) {
+    var renameTarget by remember { mutableStateOf<RecentRota?>(null) }
+    var renameText by rememberSaveable { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -499,9 +509,49 @@ private fun RecentRotasList(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary
                     )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(
+                            onClick = {
+                                renameTarget = recent
+                                renameText = recent.displayName.orEmpty()
+                            },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text("Rename")
+                        }
+                    }
                 }
             }
         }
+    }
+
+    renameTarget?.let { target ->
+        AlertDialog(
+            onDismissRequest = { renameTarget = null },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onRenameRecent(target, renameText)
+                        renameTarget = null
+                    }
+                ) { Text("Save") }
+            },
+            dismissButton = {
+                TextButton(onClick = { renameTarget = null }) { Text("Cancel") }
+            },
+            title = { Text("Rename rota") },
+            text = {
+                OutlinedTextField(
+                    value = renameText,
+                    onValueChange = { renameText = it },
+                    singleLine = true,
+                    label = { Text("Name") }
+                )
+            }
+        )
     }
 }
 
@@ -720,13 +770,13 @@ private fun SourceControls(
                 }
             }
         }
-    if (selectedSourceType == MenuSelectionType.REMOTE_LINK) {
-    RemoteStatusInfo(
-        status = remoteStatus,
-        onRefresh = onRefresh,
-        modifier = Modifier.fillMaxWidth()
-    )
-    }
+        if (selectedSourceType == MenuSelectionType.REMOTE_LINK) {
+            RemoteStatusInfo(
+                status = remoteStatus,
+                onRefresh = onRefresh,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 

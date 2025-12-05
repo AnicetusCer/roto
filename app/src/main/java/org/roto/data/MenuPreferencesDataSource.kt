@@ -143,6 +143,26 @@ class MenuPreferencesDataSource(private val context: Context) {
         }
     }
 
+    suspend fun renameRecent(target: RecentRota, newLabel: String?) {
+        val trimmedLabel = newLabel?.trim().takeUnless { it.isNullOrEmpty() }
+        context.menuPreferencesDataStore.edit { prefs ->
+            val updated = loadRecents(prefs).map { recent ->
+                if (matches(recent, target)) {
+                    recent.copy(displayName = trimmedLabel)
+                } else {
+                    recent
+                }
+            }
+            prefs[Keys.RECENT_LIST] = json.encodeToString(updated)
+
+            val currentRef = prefs[Keys.MENU_URI]
+            val currentType = prefs[Keys.MENU_TYPE]?.let { runCatching { MenuSelectionType.valueOf(it) }.getOrNull() }
+            if (currentRef == target.reference && currentType == target.type) {
+                updateLabel(prefs, trimmedLabel)
+            }
+        }
+    }
+
     private fun updateLabel(prefs: MutablePreferences, displayName: String?) {
         if (displayName != null) {
             prefs[Keys.MENU_URI_LABEL] = displayName
@@ -162,6 +182,13 @@ class MenuPreferencesDataSource(private val context: Context) {
     private fun loadRecents(prefs: MutablePreferences): List<RecentRota> {
         val raw = prefs[Keys.RECENT_LIST] ?: return emptyList()
         return runCatching { json.decodeFromString<List<RecentRota>>(raw) }.getOrElse { emptyList() }
+    }
+
+    private fun matches(a: RecentRota, b: RecentRota): Boolean {
+        if (a.type != b.type) return false
+        if (a.reference == b.reference) return true
+        if (!a.remoteUrl.isNullOrBlank() && a.remoteUrl == b.remoteUrl) return true
+        return false
     }
 
 }

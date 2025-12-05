@@ -390,6 +390,13 @@ class MenuViewModel(
         }
     }
 
+    fun renameRecent(recent: RecentRota, newLabel: String) {
+        viewModelScope.launch {
+            preferences.renameRecent(recent, newLabel)
+            _uiState.update { it.copy(setupMessage = SetupMessage("Renamed rota to \"${newLabel.trim()}\".", false)) }
+        }
+    }
+
     fun clearMenuSelection() {
         viewModelScope.launch {
             preferences.clearMenuSelection()

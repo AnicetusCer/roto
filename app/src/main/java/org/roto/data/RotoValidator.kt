@@ -52,13 +52,18 @@ object RotoValidator {
             }
         }
 
-        rotaData.specialEvents.forEach { (date, text) ->
+        rotaData.specialEvents.forEach { (date, messages) ->
             val parsed = runCatching { java.time.LocalDate.parse(date) }.getOrNull()
             if (parsed == null) {
                 issues += "special_events key \"$date\" is not a valid ISO date (YYYY-MM-DD)."
             }
-            if (text.isBlank()) {
-                issues += "special_events \"$date\" message is blank."
+            if (messages.isEmpty()) {
+                issues += "special_events \"$date\" has no messages."
+            }
+            messages.forEach { msg ->
+                if (msg.isBlank()) {
+                    issues += "special_events \"$date\" contains an empty message."
+                }
             }
         }
 

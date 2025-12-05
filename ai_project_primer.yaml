@@ -61,6 +61,7 @@ project_primer:
       - "school_name string (display header) and optional notes[] for global messages."
       - "cycle.weeks[] with week_id, week_commencing[] (ISO Mondays), and days{} mapping weekday names or ISO dates to DayDefinition."
       - "DayDefinition provides slots[] (ordered {label, text, tags[]}) plus optional notes[]. A day/override can also set a single special_event string shown as a banner before the slots. For quick one-off banners without editing a day, use top-level special_events{\"YYYY-MM-DD\": \"message\"}."
+      - "Top-level special_events values can be a single string or an array of strings to show multiple banners on the same date; they sit behind any override/day special_event."
       - "Optional cycle.repeat{start_date, start_week_id} enables the rota to loop indefinitely without enumerating future Mondays."
       - "overrides{} maps ISO dates to OverrideDay with closed/reason/slots/notes for one-off changes."
       - "\"source\" metadata records whether the active rota came from a local document or remote gist (uri, last_synced_epoch, cache_uri)."

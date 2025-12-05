@@ -28,7 +28,7 @@ data class DayResult(
     val formattedDate: String,
     val slots: List<SlotEntry>,
     val notes: List<String>,
-    val specialEvent: String?,
+    val specialEvents: List<String>,
     val globalNotes: List<String>,
     val isClosed: Boolean,
     val closedReason: String?,
@@ -47,14 +47,14 @@ fun getMenuForDate(rotaData: RotoData, targetDate: LocalDate): DayResult? {
 
     val baseDay = matchingWeek?.resolveDayDefinition(targetDate)
     val overrideDay = rotaData.overrides[targetDate.toString()]
-    val mappedSpecialEvent = rotaData.specialEvents[targetDate.toString()]?.takeIf { it.isNotBlank() }
+    val mappedSpecialEvents = rotaData.specialEvents[targetDate.toString()]
 
     val resolved = resolveDay(
         base = baseDay,
         override = overrideDay,
         week = matchingWeek,
         mondayOfWeek = mondayOfWeek,
-        mappedSpecialEvent = mappedSpecialEvent
+        mappedSpecialEvents = mappedSpecialEvents
     ) ?: return null
 
     return DayResult(
@@ -63,7 +63,7 @@ fun getMenuForDate(rotaData: RotoData, targetDate: LocalDate): DayResult? {
         formattedDate = displayFormatter.format(targetDate),
         slots = resolved.slots,
         notes = resolved.notes,
-        specialEvent = resolved.specialEvent,
+        specialEvents = resolved.specialEvents,
         globalNotes = rotaData.notes,
         isClosed = resolved.isClosed,
         closedReason = resolved.reason,
@@ -103,7 +103,7 @@ private fun findMatchingWeek(cycle: CycleData, mondayOfWeek: LocalDate): WeekEnt
 private data class ResolvedDay(
     val slots: List<SlotEntry>,
     val notes: List<String>,
-    val specialEvent: String?,
+    val specialEvents: List<String>,
     val isClosed: Boolean,
     val reason: String?,
     val weekId: String?,
@@ -116,9 +116,9 @@ private fun resolveDay(
     override: OverrideDay?,
     week: WeekEntry?,
     mondayOfWeek: LocalDate,
-    mappedSpecialEvent: String?
+    mappedSpecialEvents: List<String>?
 ): ResolvedDay? {
-    if (override == null && base == null && mappedSpecialEvent.isNullOrBlank()) return null
+    if (override == null && base == null && mappedSpecialEvents.isNullOrEmpty()) return null
 
     val isClosed = override?.closed == true
     val reason = override?.reason
@@ -134,9 +134,11 @@ private fun resolveDay(
         override?.notes?.let { addAll(it) }
     }
 
-    val specialEvent = override?.specialEvent?.takeIf { it.isNotBlank() }
-        ?: base?.specialEvent?.takeIf { it.isNotBlank() }
-        ?: mappedSpecialEvent
+    val specialEvents = buildList {
+        override?.specialEvent?.takeIf { it.isNotBlank() }?.let { add(it) }
+        base?.specialEvent?.takeIf { it.isNotBlank() }?.let { add(it) }
+        mappedSpecialEvents?.let { addAll(it.filter { msg -> msg.isNotBlank() }) }
+    }.distinct()
 
     val weekId = week?.weekId
     val weekCommencing = week?.let { mondayOfWeek }
@@ -146,7 +148,7 @@ private fun resolveDay(
     return ResolvedDay(
         slots = selectedSlots,
         notes = selectedNotes,
-        specialEvent = specialEvent,
+        specialEvents = specialEvents,
         isClosed = isClosed,
         reason = reason,
         weekId = weekId,

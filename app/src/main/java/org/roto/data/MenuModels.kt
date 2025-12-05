@@ -3,6 +3,18 @@ package org.roto.data
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable
 data class RotoData(
@@ -10,7 +22,9 @@ data class RotoData(
     @SerialName("school_name") val rotaName: String,
     val notes: List<String> = emptyList(),
     val cycle: CycleData,
-    @SerialName("special_events") val specialEvents: Map<String, String> = emptyMap(),
+    @SerialName("special_events")
+    @Serializable(with = SpecialEventsSerializer::class)
+    val specialEvents: Map<String, List<String>> = emptyMap(),
     val overrides: Map<String, OverrideDay> = emptyMap()
 )
 
@@ -72,4 +86,51 @@ object RotoJsonParser {
 
     fun parseOrNull(rawJson: String): RotoData? =
         runCatching { parse(rawJson) }.getOrNull()
+}
+
+/**
+ * Accepts either a single string or an array of strings per date key, normalising to List<String>.
+ */
+object SpecialEventsSerializer : KSerializer<Map<String, List<String>>> {
+    private val delegate = MapSerializer(String.serializer(), SpecialEventValueSerializer)
+
+    override val descriptor: SerialDescriptor = delegate.descriptor
+
+    override fun serialize(encoder: Encoder, value: Map<String, List<String>>) {
+        delegate.serialize(encoder, value)
+    }
+
+    override fun deserialize(decoder: Decoder): Map<String, List<String>> {
+        return delegate.deserialize(decoder).mapValues { (_, v) ->
+            v.filter { it.isNotBlank() }
+        }.filterValues { it.isNotEmpty() }
+    }
+}
+
+private object SpecialEventValueSerializer : KSerializer<List<String>> {
+    private val listSerializer = ListSerializer(String.serializer())
+
+    override val descriptor: SerialDescriptor = listSerializer.descriptor
+
+    override fun serialize(encoder: Encoder, value: List<String>) {
+        val jsonEncoder = encoder as? JsonEncoder
+        if (jsonEncoder != null) {
+            jsonEncoder.encodeJsonElement(
+                if (value.size == 1) JsonPrimitive(value.first()) else JsonArray(value.map { JsonPrimitive(it) })
+            )
+        } else {
+            listSerializer.serialize(encoder, value)
+        }
+    }
+
+    override fun deserialize(decoder: Decoder): List<String> {
+        val jsonDecoder = decoder as? JsonDecoder ?: return emptyList()
+        val element: JsonElement = jsonDecoder.decodeJsonElement()
+        return when (element) {
+            is JsonArray -> element.mapNotNull { it as? JsonPrimitive }
+                .mapNotNull { runCatching { it.content }.getOrNull()?.trim() }
+            is JsonPrimitive -> runCatching { element.content }.getOrNull()?.trim()?.let { listOf(it) } ?: emptyList()
+            else -> emptyList()
+        }
+    }
 }

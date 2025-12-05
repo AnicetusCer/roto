@@ -22,6 +22,7 @@ Roto is an offline, privacy-first Android app that answers one simple question: 
 - **Offline JSON import** – Load any rota via **Load rota (JSON)** or by placing `RotoRota.json` in the app’s scoped Downloads directory.
 - **Shared link rotas** – Paste a GitHub Gist (or other HTTPS) link; the app converts standard gist URLs to their raw JSON endpoints, downloads once, caches locally, and keeps serving the cached copy offline.
 - **Recent rotas list** – The setup screen remembers your last 5/10 rotas (local or shared links) so you can reopen them with one tap; clear or change the limit in Settings.
+- **Special events anywhere** – Add a `special_event` to a day/override or use top-level `special_events` with a string _or_ an array of strings to show multiple banners on the same date. Shown in the app and widget.
 - **AI helper prompt** – The setup screen’s **Copy AI Instructions** button gives anyone a ready-made prompt to turn a PDF/photo into valid JSON with their favourite assistant.
 - **Privacy by default** – No analytics, tracking, or proprietary dependencies; the app runs happily offline and is F-Droid friendly. Build is pinned and reproducible-friendly (Gradle SHA pinned; dependency metadata signing block disabled for F-Droid).
 - **Custom themes (app + widget)** – Pick from Light/Dark/System plus Forest, Sunset, Ocean, Blossom, Midnight, and Sand. The widget automatically follows your selected theme.
@@ -70,8 +71,12 @@ Roto’s schema is deliberately lightweight: name the rota, add optional notes, 
   "school_name": "Example Primary School",
   "notes": ["Optional global notes"],
   "special_events": {
-    "2025-10-20": "Special Event: World Book Day costumes today"
+    "2025-10-20": [
+      "Special Event: World Book Day costumes today",
+      "Remember £1 book token"
+    ]
   },
+  // Use an array to show multiple banners on the same date. A single string is also accepted.
   "cycle": {
     "repeat": {
       "start_date": "2025-11-03",

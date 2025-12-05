@@ -1160,9 +1160,7 @@ private fun DayDetails(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        menu.specialEvent?.takeIf { it.isNotBlank() }?.let {
-            SpecialEventBanner(text = it)
-        }
+    menu.specialEvents.forEach { SpecialEventBanner(text = it) }
 
         if (menu.isClosed) {
             Text(

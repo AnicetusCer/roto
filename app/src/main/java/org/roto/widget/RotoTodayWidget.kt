@@ -265,7 +265,7 @@ private data class WidgetState(
 private data class DaySummary(
     val title: String,
     val dateLabel: String,
-    val specialEvent: String? = null,
+    val specialEvents: List<String> = emptyList(),
     val lines: List<String>,
     val isClosed: Boolean,
     val closedReason: String?,
@@ -286,7 +286,7 @@ private data class CachedWidgetState(
 private data class CachedDaySummary(
     val title: String,
     val dateLabel: String,
-    val specialEvent: String? = null,
+    val specialEvents: List<String> = emptyList(),
     val lines: List<String>,
     val isClosed: Boolean,
     val closedReason: String?,
@@ -307,7 +307,7 @@ private fun CachedDaySummary.toDaySummary(): DaySummary =
     DaySummary(
         title = title,
         dateLabel = dateLabel,
-        specialEvent = specialEvent,
+        specialEvents = specialEvents,
         lines = lines,
         isClosed = isClosed,
         closedReason = closedReason,
@@ -328,7 +328,7 @@ private fun DaySummary.toCached(): CachedDaySummary =
     CachedDaySummary(
         title = title,
         dateLabel = dateLabel,
-        specialEvent = specialEvent,
+        specialEvents = specialEvents,
         lines = lines,
         isClosed = isClosed,
         closedReason = closedReason,
@@ -415,9 +415,11 @@ private fun DaySection(
             style = TextStyle(fontSize = 12.sp, color = palette.secondaryTextColor)
         )
         Spacer(modifier = GlanceModifier.height(4.dp))
-        summary.specialEvent?.takeIf { it.isNotBlank() }?.let {
-            SpecialEventBadge(text = it, palette = palette)
-            Spacer(modifier = GlanceModifier.height(6.dp))
+        summary.specialEvents.takeIf { it.isNotEmpty() }?.forEachIndexed { index, event ->
+            SpecialEventBadge(text = event, palette = palette)
+            if (index != summary.specialEvents.lastIndex) {
+                Spacer(modifier = GlanceModifier.height(6.dp))
+            }
         }
         if (summary.isClosed) {
             Text(
@@ -510,7 +512,7 @@ private fun DayResult.toSummary(title: String, focus: DayFocus): DaySummary {
     return DaySummary(
         title = title,
         dateLabel = formattedDate,
-        specialEvent = specialEvent?.takeIf { it.isNotBlank() },
+        specialEvents = specialEvents,
         lines = lines,
         isClosed = isClosed,
         closedReason = closedReason,

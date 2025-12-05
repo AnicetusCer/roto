@@ -662,8 +662,6 @@ private fun MenuContent(
             }
         }
 
-        Button(onClick = onRefresh) { Text("Refresh rota") }
-
         TipJarLinks(modifier = Modifier.fillMaxWidth())
         LegalLinks(modifier = Modifier.fillMaxWidth())
     }

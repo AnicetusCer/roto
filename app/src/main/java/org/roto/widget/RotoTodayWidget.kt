@@ -43,6 +43,7 @@ import androidx.glance.layout.wrapContentHeight
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import androidx.glance.text.TextAlign
 import androidx.glance.unit.ColorProvider
 import org.roto.data.RotoData
 import java.time.LocalDate
@@ -442,7 +443,7 @@ private fun SpecialEventBadge(
 @Composable
 private fun OpenAppLink(action: Action) {
     Text(
-        text = "Open app",
+        text = "Open App",
         style = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.Medium, color = PrimaryTextColor),
         modifier = GlanceModifier
             .background(ChipUnselectedBackground)
@@ -518,20 +519,19 @@ private fun ToggleRow(
             label = "Today",
             isSelected = activeFocus == DayFocus.TODAY,
             modifier = GlanceModifier
-                .padding(end = 4.dp),
+                .padding(end = 6.dp),
             onClick = todayAction
         )
         ToggleChip(
             label = "Tomorrow",
             isSelected = activeFocus == DayFocus.TOMORROW,
             modifier = GlanceModifier
-                .padding(end = 8.dp),
+                .padding(start = 6.dp, end = 6.dp),
             onClick = tomorrowAction
         )
         ActionChip(
             label = "Refresh",
-            modifier = GlanceModifier
-                .padding(end = 8.dp),
+            modifier = GlanceModifier,
             onClick = refreshAction
         )
     }
@@ -547,15 +547,19 @@ private fun ToggleChip(
     val baseModifier = modifier
         .background(if (isSelected) ChipSelectedBackground else ChipUnselectedBackground)
         .cornerRadius(12.dp)
-        .padding(horizontal = 8.dp, vertical = 6.dp)
+        .padding(horizontal = 10.dp, vertical = 7.dp)
     val clickableModifier = if (onClick != null) baseModifier.clickable(onClick) else baseModifier
-    Column(modifier = clickableModifier) {
+    Column(
+        modifier = clickableModifier,
+        horizontalAlignment = Alignment.Horizontal.CenterHorizontally
+    ) {
         Text(
             text = label,
             style = TextStyle(
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
-                color = if (isSelected) ChipSelectedText else ChipUnselectedText
+                color = if (isSelected) ChipSelectedText else ChipUnselectedText,
+                textAlign = TextAlign.Center
             )
         )
     }
@@ -567,19 +571,24 @@ private fun ActionChip(
     modifier: GlanceModifier,
     onClick: Action
 ) {
-    Text(
-        text = label,
-        style = TextStyle(
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            color = ChipUnselectedText
-        ),
+    Column(
         modifier = modifier
             .background(ChipUnselectedBackground)
             .cornerRadius(12.dp)
-            .padding(horizontal = 8.dp, vertical = 6.dp)
-            .clickable(onClick)
-    )
+            .padding(horizontal = 10.dp, vertical = 7.dp)
+            .clickable(onClick),
+        horizontalAlignment = Alignment.Horizontal.CenterHorizontally
+    ) {
+        Text(
+            text = label,
+            style = TextStyle(
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = ChipUnselectedText,
+                textAlign = TextAlign.Center
+            )
+        )
+    }
 }
 
 private const val TAG = "RotoWidget"

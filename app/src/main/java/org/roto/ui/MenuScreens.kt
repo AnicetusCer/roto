@@ -427,22 +427,45 @@ private fun SetupState(
         }
 
         currentSelectionLabel?.let { label ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "Loaded rota: $label",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onViewCurrent, contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)) {
-                        Text("View")
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Loaded rota",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
-                    TextButton(onClick = onClearMenu, contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)) {
-                        Text("✕")
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        TextButton(
+                            onClick = onViewCurrent,
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text("View", style = MaterialTheme.typography.labelSmall)
+                        }
+                        TextButton(
+                            onClick = onClearMenu,
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text("✕", style = MaterialTheme.typography.labelSmall)
+                        }
                     }
                 }
             }
@@ -826,37 +849,45 @@ private fun SourceControls(
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (isLoadedView) {
-                if (selectedSourceType == MenuSelectionType.REMOTE_LINK) {
-                    val (message, color) = when {
-                        remoteStatus == null -> "Shared link ready. Refresh to pull latest." to MaterialTheme.colorScheme.primary
-                        remoteStatus.isUsingCache -> "Using cached link from ${formatLastSynced(remoteStatus.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.tertiary
-                        else -> "Last synced ${formatLastSynced(remoteStatus.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.primary
-                    }
-                    Text(
-                        text = message,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = color,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
-                } else {
-                    Spacer(modifier = Modifier.weight(1f))
-                }
-                TextButton(
-                    onClick = onRefresh,
-                    contentPadding = refreshPadding,
-                    modifier = compactButtonHeight
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Refresh")
-                }
-                if (showClear) {
-                    TextButton(
-                        onClick = onClearMenu,
-                        contentPadding = refreshPadding,
-                        modifier = compactButtonHeight
-                    ) {
-                        Text("Back")
+                    if (selectedSourceType == MenuSelectionType.REMOTE_LINK) {
+                        val (message, color) = when {
+                            remoteStatus == null -> "Shared link ready. Refresh to pull latest." to MaterialTheme.colorScheme.primary
+                            remoteStatus.isUsingCache -> "Cached from ${formatLastSynced(remoteStatus.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.tertiary
+                            else -> "Last synced ${formatLastSynced(remoteStatus.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.primary
+                        }
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = color,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                    } else {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        TextButton(
+                            onClick = onRefresh,
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                            modifier = compactButtonHeight
+                        ) {
+                            Text("Refresh", style = MaterialTheme.typography.labelSmall)
+                        }
+                        if (showClear) {
+                            TextButton(
+                                onClick = onClearMenu,
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                modifier = compactButtonHeight
+                            ) {
+                                Text("Back", style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
                     }
                 }
             } else {

@@ -796,7 +796,7 @@ private fun SourceControls(
                         contentPadding = refreshPadding,
                         modifier = compactButtonHeight
                     ) {
-                        Text("Back", style = MaterialTheme.typography.labelSmall)
+                        Text("Back")
                     }
                 }
             } else {
@@ -817,7 +817,7 @@ private fun SourceControls(
                         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
                         modifier = Modifier.heightIn(min = 28.dp)
                     ) {
-                        Text("Back", style = MaterialTheme.typography.labelSmall)
+                        Text("Back")
                     }
                 }
                 onOpenSettings?.let { open ->

@@ -32,6 +32,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -136,15 +137,16 @@ fun MenuRoot(
         themeOption = themeOption,
         onThemeChange = onThemeChange,
         themeMode = themeMode,
-        onThemeModeChange = onThemeModeChange,
-        applySystemPadding = applySystemPadding,
-        onSystemPaddingChange = onSystemPaddingChange,
-        recentRotas = state.recentRotas,
-        recentLimit = state.recentLimit,
-        onOpenRecent = viewModel::openRecent,
+    onThemeModeChange = onThemeModeChange,
+    applySystemPadding = applySystemPadding,
+    onSystemPaddingChange = onSystemPaddingChange,
+    onEnsureCurrentInRecents = viewModel::ensureCurrentInRecents,
+    recentRotas = state.recentRotas,
+    recentLimit = state.recentLimit,
+    onOpenRecent = viewModel::openRecent,
         onRecentLimitChange = viewModel::setRecentLimit,
         onClearRecent = viewModel::clearRecentRotas,
-        onRenameRecent = viewModel::renameRecent,
+        onRenameCurrent = viewModel::renameCurrent,
         modifier = modifier
     )
 }
@@ -160,6 +162,7 @@ fun MenuScreen(
     onApplySampleSelection: (MenuSelection) -> Unit,
     onDismissSamplePrompt: () -> Unit,
     onClearMenu: () -> Unit,
+    onEnsureCurrentInRecents: () -> Unit,
     onSelectWeek: (String) -> Unit,
     onClearWeek: () -> Unit,
     themeOption: ThemeOption,
@@ -173,12 +176,14 @@ fun MenuScreen(
     onOpenRecent: (RecentRota) -> Unit,
     onRecentLimitChange: (Int) -> Unit,
     onClearRecent: () -> Unit,
-    onRenameRecent: (RecentRota, String) -> Unit,
+    onRenameCurrent: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showSetupWhileLoaded by remember { mutableStateOf(false) }
     var showSharedLinkDialog by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
+    var showRenameCurrent by rememberSaveable { mutableStateOf(false) }
+    var renameCurrentText by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(state.selectedSourceLabel, state.hasMenuData) {
         if (state.hasMenuData) {
@@ -197,6 +202,32 @@ fun MenuScreen(
         )
     }
 
+    if (showRenameCurrent) {
+        AlertDialog(
+            onDismissRequest = { showRenameCurrent = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onRenameCurrent(renameCurrentText)
+                        showRenameCurrent = false
+                    }
+                ) { Text("Save") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRenameCurrent = false }) { Text("Cancel") }
+            },
+            title = { Text("Rename rota") },
+            text = {
+                OutlinedTextField(
+                    value = renameCurrentText,
+                    onValueChange = { renameCurrentText = it },
+                    singleLine = true,
+                    label = { Text("Name") }
+                )
+            }
+        )
+    }
+
     when {
         state.isLoading -> LoadingState(modifier)
         state.hasMenuData && !showSetupWhileLoaded -> MenuContent(
@@ -206,6 +237,10 @@ fun MenuScreen(
             onUseSharedLink = { showSharedLinkDialog = true },
             onCopyInstructions = onCopyInstructions,
             onBackToSetup = { showSetupWhileLoaded = true },
+            onRenameCurrent = {
+                renameCurrentText = state.selectedSourceLabel.orEmpty()
+                showRenameCurrent = true
+            },
             onSelectWeek = onSelectWeek,
             onClearWeek = onClearWeek,
             modifier = modifier
@@ -214,15 +249,23 @@ fun MenuScreen(
             onChooseFile = onChooseFile,
             onUseSharedLink = { showSharedLinkDialog = true },
             onCopyInstructions = onCopyInstructions,
-            onCopySample = onCopySample,
-            onApplySampleSelection = onApplySampleSelection,
+        onCopySample = onCopySample,
+        onApplySampleSelection = onApplySampleSelection,
             onDismissSamplePrompt = onDismissSamplePrompt,
             onClearMenu = onClearMenu,
-            onViewCurrent = { showSetupWhileLoaded = false },
+            onViewCurrent = {
+                onEnsureCurrentInRecents()
+                showSetupWhileLoaded = false
+            },
             onRefresh = onRefresh,
+            onRenameCurrent = {
+                renameCurrentText = state.selectedSourceLabel.orEmpty()
+                showRenameCurrent = true
+            },
             currentSelectionLabel = state.selectedSourceLabel.takeUnless { it == "No rota selected" },
             sourceLabel = state.selectedSourceLabel,
             sourceType = state.selectedSourceType,
+            remoteUrl = state.remoteUrl,
             remoteStatus = state.remoteStatus,
             message = state.setupMessage,
             sampleCopyPrompt = state.sampleCopyPrompt,
@@ -230,8 +273,6 @@ fun MenuScreen(
             recentRotas = recentRotas,
             recentLimit = recentLimit,
             onOpenRecent = onOpenRecent,
-            onClearRecent = onClearRecent,
-            onRenameRecent = onRenameRecent,
             modifier = modifier
         )
     }
@@ -341,9 +382,11 @@ private fun SetupState(
     onClearMenu: () -> Unit,
     onViewCurrent: () -> Unit,
     onRefresh: () -> Unit,
+    onRenameCurrent: () -> Unit,
     currentSelectionLabel: String?,
     sourceLabel: String,
     sourceType: MenuSelectionType?,
+    remoteUrl: String?,
     remoteStatus: RemoteStatusUi?,
     message: SetupMessage?,
     sampleCopyPrompt: SampleCopyPrompt?,
@@ -351,11 +394,10 @@ private fun SetupState(
     recentRotas: List<RecentRota>,
     recentLimit: Int,
     onOpenRecent: (RecentRota) -> Unit,
-    onClearRecent: () -> Unit,
-    onRenameRecent: (RecentRota, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
     val sampleFiles = remember(context) {
         context.assets.list("sample_rotas")?.toList()?.filter { it.endsWith(".json") }?.sorted() ?: emptyList()
     }
@@ -477,6 +519,30 @@ private fun SetupState(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            if (sourceType == MenuSelectionType.REMOTE_LINK && !remoteUrl.isNullOrBlank()) {
+                                val shareUrl = remoteUrl
+                                TextButton(
+                                    onClick = {
+                                        val intent = Intent(Intent.ACTION_SEND).apply {
+                                            type = "text/plain"
+                                            putExtra(Intent.EXTRA_TEXT, shareUrl)
+                                        }
+                                        context.startActivity(Intent.createChooser(intent, "Share rota link"))
+                                    },
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                                ) {
+                                    Text("Share", style = MaterialTheme.typography.labelSmall)
+                                }
+                                TextButton(
+                                    onClick = { clipboard.setText(AnnotatedString(shareUrl)) },
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                                ) {
+                                    Text("Copy", style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                            IconButton(onClick = onRenameCurrent, modifier = Modifier.size(32.dp)) {
+                                Icon(imageVector = Icons.Filled.Edit, contentDescription = "Rename")
+                            }
                             IconButton(onClick = onRefresh, modifier = Modifier.size(32.dp)) {
                                 Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Refresh")
                             }
@@ -511,9 +577,7 @@ private fun SetupState(
             RecentRotasList(
                 recentRotas = recentRotas,
                 limit = recentLimit,
-                onOpenRecent = onOpenRecent,
-                onClearRecent = onClearRecent,
-                onRenameRecent = onRenameRecent
+                onOpenRecent = onOpenRecent
             )
         }
 
@@ -554,14 +618,10 @@ private fun SetupState(
 private fun RecentRotasList(
     recentRotas: List<RecentRota>,
     limit: Int,
-    onOpenRecent: (RecentRota) -> Unit,
-    onClearRecent: () -> Unit,
-    onRenameRecent: (RecentRota, String) -> Unit
+    onOpenRecent: (RecentRota) -> Unit
 ) {
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
-    var renameTarget by remember { mutableStateOf<RecentRota?>(null) }
-    var renameText by rememberSaveable { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -580,12 +640,6 @@ private fun RecentRotasList(
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold
             )
-            TextButton(
-                onClick = onClearRecent,
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-            ) {
-                Text("Clear list")
-            }
         }
         recentRotas.forEach { recent ->
             Card(
@@ -641,45 +695,10 @@ private fun RecentRotasList(
                                 Text("Copy link")
                             }
                         }
-                        TextButton(
-                            onClick = {
-                                renameTarget = recent
-                                renameText = recent.displayName.orEmpty()
-                            },
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Text("Rename")
-                        }
                     }
                 }
             }
         }
-    }
-
-    renameTarget?.let { target ->
-        AlertDialog(
-            onDismissRequest = { renameTarget = null },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onRenameRecent(target, renameText)
-                        renameTarget = null
-                    }
-                ) { Text("Save") }
-            },
-            dismissButton = {
-                TextButton(onClick = { renameTarget = null }) { Text("Cancel") }
-            },
-            title = { Text("Rename rota") },
-            text = {
-                OutlinedTextField(
-                    value = renameText,
-                    onValueChange = { renameText = it },
-                    singleLine = true,
-                    label = { Text("Name") }
-                )
-            }
-        )
     }
 }
 
@@ -692,6 +711,7 @@ private fun MenuContent(
     onUseSharedLink: () -> Unit,
     onCopyInstructions: () -> Unit,
     onBackToSetup: () -> Unit,
+    onRenameCurrent: () -> Unit,
     onSelectWeek: (String) -> Unit,
     onClearWeek: () -> Unit,
     modifier: Modifier = Modifier
@@ -746,6 +766,7 @@ private fun MenuContent(
             onRefresh = onRefresh,
             showClear = state.selectedSourceLabel != "No rota selected",
             onClearMenu = onBackToSetup,
+            onRenameCurrent = onRenameCurrent,
             onOpenSettings = null
         )
 
@@ -858,6 +879,7 @@ private fun SourceControls(
     onRefresh: () -> Unit,
     showClear: Boolean,
     onClearMenu: () -> Unit,
+    onRenameCurrent: (() -> Unit)?,
     onOpenSettings: (() -> Unit)?
 ) {
     val isLoadedView = onOpenSettings == null
@@ -897,6 +919,14 @@ private fun SourceControls(
                         Spacer(modifier = Modifier.weight(1f))
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        onRenameCurrent?.let { rename ->
+                            IconButton(
+                                onClick = rename,
+                                modifier = compactButtonHeight.then(Modifier.size(32.dp))
+                            ) {
+                                Icon(imageVector = Icons.Filled.Edit, contentDescription = "Rename")
+                            }
+                        }
                         TextButton(
                             onClick = onRefresh,
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),

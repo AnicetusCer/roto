@@ -261,6 +261,27 @@ class MenuViewModel(
         }
     }
 
+    fun ensureCurrentInRecents() {
+        val selection = currentSelection ?: return
+        viewModelScope.launch {
+            persistSelection(selection)
+            refreshWidgets()
+        }
+    }
+
+    fun renameCurrent(newLabel: String) {
+        val selection = currentSelection ?: return
+        val trimmed = newLabel.trim()
+        if (trimmed.isEmpty()) return
+        val updated = selection.copy(displayName = trimmed)
+        currentSelection = updated
+        viewModelScope.launch {
+            persistSelection(updated)
+            _uiState.update { it.copy(selectedSourceLabel = trimmed) }
+            refreshWidgets()
+        }
+    }
+
     fun onAppForeground() {
         val selection = currentSelection
         if (selection?.type == MenuSelectionType.REMOTE_LINK) {

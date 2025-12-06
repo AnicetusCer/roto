@@ -468,7 +468,7 @@ private fun SetupState(
                                 onClick = onViewCurrent,
                                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
                             ) {
-                                Text("View", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold))
+                                Text("View", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold))
                             }
                             IconButton(onClick = onRefresh, modifier = Modifier.size(32.dp)) {
                                 Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Refresh")

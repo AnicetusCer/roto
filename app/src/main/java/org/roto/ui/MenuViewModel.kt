@@ -525,11 +525,20 @@ class MenuViewModel(
                     )
                 }
             } else {
-                emitLoadError(
-                    message = primaryError.message
-                        ?: "Pick the latest rota file. If you need one, copy the helper prompt and ask your favourite assistant to build it.",
-                    selectionLabel = "No rota selected"
+                _uiState.emit(
+                    MenuUiState(
+                        isLoading = false,
+                        setupMessage = null,
+                        hasMenuData = false,
+                        selectedSourceLabel = "No rota selected",
+                        selectedSourceType = null,
+                        remoteStatus = null,
+                        remoteUrl = null,
+                        recentRotas = _uiState.value.recentRotas,
+                        recentLimit = _uiState.value.recentLimit
+                    )
                 )
+                refreshWidgets()
             }
         }
     }

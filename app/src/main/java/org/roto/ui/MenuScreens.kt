@@ -780,7 +780,7 @@ private fun SourceControls(
                     contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
                     modifier = Modifier.heightIn(min = 28.dp)
                 ) {
-                    Text("Clear", style = MaterialTheme.typography.labelSmall)
+                    Text("Back", style = MaterialTheme.typography.labelSmall)
                 }
             }
             onOpenSettings?.let { open ->

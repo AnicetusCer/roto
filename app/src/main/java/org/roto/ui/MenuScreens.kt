@@ -179,6 +179,12 @@ fun MenuScreen(
     var showSharedLinkDialog by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
 
+    LaunchedEffect(state.selectedSourceLabel, state.hasMenuData) {
+        if (state.hasMenuData) {
+            showSetupWhileLoaded = false
+        }
+    }
+
     if (showSharedLinkDialog) {
         SharedLinkDialog(
             initialValue = state.remoteUrl.orEmpty(),
@@ -508,12 +514,6 @@ private fun SetupState(
                 onClearRecent = onClearRecent,
                 onRenameRecent = onRenameRecent
             )
-        }
-
-        if (showClear) {
-            TextButton(onClick = onClearMenu) {
-                Text("Clear saved rota")
-            }
         }
 
         Button(

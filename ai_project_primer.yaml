@@ -42,7 +42,9 @@ project_primer:
       - key: browse_week_rota
         description: "Allow users to open any published week pattern and inspect all configured days (weekday or weekend)."
       - key: recent_rotas
-        description: "Keep a recents list of the last 5–10 rotas (local or shared links) for one-tap reopening, with a clear/reset option."
+        description: "Keep a recents list of the last 5–10 rotas (local or shared links) for one-tap reopening, with a clear/reset option in Settings and share/copy buttons for remote entries."
+      - key: loaded_rota_card
+        description: "When a rota is loaded, show a card with rename/share/copy (for remote), refresh, and view actions without leaving the setup screen."
     stretch_goals:
       - key: home_screen_widget
         description: "Android widget showing tomorrow's rota summary."
@@ -131,6 +133,7 @@ project_primer:
           helpers:
             - "Show last synced timestamp and cached-warning state when a remote link is active."
             - "Surface a permanent banner if the remote link fails while keeping the mirrored file active."
+            - "Expose recents list with share/copy for remote entries; loaded card exposes rename/share/copy/refresh and can open the rota directly."
     orientation:
       lock_to_portrait: "Keep the app in a non-rotating, vertical layout so the UI stays consistent for parents."
 

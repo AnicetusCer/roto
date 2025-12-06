@@ -30,6 +30,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -38,6 +39,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -211,6 +213,7 @@ fun MenuScreen(
             showClear = hasSelection,
             onClearMenu = onClearMenu,
             onViewCurrent = { showSetupWhileLoaded = false },
+            onRefresh = onRefresh,
             currentSelectionLabel = state.selectedSourceLabel.takeUnless { it == "No rota selected" },
             sourceLabel = state.selectedSourceLabel,
             sourceType = state.selectedSourceType,
@@ -332,6 +335,7 @@ private fun SetupState(
     showClear: Boolean,
     onClearMenu: () -> Unit,
     onViewCurrent: () -> Unit,
+    onRefresh: () -> Unit,
     currentSelectionLabel: String?,
     sourceLabel: String,
     sourceType: MenuSelectionType?,
@@ -427,19 +431,33 @@ private fun SetupState(
         }
 
         currentSelectionLabel?.let { label ->
+            val (statusText, statusColor) = when {
+                sourceType == MenuSelectionType.REMOTE_LINK && remoteStatus != null -> {
+                    if (remoteStatus.isUsingCache) {
+                        "Cached from ${formatLastSynced(remoteStatus.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.tertiary
+                    } else {
+                        "Last synced ${formatLastSynced(remoteStatus.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.primary
+                    }
+                }
+                sourceType == MenuSelectionType.REMOTE_LINK -> "Shared link ready. Refresh to pull latest." to MaterialTheme.colorScheme.primary
+                else -> "Local file loaded" to MaterialTheme.colorScheme.primary
+            }
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 12.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Icon(imageVector = Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                             Text(
@@ -448,28 +466,38 @@ private fun SetupState(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        TextButton(
-                            onClick = onViewCurrent,
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text("View", style = MaterialTheme.typography.labelSmall)
-                        }
-                        TextButton(
-                            onClick = onClearMenu,
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text("✕", style = MaterialTheme.typography.labelSmall)
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(onClick = onRefresh, modifier = Modifier.size(32.dp)) {
+                                Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Refresh")
+                            }
+                            TextButton(
+                                onClick = onViewCurrent,
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text("View", style = MaterialTheme.typography.labelSmall)
+                            }
+                            TextButton(
+                                onClick = onClearMenu,
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text("✕", style = MaterialTheme.typography.labelSmall)
+                            }
                         }
                     }
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = statusText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = statusColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))

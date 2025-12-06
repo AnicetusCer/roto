@@ -172,6 +172,7 @@ fun MenuScreen(
     onRenameRecent: (RecentRota, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showSetupWhileLoaded by rememberSaveable { mutableStateOf(false) }
     val hasSelection = state.selectedSourceLabel != "No rota selected"
     var showSharedLinkDialog by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
@@ -189,13 +190,13 @@ fun MenuScreen(
 
     when {
         state.isLoading -> LoadingState(modifier)
-        state.hasMenuData -> MenuContent(
+        state.hasMenuData && !showSetupWhileLoaded -> MenuContent(
             state = state,
             onRefresh = onRefresh,
             onChooseFile = onChooseFile,
             onUseSharedLink = { showSharedLinkDialog = true },
             onCopyInstructions = onCopyInstructions,
-            onClearMenu = onClearMenu,
+            onBackToSetup = { showSetupWhileLoaded = true },
             onSelectWeek = onSelectWeek,
             onClearWeek = onClearWeek,
             modifier = modifier
@@ -209,20 +210,22 @@ fun MenuScreen(
             onDismissSamplePrompt = onDismissSamplePrompt,
             showClear = hasSelection,
             onClearMenu = onClearMenu,
+            onViewCurrent = { showSetupWhileLoaded = false },
+            currentSelectionLabel = state.selectedSourceLabel.takeUnless { it == "No rota selected" },
             sourceLabel = state.selectedSourceLabel,
             sourceType = state.selectedSourceType,
             remoteStatus = state.remoteStatus,
             message = state.setupMessage,
             sampleCopyPrompt = state.sampleCopyPrompt,
             onOpenSettings = { showSettings = true },
-        recentRotas = recentRotas,
-        recentLimit = recentLimit,
-        onOpenRecent = onOpenRecent,
-        onClearRecent = onClearRecent,
-        onRenameRecent = onRenameRecent,
-        modifier = modifier
-    )
-}
+            recentRotas = recentRotas,
+            recentLimit = recentLimit,
+            onOpenRecent = onOpenRecent,
+            onClearRecent = onClearRecent,
+            onRenameRecent = onRenameRecent,
+            modifier = modifier
+        )
+    }
 
     if (showSettings) {
         SettingsDialog(
@@ -328,6 +331,8 @@ private fun SetupState(
     onDismissSamplePrompt: () -> Unit,
     showClear: Boolean,
     onClearMenu: () -> Unit,
+    onViewCurrent: () -> Unit,
+    currentSelectionLabel: String?,
     sourceLabel: String,
     sourceType: MenuSelectionType?,
     remoteStatus: RemoteStatusUi?,
@@ -419,6 +424,28 @@ private fun SetupState(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Use shared link")
+        }
+
+        currentSelectionLabel?.let { label ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Loaded rota: $label",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = onViewCurrent, contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)) {
+                        Text("View")
+                    }
+                    TextButton(onClick = onClearMenu, contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)) {
+                        Text("✕")
+                    }
+                }
+            }
         }
 
         if (sourceType == MenuSelectionType.REMOTE_LINK) {
@@ -619,7 +646,7 @@ private fun MenuContent(
     onChooseFile: () -> Unit,
     onUseSharedLink: () -> Unit,
     onCopyInstructions: () -> Unit,
-    onClearMenu: () -> Unit,
+    onBackToSetup: () -> Unit,
     onSelectWeek: (String) -> Unit,
     onClearWeek: () -> Unit,
     modifier: Modifier = Modifier
@@ -670,7 +697,7 @@ private fun MenuContent(
             onChooseFile = onChooseFile,
             onRefresh = onRefresh,
             showClear = state.selectedSourceLabel != "No rota selected",
-            onClearMenu = onClearMenu,
+            onClearMenu = onBackToSetup,
             onOpenSettings = null
         )
 

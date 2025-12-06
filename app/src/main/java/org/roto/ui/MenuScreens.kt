@@ -453,6 +453,8 @@ private fun RecentRotasList(
     onClearRecent: () -> Unit,
     onRenameRecent: (RecentRota, String) -> Unit
 ) {
+    val clipboard = LocalClipboardManager.current
+    val context = LocalContext.current
     var renameTarget by remember { mutableStateOf<RecentRota?>(null) }
     var renameText by rememberSaveable { mutableStateOf("") }
 
@@ -511,8 +513,29 @@ private fun RecentRotasList(
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        if (recent.type == MenuSelectionType.REMOTE_LINK && recent.remoteUrl != null) {
+                            TextButton(
+                                onClick = {
+                                    val intent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, recent.remoteUrl)
+                                    }
+                                    context.startActivity(Intent.createChooser(intent, "Share rota link"))
+                                },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text("Share")
+                            }
+                            TextButton(
+                                onClick = { clipboard.setText(AnnotatedString(recent.remoteUrl)) },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text("Copy link")
+                            }
+                        }
                         TextButton(
                             onClick = {
                                 renameTarget = recent

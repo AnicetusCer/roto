@@ -40,6 +40,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -92,6 +93,8 @@ fun MenuRoot(
     themeMode: ThemeMode,
     onThemeChange: (ThemeOption) -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
+    applySystemPadding: Boolean,
+    onSystemPaddingChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -130,6 +133,8 @@ fun MenuRoot(
         onThemeChange = onThemeChange,
         themeMode = themeMode,
         onThemeModeChange = onThemeModeChange,
+        applySystemPadding = applySystemPadding,
+        onSystemPaddingChange = onSystemPaddingChange,
         recentRotas = state.recentRotas,
         recentLimit = state.recentLimit,
         onOpenRecent = viewModel::openRecent,
@@ -157,6 +162,8 @@ fun MenuScreen(
     themeMode: ThemeMode,
     onThemeChange: (ThemeOption) -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
+    applySystemPadding: Boolean,
+    onSystemPaddingChange: (Boolean) -> Unit,
     recentRotas: List<RecentRota>,
     recentLimit: Int,
     onOpenRecent: (RecentRota) -> Unit,
@@ -223,6 +230,8 @@ fun MenuScreen(
             onThemeChange = onThemeChange,
             themeMode = themeMode,
             onThemeModeChange = onThemeModeChange,
+            applySystemPadding = applySystemPadding,
+            onSystemPaddingChange = onSystemPaddingChange,
             recentLimit = recentLimit,
             onRecentLimitChange = onRecentLimitChange,
             onClearRecent = onClearRecent,
@@ -237,6 +246,8 @@ private fun SettingsDialog(
     onThemeChange: (ThemeOption) -> Unit,
     themeMode: ThemeMode,
     onThemeModeChange: (ThemeMode) -> Unit,
+    applySystemPadding: Boolean,
+    onSystemPaddingChange: (Boolean) -> Unit,
     recentLimit: Int,
     onRecentLimitChange: (Int) -> Unit,
     onClearRecent: () -> Unit,
@@ -260,6 +271,28 @@ private fun SettingsDialog(
                         onThemeChange(it)
                     }
                 )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Safe area padding",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Pad around status/nav bars to avoid overlap",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = applySystemPadding,
+                        onCheckedChange = onSystemPaddingChange
+                    )
+                }
                 RecentListSettings(
                     currentLimit = recentLimit,
                     onLimitChange = onRecentLimitChange,

@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.darkColorScheme
@@ -14,11 +13,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.roto.data.ThemeMode
 import org.roto.data.ThemeOption
 import org.roto.ui.MenuRoot
 import org.roto.ui.MenuViewModel
+import org.roto.ui.ThemeUiState
 import org.roto.ui.ThemeViewModel
 
 class MainActivity : ComponentActivity() {
@@ -30,7 +32,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val themeState by themeViewModel.themeState.collectAsStateWithLifecycle()
-            val (themeOption, themeMode) = themeState
+            val themeOption = themeState.option
+            val themeMode = themeState.mode
+            val applySystemPadding = themeState.applySystemPadding
             RotoTheme(themeOption, themeMode) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -42,7 +46,11 @@ class MainActivity : ComponentActivity() {
                         themeMode = themeMode,
                         onThemeChange = themeViewModel::setTheme,
                         onThemeModeChange = themeViewModel::setMode,
-                        modifier = Modifier.fillMaxSize()
+                        applySystemPadding = applySystemPadding,
+                        onSystemPaddingChange = themeViewModel::setApplySystemPadding,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .let { base -> if (applySystemPadding) base.systemBarsPadding() else base }
                     )
                 }
             }

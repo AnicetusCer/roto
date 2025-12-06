@@ -2,6 +2,7 @@ package org.roto.data
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -17,6 +18,7 @@ class ThemePreferencesDataSource(private val context: Context) {
     private object Keys {
         val THEME_OPTION = stringPreferencesKey("theme_option")
         val THEME_MODE = stringPreferencesKey("theme_mode")
+        val APPLY_SYSTEM_PADDING = booleanPreferencesKey("apply_system_padding")
     }
 
     val themeOptionFlow: Flow<ThemeOption> =
@@ -33,6 +35,11 @@ class ThemePreferencesDataSource(private val context: Context) {
                 ?: ThemeMode.SYSTEM
         }
 
+    val applySystemPaddingFlow: Flow<Boolean> =
+        context.themePreferencesDataStore.data.map { prefs ->
+            prefs[Keys.APPLY_SYSTEM_PADDING] ?: true
+        }
+
     suspend fun saveTheme(option: ThemeOption) {
         context.themePreferencesDataStore.edit { prefs ->
             prefs[Keys.THEME_OPTION] = option.name
@@ -42,6 +49,12 @@ class ThemePreferencesDataSource(private val context: Context) {
     suspend fun saveMode(mode: ThemeMode) {
         context.themePreferencesDataStore.edit { prefs ->
             prefs[Keys.THEME_MODE] = mode.name
+        }
+    }
+
+    suspend fun saveApplySystemPadding(apply: Boolean) {
+        context.themePreferencesDataStore.edit { prefs ->
+            prefs[Keys.APPLY_SYSTEM_PADDING] = apply
         }
     }
 }

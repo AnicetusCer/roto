@@ -11,16 +11,27 @@ import org.roto.data.ThemeMode
 import org.roto.data.ThemeOption
 import org.roto.data.ThemePreferencesDataSource
 
+data class ThemeUiState(
+    val option: ThemeOption = ThemeOption.SYSTEM,
+    val mode: ThemeMode = ThemeMode.SYSTEM,
+    val applySystemPadding: Boolean = true
+)
+
 class ThemeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val preferences = ThemePreferencesDataSource(application)
 
-    val themeState = preferences.themeOptionFlow
-        .combine(preferences.themeModeFlow) { option, mode -> option to mode }
+    val themeState = combine(
+        preferences.themeOptionFlow,
+        preferences.themeModeFlow,
+        preferences.applySystemPaddingFlow
+    ) { option, mode, padding ->
+        ThemeUiState(option = option, mode = mode, applySystemPadding = padding)
+    }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = ThemeOption.SYSTEM to ThemeMode.SYSTEM
+            initialValue = ThemeUiState()
         )
 
     fun setTheme(option: ThemeOption) {
@@ -32,6 +43,12 @@ class ThemeViewModel(application: Application) : AndroidViewModel(application) {
     fun setMode(mode: ThemeMode) {
         viewModelScope.launch {
             preferences.saveMode(mode)
+        }
+    }
+
+    fun setApplySystemPadding(apply: Boolean) {
+        viewModelScope.launch {
+            preferences.saveApplySystemPadding(apply)
         }
     }
 }

@@ -66,6 +66,16 @@ For F-Droid reproducibility and scans:
 - `dependenciesInfo { includeInApk = false; includeInBundle = false }` is set in `app/build.gradle.kts` to disable the dependency metadata signing block.
 - Release APKs uploaded to GitHub are named `roto-v<versionName>.apk` (e.g. `roto-v1.0.2.apk`) to match the `Binaries` URL pattern used in fdroiddata.
 
+### Dependency profiles (F-Droid vs. “latest”)
+
+The default dependencies in `app/build.gradle.kts` are pinned for F-Droid reproducibility. To build with newer libraries (e.g., for Play or local testing), enable the toggle:
+
+```bash
+./gradlew -PuseLatestDeps=true :app:assembleRelease
+```
+
+With `useLatestDeps=true`, common libraries (core-ktx, lifecycle, activity-compose, material, datastore, glance, work, desugar) switch to newer versions. Leave the flag off for F-Droid-compatible, pinned builds.
+
 ### App Bundle (Google Play)
 
 ```bash

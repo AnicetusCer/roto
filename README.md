@@ -125,6 +125,8 @@ The full AI helper prompt lives in `app/src/main/assets/ai_llm_instructions.txt`
 
 See [`docs/BUILDING.md`](docs/BUILDING.md) for environment prerequisites, debug builds, release signing, and Play/F-Droid packaging. The high-level layout:
 
+- Default dependency pins are kept reproducible for F-Droid; pass `-PuseLatestDeps=true` to Gradle if you want a Play/local build with the newest library versions.
+
 - `app/src/main/java/org/roto/data` – Roto models, repository, and DataStore-backed preferences.
 - `app/src/main/java/org/roto/domain` – Rotation logic that resolves overrides, notes, and slot lists.
 - `app/src/main/java/org/roto/ui` – Compose screens plus the view model that handles imports and date browsing.

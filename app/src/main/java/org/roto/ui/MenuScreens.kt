@@ -500,14 +500,6 @@ private fun SetupState(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        if (sourceType == MenuSelectionType.REMOTE_LINK) {
-            RemoteStatusInfo(
-                status = remoteStatus,
-                onRefresh = {},
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
         if (recentRotas.isNotEmpty()) {
             RecentRotasList(
                 recentRotas = recentRotas,

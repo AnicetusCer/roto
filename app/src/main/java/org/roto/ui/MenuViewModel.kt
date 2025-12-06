@@ -273,6 +273,7 @@ class MenuViewModel(
         val selection = currentSelection ?: return
         val trimmed = newLabel.trim()
         if (trimmed.isEmpty()) return
+        if (selection.displayName == trimmed) return
         val updated = selection.copy(displayName = trimmed)
         currentSelection = updated
         viewModelScope.launch {

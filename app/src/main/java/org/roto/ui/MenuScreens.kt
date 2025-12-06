@@ -1,5 +1,6 @@
 package org.roto.ui
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -146,7 +147,7 @@ fun MenuRoot(
     onOpenRecent = viewModel::openRecent,
         onRecentLimitChange = viewModel::setRecentLimit,
         onClearRecent = viewModel::clearRecentRotas,
-        onRenameCurrent = viewModel::renameCurrent,
+    onRenameCurrent = viewModel::renameCurrent,
         modifier = modifier
     )
 }
@@ -522,13 +523,7 @@ private fun SetupState(
                             if (sourceType == MenuSelectionType.REMOTE_LINK && !remoteUrl.isNullOrBlank()) {
                                 val shareUrl = remoteUrl
                                 TextButton(
-                                    onClick = {
-                                        val intent = Intent(Intent.ACTION_SEND).apply {
-                                            type = "text/plain"
-                                            putExtra(Intent.EXTRA_TEXT, shareUrl)
-                                        }
-                                        context.startActivity(Intent.createChooser(intent, "Share rota link"))
-                                    },
+                                    onClick = { shareLink(context, shareUrl) },
                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
                                 ) {
                                     Text("Share", style = MaterialTheme.typography.labelSmall)
@@ -677,13 +672,7 @@ private fun RecentRotasList(
                     ) {
                         if (recent.type == MenuSelectionType.REMOTE_LINK && recent.remoteUrl != null) {
                             TextButton(
-                                onClick = {
-                                    val intent = Intent(Intent.ACTION_SEND).apply {
-                                        type = "text/plain"
-                                        putExtra(Intent.EXTRA_TEXT, recent.remoteUrl)
-                                    }
-                                    context.startActivity(Intent.createChooser(intent, "Share rota link"))
-                                },
+                                onClick = { shareLink(context, recent.remoteUrl) },
                                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text("Share")
@@ -1087,6 +1076,14 @@ private fun InfoCard(message: String) {
             Text(text = message, style = MaterialTheme.typography.bodyMedium)
         }
     }
+}
+
+private fun shareLink(context: Context, url: String) {
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, url)
+    }
+    context.startActivity(Intent.createChooser(intent, "Share rota link"))
 }
 
 @Composable

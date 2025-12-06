@@ -752,6 +752,7 @@ private fun SourceControls(
     onClearMenu: () -> Unit,
     onOpenSettings: (() -> Unit)?
 ) {
+    val isLoadedView = onOpenSettings == null
     Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
         Text(
             text = "Rota source: $selectedSourceLabel",
@@ -762,34 +763,54 @@ private fun SourceControls(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val buttonPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-            Button(
-                onClick = onChooseFile,
-                contentPadding = buttonPadding,
-                modifier = Modifier.heightIn(min = 36.dp)
-            ) { Text("Load rota file") }
-            Button(
-                onClick = onUseSharedLink,
-                contentPadding = buttonPadding,
-                modifier = Modifier.heightIn(min = 36.dp)
-            ) { Text("Use shared link") }
-            Spacer(modifier = Modifier.weight(1f))
-            if (showClear) {
+            if (isLoadedView) {
+                Spacer(modifier = Modifier.weight(1f))
                 TextButton(
-                    onClick = onClearMenu,
-                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
-                    modifier = Modifier.heightIn(min = 28.dp)
+                    onClick = onRefresh,
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                    modifier = Modifier.heightIn(min = 32.dp)
                 ) {
-                    Text("Back", style = MaterialTheme.typography.labelSmall)
+                    Text("Refresh")
                 }
-            }
-            onOpenSettings?.let { open ->
-                TextButton(
-                    onClick = open,
-                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
-                    modifier = Modifier.heightIn(min = 28.dp)
-                ) {
-                    Text("Settings", style = MaterialTheme.typography.labelSmall)
+                if (showClear) {
+                    TextButton(
+                        onClick = onClearMenu,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                        modifier = Modifier.heightIn(min = 32.dp)
+                    ) {
+                        Text("Back", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            } else {
+                val buttonPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                Button(
+                    onClick = onChooseFile,
+                    contentPadding = buttonPadding,
+                    modifier = Modifier.heightIn(min = 36.dp)
+                ) { Text("Load rota file") }
+                Button(
+                    onClick = onUseSharedLink,
+                    contentPadding = buttonPadding,
+                    modifier = Modifier.heightIn(min = 36.dp)
+                ) { Text("Use shared link") }
+                Spacer(modifier = Modifier.weight(1f))
+                if (showClear) {
+                    TextButton(
+                        onClick = onClearMenu,
+                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
+                        modifier = Modifier.heightIn(min = 28.dp)
+                    ) {
+                        Text("Back", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+                onOpenSettings?.let { open ->
+                    TextButton(
+                        onClick = open,
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
+                        modifier = Modifier.heightIn(min = 28.dp)
+                    ) {
+                        Text("Settings", style = MaterialTheme.typography.labelSmall)
+                    }
                 }
             }
         }

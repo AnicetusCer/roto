@@ -753,6 +753,8 @@ private fun SourceControls(
     onOpenSettings: (() -> Unit)?
 ) {
     val isLoadedView = onOpenSettings == null
+    val refreshPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+    val compactButtonHeight = Modifier.heightIn(min = 32.dp)
     Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
         Text(
             text = "Rota source: $selectedSourceLabel",
@@ -764,33 +766,48 @@ private fun SourceControls(
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (isLoadedView) {
-                Spacer(modifier = Modifier.weight(1f))
+                if (selectedSourceType == MenuSelectionType.REMOTE_LINK) {
+                    val (message, color) = when {
+                        remoteStatus == null -> "Shared link ready. Refresh to pull latest." to MaterialTheme.colorScheme.primary
+                        remoteStatus.isUsingCache -> "Using cached link from ${formatLastSynced(remoteStatus.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.tertiary
+                        else -> "Last synced ${formatLastSynced(remoteStatus.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.primary
+                    }
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = color,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                } else {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
                 TextButton(
                     onClick = onRefresh,
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                    modifier = Modifier.heightIn(min = 32.dp)
+                    contentPadding = refreshPadding,
+                    modifier = compactButtonHeight
                 ) {
                     Text("Refresh")
                 }
                 if (showClear) {
                     TextButton(
                         onClick = onClearMenu,
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                        modifier = Modifier.heightIn(min = 32.dp)
+                        contentPadding = refreshPadding,
+                        modifier = compactButtonHeight
                     ) {
                         Text("Back", style = MaterialTheme.typography.labelSmall)
                     }
                 }
             } else {
-                val buttonPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 Button(
                     onClick = onChooseFile,
-                    contentPadding = buttonPadding,
+                    contentPadding = refreshPadding,
                     modifier = Modifier.heightIn(min = 36.dp)
                 ) { Text("Load rota file") }
                 Button(
                     onClick = onUseSharedLink,
-                    contentPadding = buttonPadding,
+                    contentPadding = refreshPadding,
                     modifier = Modifier.heightIn(min = 36.dp)
                 ) { Text("Use shared link") }
                 Spacer(modifier = Modifier.weight(1f))
@@ -814,7 +831,7 @@ private fun SourceControls(
                 }
             }
         }
-        if (selectedSourceType == MenuSelectionType.REMOTE_LINK) {
+        if (!isLoadedView && selectedSourceType == MenuSelectionType.REMOTE_LINK) {
             RemoteStatusInfo(
                 status = remoteStatus,
                 onRefresh = onRefresh,

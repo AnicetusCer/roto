@@ -455,11 +455,13 @@ class MenuViewModel(
             )
         }
         primaryResult.onSuccess { result ->
-            val resolvedLabel = preferredLabel ?: result.data.rotaName
-            if (selection != null && selection.displayName.isNullOrBlank()) {
+            val rotaLabel = result.data.rotaName
+            val shouldReplaceLabel = preferredLabel.isNullOrBlank() || preferredLabel.endsWith(".json", ignoreCase = true)
+            val resolvedLabel = if (shouldReplaceLabel) rotaLabel else preferredLabel
+            if (selection != null && resolvedLabel != preferredLabel) {
                 when (selection.type) {
-                    MenuSelectionType.LOCAL_FILE -> preferences.saveLocalSelection(selection.reference, result.data.rotaName)
-                    MenuSelectionType.REMOTE_LINK -> selection.remoteUrl?.let { preferences.saveRemoteSelection(selection.reference, result.data.rotaName, it) }
+                    MenuSelectionType.LOCAL_FILE -> preferences.saveLocalSelection(selection.reference, resolvedLabel)
+                    MenuSelectionType.REMOTE_LINK -> selection.remoteUrl?.let { preferences.saveRemoteSelection(selection.reference, resolvedLabel, it) }
                 }
             }
             updateStateWithMenu(

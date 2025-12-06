@@ -692,7 +692,10 @@ private fun MenuContent(
     onClearWeek: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val appTitle = state.rotaName.ifBlank { "Roto" }
+    val appTitle = state.selectedSourceLabel
+        .takeUnless { it.isNullOrBlank() || it == "No rota selected" }
+        ?: state.rotaName.takeUnless { it.isBlank() }
+        ?: "Roto"
     val scrollState = rememberScrollState()
     var showBrowse by remember { mutableStateOf(false) }
     val weekCardBringIntoView = remember { BringIntoViewRequester() }

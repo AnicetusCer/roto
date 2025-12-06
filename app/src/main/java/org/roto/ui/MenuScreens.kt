@@ -29,6 +29,8 @@ import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
@@ -398,7 +400,6 @@ private fun SetupState(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val clipboard = LocalClipboardManager.current
     val sampleFiles = remember(context) {
         context.assets.list("sample_rotas")?.toList()?.filter { it.endsWith(".json") }?.sorted() ?: emptyList()
     }
@@ -480,17 +481,7 @@ private fun SetupState(
 
         currentSelectionLabel?.let { label ->
             val cardInteraction = remember { MutableInteractionSource() }
-            val (statusText, statusColor) = when {
-                sourceType == MenuSelectionType.REMOTE_LINK && remoteStatus != null -> {
-                    if (remoteStatus.isUsingCache) {
-                        "Cached from ${formatLastSynced(remoteStatus.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.tertiary
-                    } else {
-                        "Last synced ${formatLastSynced(remoteStatus.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.primary
-                    }
-                }
-                sourceType == MenuSelectionType.REMOTE_LINK -> "Shared link ready. Refresh to pull latest." to MaterialTheme.colorScheme.primary
-                else -> "Local file loaded" to MaterialTheme.colorScheme.primary
-            }
+            val (statusText, statusColor) = buildRemoteStatusDisplay(remoteStatus, sourceType)
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
@@ -520,21 +511,13 @@ private fun SetupState(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                            if (sourceType == MenuSelectionType.REMOTE_LINK && !remoteUrl.isNullOrBlank()) {
-                                val shareUrl = remoteUrl
-                                TextButton(
-                                    onClick = { shareLink(context, shareUrl) },
-                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                                ) {
-                                    Text("Share", style = MaterialTheme.typography.labelSmall)
-                                }
-                                TextButton(
-                                    onClick = { clipboard.setText(AnnotatedString(shareUrl)) },
-                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                                ) {
-                                    Text("Copy", style = MaterialTheme.typography.labelSmall)
-                                }
-                            }
+                        if (sourceType == MenuSelectionType.REMOTE_LINK && !remoteUrl.isNullOrBlank()) {
+                            ShareCopyButtons(
+                                url = remoteUrl,
+                                textStyle = MaterialTheme.typography.labelSmall,
+                                padding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                            )
+                        }
                             IconButton(onClick = onRenameCurrent, modifier = Modifier.size(32.dp)) {
                                 Icon(imageVector = Icons.Filled.Edit, contentDescription = "Rename")
                             }
@@ -615,28 +598,21 @@ private fun RecentRotasList(
     limit: Int,
     onOpenRecent: (RecentRota) -> Unit
 ) {
-    val clipboard = LocalClipboardManager.current
-    val context = LocalContext.current
-
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(max = 320.dp)
-            .verticalScroll(rememberScrollState()),
+            .heightIn(max = 320.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        item {
             Text(
                 text = "Recently opened (last $limit)",
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(bottom = 4.dp, start = 4.dp, end = 4.dp)
             )
         }
-        recentRotas.forEach { recent ->
+        items(recentRotas) { recent ->
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                 modifier = Modifier
@@ -671,18 +647,10 @@ private fun RecentRotasList(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         if (recent.type == MenuSelectionType.REMOTE_LINK && recent.remoteUrl != null) {
-                            TextButton(
-                                onClick = { shareLink(context, recent.remoteUrl) },
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Text("Share")
-                            }
-                            TextButton(
-                                onClick = { clipboard.setText(AnnotatedString(recent.remoteUrl)) },
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Text("Copy link")
-                            }
+                            ShareCopyButtons(
+                                url = recent.remoteUrl,
+                                padding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                            )
                         }
                     }
                 }
@@ -891,11 +859,7 @@ private fun SourceControls(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (selectedSourceType == MenuSelectionType.REMOTE_LINK) {
-                        val (message, color) = when {
-                            remoteStatus == null -> "Shared link ready. Refresh to pull latest." to MaterialTheme.colorScheme.primary
-                            remoteStatus.isUsingCache -> "Cached from ${formatLastSynced(remoteStatus.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.tertiary
-                            else -> "Last synced ${formatLastSynced(remoteStatus.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.primary
-                        }
+                        val (message, color) = buildRemoteStatusDisplay(remoteStatus, selectedSourceType)
                         Text(
                             text = message,
                             style = MaterialTheme.typography.bodySmall,
@@ -1075,6 +1039,41 @@ private fun InfoCard(message: String) {
             Icon(imageVector = Icons.Filled.Info, contentDescription = null)
             Text(text = message, style = MaterialTheme.typography.bodyMedium)
         }
+    }
+}
+
+@Composable
+private fun buildRemoteStatusDisplay(
+    remoteStatus: RemoteStatusUi?,
+    sourceType: MenuSelectionType?
+): Pair<String, Color> {
+    return when {
+        sourceType != MenuSelectionType.REMOTE_LINK -> "Local file loaded" to MaterialTheme.colorScheme.primary
+        remoteStatus == null -> "Shared link ready. Refresh to pull latest." to MaterialTheme.colorScheme.primary
+        remoteStatus.isUsingCache -> "Cached from ${formatLastSynced(remoteStatus.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.tertiary
+        else -> "Last synced ${formatLastSynced(remoteStatus.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.primary
+    }
+}
+
+@Composable
+private fun ShareCopyButtons(
+    url: String,
+    textStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.labelSmall,
+    padding: PaddingValues = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+) {
+    val clipboard = LocalClipboardManager.current
+    val context = LocalContext.current
+    TextButton(
+        onClick = { shareLink(context, url) },
+        contentPadding = padding
+    ) {
+        Text("Share", style = textStyle)
+    }
+    TextButton(
+        onClick = { clipboard.setText(AnnotatedString(url)) },
+        contentPadding = padding
+    ) {
+        Text("Copy", style = textStyle)
     }
 }
 

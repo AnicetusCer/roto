@@ -455,10 +455,17 @@ class MenuViewModel(
             )
         }
         primaryResult.onSuccess { result ->
+            val resolvedLabel = preferredLabel ?: result.data.rotaName
+            if (selection != null && selection.displayName.isNullOrBlank()) {
+                when (selection.type) {
+                    MenuSelectionType.LOCAL_FILE -> preferences.saveLocalSelection(selection.reference, result.data.rotaName)
+                    MenuSelectionType.REMOTE_LINK -> selection.remoteUrl?.let { preferences.saveRemoteSelection(selection.reference, result.data.rotaName, it) }
+                }
+            }
             updateStateWithMenu(
                 menuData = result.data,
                 selection = selection,
-                selectionLabel = preferredLabel,
+                selectionLabel = resolvedLabel,
                 today = today,
                 tomorrow = tomorrow,
                 messageOverride = null,

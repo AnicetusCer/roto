@@ -14,8 +14,10 @@ Roto is developed and maintained by **AnicetusCer**.
 - Browse any calendar date (including weekends)  
 - Flexible labelled slots with optional tags and notes  
 - Looping week cycles with a repeat anchor  
-- Per‑date overrides for closures and special events  
-- Supports local JSON files and HTTPS shared‑link rotas  
+- Per-date overrides and top-level `special_events` (single string or array for multiple banners on the same day)  
+- Supports local JSON files and HTTPS shared-link rotas (cached offline, with refresh)  
+- Recent rotas list with share/copy for remote links and a loaded card that surfaces rename/share/refresh controls  
+- Custom themes that apply to both app and widget; safe-area padding toggle for devices with gesture bars/notches  
 - Homescreen widget for quick rota summaries  
 - No analytics, tracking, or proprietary dependencies
 
@@ -42,4 +44,3 @@ Roto is a one‑person, spare‑time project. If you find it useful:
 
 - Report bugs or request features on GitHub: <https://github.com/AnicetusCer/roto/issues>  
 - Consider sending a tip via the Ko‑fi link inside the app.
-

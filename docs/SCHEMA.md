@@ -13,6 +13,9 @@ Roto stores schedules in a lightweight JSON format so you can edit rotas by hand
   "schema_version": "0.3",         // Required. Currently must be "0.3".
   "rota_name": "My Rota Name",     // Display name shown in the app (can be any label).
   "notes": [ "Optional global note" ], // Optional list shown on the home screen.
+  "special_events": {              // Optional. Map of ISO date -> string OR array of strings.
+    "2025-12-05": ["Event 1", "Event 2"]
+  },
   "cycle": { ... },                // Required. Describes repeating weeks/days.
   "overrides": { ... }             // Optional map of date-specific overrides.
 }
@@ -124,6 +127,21 @@ Use overrides for one-off changes (closures, special events). Keys are ISO dates
 - `reason` (string) – optional text explaining the closure.
 - `slots` – optional replacement slots (if the day isn’t closed).
 - `notes` – optional extra reminders.
+
+### `special_events`
+
+Use `special_events` at the top level to surface banners on specific dates without touching the underlying cycle/override. Keys are ISO dates. Values can be:
+
+- A single string:
+  ```jsonc
+  "special_events": { "2025-12-05": "Christmas Disco Today!" }
+  ```
+- Or an array of strings when you want multiple lines on the same day:
+  ```jsonc
+  "special_events": { "2025-12-05": ["Christmas Disco Today!", "Wear festive jumpers"] }
+  ```
+
+Special events are displayed in both the app and the widget (today/tomorrow).
 
 ---
 

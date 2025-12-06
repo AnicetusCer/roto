@@ -175,7 +175,6 @@ fun MenuScreen(
     modifier: Modifier = Modifier
 ) {
     var showSetupWhileLoaded by remember { mutableStateOf(false) }
-    val hasSelection = state.selectedSourceLabel != "No rota selected"
     var showSharedLinkDialog by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
 
@@ -216,7 +215,6 @@ fun MenuScreen(
             onCopySample = onCopySample,
             onApplySampleSelection = onApplySampleSelection,
             onDismissSamplePrompt = onDismissSamplePrompt,
-            showClear = hasSelection,
             onClearMenu = onClearMenu,
             onViewCurrent = { showSetupWhileLoaded = false },
             onRefresh = onRefresh,
@@ -338,7 +336,6 @@ private fun SetupState(
     onCopySample: (String) -> Unit,
     onApplySampleSelection: (MenuSelection) -> Unit,
     onDismissSamplePrompt: () -> Unit,
-    showClear: Boolean,
     onClearMenu: () -> Unit,
     onViewCurrent: () -> Unit,
     onRefresh: () -> Unit,

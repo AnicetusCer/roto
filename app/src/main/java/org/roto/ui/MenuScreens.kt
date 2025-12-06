@@ -174,7 +174,7 @@ fun MenuScreen(
     onRenameRecent: (RecentRota, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showSetupWhileLoaded by rememberSaveable { mutableStateOf(false) }
+    var showSetupWhileLoaded by remember { mutableStateOf(false) }
     val hasSelection = state.selectedSourceLabel != "No rota selected"
     var showSharedLinkDialog by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }

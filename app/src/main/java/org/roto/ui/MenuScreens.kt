@@ -33,9 +33,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -514,8 +516,7 @@ private fun SetupState(
                         if (sourceType == MenuSelectionType.REMOTE_LINK && !remoteUrl.isNullOrBlank()) {
                             ShareCopyButtons(
                                 url = remoteUrl,
-                                textStyle = MaterialTheme.typography.labelSmall,
-                                padding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                                padding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
                             )
                         }
                             IconButton(onClick = onRenameCurrent, modifier = Modifier.size(32.dp)) {
@@ -880,12 +881,11 @@ private fun SourceControls(
                                 Icon(imageVector = Icons.Filled.Edit, contentDescription = "Rename")
                             }
                         }
-                        TextButton(
+                        IconButton(
                             onClick = onRefresh,
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                            modifier = compactButtonHeight
+                            modifier = compactButtonHeight.then(Modifier.size(32.dp))
                         ) {
-                            Text("Refresh", style = MaterialTheme.typography.labelSmall)
+                            Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Refresh")
                         }
                         if (showClear) {
                             TextButton(
@@ -1058,22 +1058,25 @@ private fun buildRemoteStatusDisplay(
 @Composable
 private fun ShareCopyButtons(
     url: String,
-    textStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.labelSmall,
-    padding: PaddingValues = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+    padding: PaddingValues = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
 ) {
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
-    TextButton(
+    IconButton(
         onClick = { shareLink(context, url) },
-        contentPadding = padding
+        modifier = Modifier
+            .size(32.dp)
+            .padding(padding)
     ) {
-        Text("Share", style = textStyle)
+        Icon(imageVector = Icons.Filled.Share, contentDescription = "Share link")
     }
-    TextButton(
+    IconButton(
         onClick = { clipboard.setText(AnnotatedString(url)) },
-        contentPadding = padding
+        modifier = Modifier
+            .size(32.dp)
+            .padding(padding)
     ) {
-        Text("Copy", style = textStyle)
+        Icon(imageVector = Icons.Filled.ContentCopy, contentDescription = "Copy link")
     }
 }
 

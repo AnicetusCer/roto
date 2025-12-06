@@ -1,0 +1,5 @@
+1.0.3
+- Rename entries in the recent rotas list and share/copy saved shared links.
+- Safe-area padding toggle to avoid status/gesture bar overlap.
+- Cleaned loaded view controls (Refresh/Back only) and UI polish.
+- Special events support multiple messages per date in app + widget.

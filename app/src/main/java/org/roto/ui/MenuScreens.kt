@@ -8,6 +8,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -70,6 +71,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.Role
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.time.Instant
 import java.time.LocalDate
@@ -434,6 +436,7 @@ private fun SetupState(
         }
 
         currentSelectionLabel?.let { label ->
+            val cardInteraction = remember { MutableInteractionSource() }
             val (statusText, statusColor) = when {
                 sourceType == MenuSelectionType.REMOTE_LINK && remoteStatus != null -> {
                     if (remoteStatus.isUsingCache) {
@@ -448,7 +451,14 @@ private fun SetupState(
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = cardInteraction,
+                        indication = null,
+                        role = Role.Button,
+                        onClick = onViewCurrent
+                    )
             ) {
                 Column(
                     modifier = Modifier
@@ -467,12 +477,6 @@ private fun SetupState(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                            TextButton(
-                                onClick = onViewCurrent,
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                            ) {
-                                Text("View", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold))
-                            }
                             IconButton(onClick = onRefresh, modifier = Modifier.size(32.dp)) {
                                 Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Refresh")
                             }

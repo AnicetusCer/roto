@@ -448,6 +448,12 @@ class MenuViewModel(
         val tomorrow = today.plusDays(1)
         val preferredLabel = selection?.displayName
 
+        fun resolveLabel(fallbackName: String?): String? {
+            val name = preferredLabel
+            val shouldReplace = name.isNullOrBlank() || name.endsWith(".json", ignoreCase = true)
+            return if (shouldReplace) fallbackName else name
+        }
+
         val primaryResult = withContext(Dispatchers.IO) {
             repository.loadMenu(
                 selection = selection,
@@ -455,10 +461,8 @@ class MenuViewModel(
             )
         }
         primaryResult.onSuccess { result ->
-            val rotaLabel = result.data.rotaName
-            val shouldReplaceLabel = preferredLabel.isNullOrBlank() || preferredLabel.endsWith(".json", ignoreCase = true)
-            val resolvedLabel = if (shouldReplaceLabel) rotaLabel else preferredLabel
-            if (selection != null && resolvedLabel != preferredLabel) {
+            val resolvedLabel = resolveLabel(result.data.rotaName)
+            if (selection != null && resolvedLabel != preferredLabel && !resolvedLabel.isNullOrBlank()) {
                 when (selection.type) {
                     MenuSelectionType.LOCAL_FILE -> preferences.saveLocalSelection(selection.reference, resolvedLabel)
                     MenuSelectionType.REMOTE_LINK -> selection.remoteUrl?.let { preferences.saveRemoteSelection(selection.reference, resolvedLabel, it) }
@@ -493,10 +497,11 @@ class MenuViewModel(
                             )
                         }
                         ?: previousStatus)?.copy(isFromCache = true)
+                    val resolvedLabel = resolveLabel(cached.data.rotaName)
                     updateStateWithMenu(
                         menuData = cached.data,
                         selection = selection,
-                        selectionLabel = preferredLabel,
+                        selectionLabel = resolvedLabel,
                         today = today,
                         tomorrow = tomorrow,
                         messageOverride = buildFallbackRemoteMessage(primaryError.message, fallbackStatus),
@@ -513,10 +518,11 @@ class MenuViewModel(
                     repository.loadMenu(null)
                 }
                 fallbackResult.onSuccess { fallback ->
+                    val resolvedLabel = resolveLabel(fallback.data.rotaName)
                     updateStateWithMenu(
                         menuData = fallback.data,
                         selection = selection,
-                        selectionLabel = preferredLabel,
+                        selectionLabel = resolvedLabel,
                         today = today,
                         tomorrow = tomorrow,
                         messageOverride = primaryError.message

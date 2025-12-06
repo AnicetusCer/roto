@@ -11,7 +11,7 @@ Roto stores schedules in a lightweight JSON format so you can edit rotas by hand
 ```jsonc
 {
   "schema_version": "0.3",         // Required. Currently must be "0.3".
-  "school_name": "My Rota Name",   // Display name shown in the app (can be any label).
+  "rota_name": "My Rota Name",     // Display name shown in the app (can be any label).
   "notes": [ "Optional global note" ], // Optional list shown on the home screen.
   "cycle": { ... },                // Required. Describes repeating weeks/days.
   "overrides": { ... }             // Optional map of date-specific overrides.
@@ -74,6 +74,8 @@ Use `week_commencing` when you have specific calendar Mondays that should map to
 
 > **Can I use both?** Yes. If a date lands in `week_commencing`, that explicit mapping wins. Otherwise Roto falls back to the repeating cycle.
 
+> **Legacy field:** Older files may use `school_name`; Roto will still read this, but new rotas should prefer `rota_name`.
+
 ### Day definition
 
 ```jsonc
@@ -130,7 +132,7 @@ Use overrides for one-off changes (closures, special events). Keys are ISO dates
 ```jsonc
 {
   "schema_version": "0.3",
-  "school_name": "City Hospital Night Shift Sample",
+  "rota_name": "City Hospital Night Shift Sample",
   "notes": [
     "Rotation shows a repeating seven-night pattern.",
     "Each night includes a senior nurse, support nurse, and float."

@@ -65,7 +65,7 @@ JSON SCHEMA EXAMPLE (VERSION 0.3)
 ----------------------------------------------------------------------
 {
   "schema_version": "0.3",
-  "school_name": "Shown on the home screen header",
+  "rota_name": "Shown on the home screen header",
   "notes": ["Optional global notes"],
   "special_events": {
     "2025-11-03": [

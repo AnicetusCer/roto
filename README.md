@@ -68,7 +68,7 @@ Roto’s schema is deliberately lightweight: name the rota, add optional notes, 
 ```json
 {
   "schema_version": "0.3",
-  "school_name": "Example Primary School",
+  "rota_name": "Example Primary School",
   "notes": ["Optional global notes"],
   "special_events": {
     "2025-10-20": [

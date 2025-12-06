@@ -60,7 +60,7 @@ class RotoJsonParserTest {
         val repeatingJson = """
             {
               "schema_version": "0.3",
-              "school_name": "Looping Example",
+              "rota_name": "Looping Example",
               "notes": [],
               "cycle": {
                 "repeat": {

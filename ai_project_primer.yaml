@@ -58,7 +58,7 @@ project_primer:
   data_model:
     schema_version: "0.3"
     structure_highlights:
-      - "school_name string (display header) and optional notes[] for global messages."
+      - "rota_name string (display header) and optional notes[] for global messages. (Legacy files may use school_name; still accepted.)"
       - "cycle.weeks[] with week_id, week_commencing[] (ISO Mondays), and days{} mapping weekday names or ISO dates to DayDefinition."
       - "DayDefinition provides slots[] (ordered {label, text, tags[]}) plus optional notes[]. A day/override can also set a single special_event string shown as a banner before the slots. For quick one-off banners without editing a day, use top-level special_events{\"YYYY-MM-DD\": \"message\"}."
       - "Top-level special_events values can be a single string or an array of strings to show multiple banners on the same date; they sit behind any override/day special_event."

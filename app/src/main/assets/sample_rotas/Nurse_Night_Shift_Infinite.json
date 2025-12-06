@@ -1,6 +1,6 @@
 {
   "schema_version": "0.3",
-  "school_name": "City Hospital Night Shift Sample",
+  "rota_name": "City Hospital Night Shift Sample",
   "notes": [
     "Rotation shows a repeating seven-night pattern for the general medicine ward.",
     "Each night includes a senior nurse, a support nurse, and an admissions float.",

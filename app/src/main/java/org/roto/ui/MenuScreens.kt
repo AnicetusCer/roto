@@ -1325,7 +1325,7 @@ private fun FormatInfoCard() {
     val exampleJson = """
         {
           "schema_version": "0.3",
-          "school_name": "Your Rota Name",
+          "rota_name": "Your Rota Name",
           "notes": ["Optional reminders"],
           "special_events": {
             "2025-10-20": "Special Event: World Book Day costumes today"

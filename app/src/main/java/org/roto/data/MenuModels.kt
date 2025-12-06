@@ -1,6 +1,8 @@
 package org.roto.data
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.json.JsonNames
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.KSerializer
@@ -16,10 +18,13 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonPrimitive
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class RotoData(
     @SerialName("schema_version") val schemaVersion: String,
-    @SerialName("school_name") val rotaName: String,
+    @SerialName("rota_name")
+    @JsonNames("school_name")
+    val rotaName: String,
     val notes: List<String> = emptyList(),
     val cycle: CycleData,
     @SerialName("special_events")

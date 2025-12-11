@@ -216,6 +216,20 @@ project_primer:
           - "Weekends or unmatched dates show a polite no-rota message."
           - "Gist-backed rotas load, refresh on demand, and remain readable when the device switches offline."
 
+  release_and_build_notes:
+    fdroid_metadata_defaults:
+      - "Use gradle: yes, subdir: ., and output: app/build/outputs/apk/release/app-release-unsigned.apk; omit Binaries so fdroid builds from source."
+      - "Tag releases as 1.0.x for autoupdate and keep the unsigned release task at assembleRelease."
+    reproducible_builds:
+      - "Keep Gradle wrapper pinned with distributionSha256Sum; avoid changing AGP/Gradle without noting the version used for FDroid vs Play if they diverge."
+      - "Name GitHub release artifacts roto-v<version>.apk for consistency even if fdroid ignores upstream binaries."
+    checklists:
+      - "Bump versionName/code, tag, run ./gradlew assembleRelease, and verify lint/CI before updating fdroiddata."
+      - "Refresh fastlane/screenshots and fdroiddata metadata, then run fdroid lint locally ahead of the MR."
+      - "Keep the signing key hash documented (AllowedAPKSigningKeys) and maintain a private, backed-up copy of the release keystore and its passwords."
+    local_properties_reminder:
+      - "Do not commit local.properties; fdroid auto-generates it during builds."
+
   execution_plan:
     immediate_next_steps:
       - "Harden schema 0.3 validation and surface friendly error messages when required fields are missing."

@@ -65,6 +65,22 @@ For F-Droid reproducibility and scans:
 - The Gradle wrapper is pinned with `distributionSha256Sum` to verify the Gradle download.
 - `dependenciesInfo { includeInApk = false; includeInBundle = false }` is set in `app/build.gradle.kts` to disable the dependency metadata signing block.
 - Release APKs uploaded to GitHub are named `roto-v<versionName>.apk` (e.g. `roto-v1.0.8.apk`) to match the `Binaries` URL pattern used in fdroiddata.
+- Build the GitHub release APK from the exact commit used in the fdroiddata `Builds` entry. Android embeds VCS metadata in `META-INF/version-control-info.textproto`, and F-Droid compares the signed GitHub APK against its rebuilt APK.
+- After uploading a release APK, check both the SHA256 and embedded revision:
+
+```bash
+sha256sum app/build/outputs/apk/release/versioned/roto-v<versionName>.apk
+unzip -p app/build/outputs/apk/release/versioned/roto-v<versionName>.apk META-INF/version-control-info.textproto
+```
+
+For fdroiddata update MRs:
+
+- Keep the version update diff focused on `metadata/org.roto.yml`.
+- Keep `subdir: app`, `gradle: yes`, `Binaries`, and `AllowedAPKSigningKeys`.
+- Prefer full commit hashes in new `Builds` entries.
+- Create the MR branch from current `fdroid/fdroiddata` `master`, not from a stale fork branch.
+- GitLab's Code Quality widget is used by fdroiddata as an APK report channel; informational entries for permissions, signing key, APK size/ABI, and reproducible build artifacts are expected.
+- GitLab's "No security scans enabled" and "License Compliance failed loading results" widgets are GitLab-native security/compliance report notices. They are not F-Droid blockers unless a CI job fails or a maintainer comments.
 
 ### Dependency profiles (F-Droid vs. “latest”)
 

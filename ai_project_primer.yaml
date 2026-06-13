@@ -145,7 +145,7 @@ project_primer:
       test_side: "Windows 11 runs the Android Emulator for interactive testing."
       privacy_target: "No Play Services dependency; deliver an offline app that is F-Droid friendly and Play Store compliant with a public privacy policy at https://anicetuscer.github.io/roto/PRIVACY.html."
     wsl_fedora_setup:
-      sdk_root: "/home/Mile/Android/sdk"
+      sdk_root: "/home/<user>/Android/sdk"
       java:
         version: "OpenJDK 21 (java-21-openjdk-devel or equivalent)."
         verification:
@@ -155,9 +155,9 @@ project_primer:
           - 'export JAVA_HOME="/usr/lib/jvm/<java-21-path>"'
           - 'export PATH="$JAVA_HOME/bin:$PATH"'
       android_sdk:
-        layout: "/home/Mile/Android/sdk with cmdline-tools, platform-tools, build-tools."
+        layout: "/home/<user>/Android/sdk with cmdline-tools, platform-tools, build-tools."
         bashrc_exports:
-          - 'export ANDROID_SDK_ROOT="/home/Mile/Android/sdk"'
+          - 'export ANDROID_SDK_ROOT="/home/<user>/Android/sdk"'
           - 'export ANDROID_HOME="$ANDROID_SDK_ROOT"'
           - 'export PATH="$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin"'
           - 'export PATH="$PATH:$ANDROID_SDK_ROOT/platform-tools"'
@@ -193,16 +193,16 @@ project_primer:
         - "Orientation is portrait-only; rotate the emulator to confirm the UI remains locked vertically."
     project_location_strategy:
       preferred_path_windows: "C:\\dev\\roto-app"
-      preferred_path_wsl: "/mnt/c/dev/roto-app"
+      preferred_path_wsl: "/path/to/roto-app"
       rationale:
         - "Single shared workspace for Gradle builds and Windows-side adb installs."
         - "No need to copy APKs between environments."
     dev_loop:
       - step: build_apk_in_wsl
         commands:
-          - 'cd /mnt/c/dev/roto-app'
+          - 'cd /path/to/roto-app'
           - './gradlew assembleDebug'
-        output: "/mnt/c/dev/roto-app/app/build/outputs/apk/debug/app-debug.apk"
+        output: "/path/to/roto-app/app/build/outputs/apk/debug/app-debug.apk"
       - step: run_emulator_on_windows
         command: 'emulator -avd PixelLikeApi34'
       - step: install_apk_from_windows
@@ -218,15 +218,24 @@ project_primer:
 
   release_and_build_notes:
     fdroid_metadata_defaults:
-      - "Use gradle: yes, subdir: ., and output: app/build/outputs/apk/release/app-release-unsigned.apk; omit Binaries so fdroid builds from source."
-      - "Tag releases as 1.0.x for autoupdate and keep the unsigned release task at assembleRelease."
+      - "Use gradle: yes and subdir: app in fdroiddata. Do not add output for the current Gradle build; F-Droid finds app/build/outputs/apk/release/app-release-unsigned.apk."
+      - "Keep Binaries: https://github.com/AnicetusCer/roto/releases/download/v%v/roto-v%v.apk so F-Droid can do reproducible verification against the signed GitHub release APK."
+      - "Use full commit hashes for new Builds entries when updating fdroiddata. Tags may work, but F-Droid docs and prior review prefer exact commits."
+      - "Tag releases as v1.0.x for autoupdate, with versionName matching the tag without the v prefix."
     reproducible_builds:
       - "Keep Gradle wrapper pinned with distributionSha256Sum; avoid changing AGP/Gradle without noting the version used for FDroid vs Play if they diverge."
-      - "Name GitHub release artifacts roto-v<version>.apk for consistency even if fdroid ignores upstream binaries."
+      - "Name GitHub release artifacts roto-v<version>.apk because fdroiddata Binaries resolves to that exact file."
+      - "Build the signed GitHub release APK from the exact commit used in fdroiddata. Android embeds META-INF/version-control-info.textproto; if it names an older commit, F-Droid reproducible verification fails even when the source build succeeds."
+      - "After uploading or replacing a release APK, verify its SHA256 and embedded revision before retrying the F-Droid job."
     checklists:
-      - "Bump versionName/code, tag, run ./gradlew assembleRelease, and verify lint/CI before updating fdroiddata."
-      - "Refresh fastlane/screenshots and fdroiddata metadata, then run fdroid lint locally ahead of the MR."
+      - "Bump versionName/code, commit, tag, run ./gradlew clean :app:assembleRelease, and verify lint/CI before updating fdroiddata."
+      - "Confirm unzip -p roto-v<version>.apk META-INF/version-control-info.textproto reports the same commit as the fdroiddata Builds entry."
+      - "Refresh fastlane/screenshots and fdroiddata metadata, then run fdroid lint locally ahead of the MR. Local fdroidserver versions can disagree on categories; trust upstream CI if unchanged metadata previously passed."
       - "Keep the signing key hash documented (AllowedAPKSigningKeys) and maintain a private, backed-up copy of the release keystore and its passwords."
+      - "For GitLab/glab, create update branches from current fdroid/fdroiddata master, not a stale fork master, or the MR may reintroduce old metadata and conflicts."
+      - "If git push is awkward, glab API can create the fork branch/commit/MR. Keep the MR diff to metadata/org.roto.yml only for version updates."
+      - "GitLab Code Quality on fdroiddata is used as an APK report channel, not only source quality. Informational entries such as built_apk, permissions, signing key, and APK size are expected."
+      - "GitLab 'No security scans enabled' and 'License Compliance failed loading results' are GitLab-native security/compliance widgets. They are not F-Droid blockers unless an actual CI job fails or a maintainer comments."
     local_properties_reminder:
       - "Do not commit local.properties; fdroid auto-generates it during builds."
 

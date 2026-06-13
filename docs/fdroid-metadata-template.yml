@@ -1,4 +1,5 @@
 Categories:
+  - Calendar & Agenda
   - Time
 License: Apache-2.0
 WebSite: https://anicetuscer.github.io/roto/
@@ -23,15 +24,19 @@ Description: |
 
 RepoType: git
 Repo: https://github.com/AnicetusCer/roto.git
+Binaries: https://github.com/AnicetusCer/roto/releases/download/v%v/roto-v%v.apk
 
 Builds:
   - versionName: "1.0.8"
     versionCode: 6
-    commit: v1.0.8
+    commit: 0915ac9251b416a81d281933c8d6d4366346145e
     subdir: app
     gradle:
       - yes
 
+AllowedAPKSigningKeys: 2624140b43f0bf25e4f02d14a65a6680fe113431a5b43c1c301fa2e87f59bc9f
+
 AutoUpdateMode: Version
-UpdateCheckMode: Tags
-VercodeOperation: "+1"
+UpdateCheckMode: Tags ^v[0-9.]+$
+CurrentVersion: 1.0.8
+CurrentVersionCode: 6

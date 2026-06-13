@@ -1,0 +1,4 @@
+Add pasted JSON import so AI-generated rotas can be saved without first creating a file.
+Add local rota file sharing, including app-private pasted rotas.
+Make shared-link updates manual with separate Reload and Fetch actions.
+Harden rota JSON validation and AI helper instructions.

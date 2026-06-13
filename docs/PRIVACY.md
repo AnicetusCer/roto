@@ -1,6 +1,6 @@
 # Roto Privacy Policy
 
-Last updated: _2025-__-__
+Last updated: 2026-06-13
 
 Roto is an offline, privacy‑first Android app for managing rotating schedules (for example school dinners, shifts, or collections). This policy explains what information the app accesses and how it is handled.
 
@@ -36,7 +36,7 @@ When you enter a shared link:
 
 - The app fetches the JSON from that URL using a secure HTTPS connection.  
 - The downloaded file is saved on your device and treated like a local rota file.  
-- The homescreen widget may periodically refresh the same URL to keep the cached copy up to date.
+- The app and homescreen widget use the saved local copy unless you press Fetch to download the link again.
 
 We do not operate any backend server for Roto, and we do not receive or log the contents of your rota files.
 
@@ -47,7 +47,7 @@ We do not operate any backend server for Roto, and we do not receive or log the 
 Roto includes an optional homescreen widget. To show today’s or tomorrow’s rota, the widget:
 
 - Reads the rota JSON stored on your device.  
-- May refresh a shared‑link rota over HTTPS as described above.
+- Refreshes shared-link rota JSON over HTTPS only when you press the widget Fetch button.
 
 This background work happens on your device only. No data is sent to us.
 
@@ -81,4 +81,3 @@ If you have questions about this policy or Roto’s privacy behaviour, please us
 - Source code and issues: <https://github.com/AnicetusCer/roto>
 
 If this policy changes, we will update the “Last updated” date above and describe the changes in the project’s release notes.
-

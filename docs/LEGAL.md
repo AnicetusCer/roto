@@ -13,7 +13,7 @@ This page summarises the key legal points; the full details live in the reposito
 ## No warranty
 
 - Roto is provided **“as‑is”**, without any warranty of any kind.  
-- The full disclaimer is in `DISCLAIMER.md` in the project repository.
+- The full disclaimer is in [`DISCLAIMER.md`](https://github.com/AnicetusCer/roto/blob/main/DISCLAIMER.md) in the project repository.
 
 Although the app is designed to help you keep track of rotating schedules, you remain responsible for verifying rota data (for example school menus, shifts, or collections) before acting on it.
 
@@ -34,4 +34,3 @@ See the full privacy policy for details:
 For questions, feedback, or bug reports, please use the project’s GitHub repository:
 
 - <https://github.com/AnicetusCer/roto>
-

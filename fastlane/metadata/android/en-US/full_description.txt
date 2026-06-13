@@ -1,6 +1,6 @@
 Roto is an offline, privacy-first way to keep any rotating schedule on-device. Load a JSON rota, pin the widget, and check today or tomorrow at a glance—no accounts or trackers.
 
-- Works fully offline; optional one-time download from a user-provided HTTPS link
+- Works fully offline; optional refreshable download from a user-provided HTTPS link
 - Handles repeating week cycles (Week 1/Week 2/Week 3...) anchored to real calendar Mondays
 - Supports per-date overrides without editing the base cycle
 - Flexible slots with labels, tags, and notes for menus, shifts, or duties

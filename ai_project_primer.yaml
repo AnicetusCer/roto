@@ -38,13 +38,13 @@ project_primer:
       - key: human_editable_data
         description: "Support pasting or importing JSON that any user can tweak or regenerate with an AI."
       - key: shared_link_rotas
-        description: "Accept GitHub Gist (or other HTTPS) links, mirror the downloaded JSON into the Downloads/Roto folder, and treat it exactly like a local file with automatic refresh + offline fallback."
+        description: "Accept GitHub Gist (or other HTTPS) links, mirror the downloaded JSON into the Downloads/Roto folder, and treat it exactly like a local file with explicit user-triggered fetch + offline fallback."
       - key: browse_week_rota
         description: "Allow users to open any published week pattern and inspect all configured days (weekday or weekend)."
       - key: recent_rotas
         description: "Keep a recents list of the last 5–10 rotas (local or shared links) for one-tap reopening, with a clear/reset option in Settings and share/copy buttons for remote entries."
       - key: loaded_rota_card
-        description: "When a rota is loaded, show a card with rename/share/copy (for remote), refresh, and view actions without leaving the setup screen."
+        description: "When a rota is loaded, show a card with rename/share/copy (for remote), Reload, Fetch (for remote), and view actions without leaving the setup screen."
     stretch_goals:
       - key: home_screen_widget
         description: "Android widget showing tomorrow's rota summary."
@@ -90,8 +90,8 @@ project_primer:
       - "Keep the build reproducible with FLOSS-friendly tooling."
     network_and_caching:
       client: "OkHttp-based fetcher that can resolve gist page links to their raw JSON without Play Services."
-      sync_policy: "On setup or manual/auto refresh, download the gist JSON, validate schema 0.3, then overwrite the mirrored file and update last_synced metadata."
-      offline_behavior: "If a gist fetch fails (404/offline), surface a persistent warning, mark the remote status as cached, and keep using the last downloaded copy until the link recovers. Widget Today/Tomorrow toggles use the local copy for responsiveness; the Refresh action triggers the network fetch."
+      sync_policy: "On shared-link setup or explicit Fetch button press, download the gist JSON, validate schema 0.3, then overwrite the mirrored file and update last_synced metadata."
+      offline_behavior: "If a gist fetch fails (404/offline), surface a persistent warning, mark the remote status as cached, and keep using the last downloaded copy until the link recovers. App startup, foreground reloads, scheduled widget updates, widget Today/Tomorrow toggles, and Reload actions use the local copy; Fetch actions trigger the network download."
 
   architecture_and_ui:
     layers:
@@ -122,7 +122,7 @@ project_primer:
             - slot_list (ordered slots with tags)
             - reason_or_notes (override/day/global notes)
             - button_view_other_day
-            - button_refresh_remote (visible only when a shared link is configured; triggers background sync, updates warning banner if the link is unreachable)
+            - button_fetch_remote (visible only when a shared link is configured; triggers a user-requested fetch, updates warning banner if the link is unreachable)
       - pick_a_day_screen:
           purpose: "Browse any date's rota via date picker or next/prev controls."
       - setup_screen:
@@ -133,7 +133,7 @@ project_primer:
           helpers:
             - "Show last synced timestamp and cached-warning state when a remote link is active."
             - "Surface a permanent banner if the remote link fails while keeping the mirrored file active."
-            - "Expose recents list with share/copy for remote entries; loaded card exposes rename/share/copy/refresh and can open the rota directly."
+            - "Expose recents list with share/copy for remote entries; loaded card exposes rename/share/copy/reload/fetch and can open the rota directly."
     orientation:
       lock_to_portrait: "Keep the app in a non-rotating, vertical layout so the UI stays consistent for parents."
 
@@ -214,7 +214,7 @@ project_primer:
           - "Tomorrow's rota populated with the correct slots/notes (including overrides)."
           - "Changing emulator date updates the displayed rota."
           - "Weekends or unmatched dates show a polite no-rota message."
-          - "Gist-backed rotas load, refresh on demand, and remain readable when the device switches offline."
+          - "Gist-backed rotas load, fetch on demand, and remain readable when the device switches offline."
 
   release_and_build_notes:
     fdroid_metadata_defaults:
@@ -235,8 +235,8 @@ project_primer:
       - "Harden schema 0.3 validation and surface friendly error messages when required fields are missing."
       - "Remember last-opened week/tab state for faster browsing."
       - "Polish accessibility copy and consider larger text spacing for the setup instructions."
-      - "Prototype GitHub Gist onboarding (URL entry, validation, storage metadata, manual refresh controls)."
-      - "Add HTTP client + background sync job that caches gist payloads for offline continuity."
+      - "Polish shared-link validation, error copy, and manual fetch/reload controls."
+      - "Add automated tests around remote fetch failure handling and local mirror preservation."
     upcoming_milestones:
       - "Offer optional pretty-print/report of the JSON structure for manual editors."
       - "Add automated tests around repository failure handling and week browsing edge cases."
@@ -280,7 +280,7 @@ project_primer:
     ux_considerations:
       - "Setup screen offers two tabs: Local File and Shared Link; both store their latest success in Preferences DataStore."
       - "Show validation feedback if the pasted link is not HTTPS or does not point at JSON."
-      - "Expose last synced timestamp + 'Refresh now' affordance on home/pick-a-day screens for remote sources."
+      - "Expose last synced timestamp + 'Fetch now' affordance on home/pick-a-day screens for remote sources."
     caching_rules:
       - "Every successful download writes the payload to app-specific storage along with url + etag/hash metadata."
       - "Offline state keeps delivering the cached payload and surfaces a subtle 'Using cached link from <date/time>' message."

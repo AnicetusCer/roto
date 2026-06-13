@@ -25,9 +25,9 @@ RepoType: git
 Repo: https://github.com/AnicetusCer/roto.git
 
 Builds:
-  - versionName: "1.0.2"
-    versionCode: 3
-    commit: v1.0.2
+  - versionName: "1.0.7"
+    versionCode: 5
+    commit: v1.0.7
     subdir: app
     gradle:
       - yes

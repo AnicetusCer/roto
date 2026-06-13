@@ -207,6 +207,6 @@ Special events are displayed in both the app and the widget (today/tomorrow).
 - **Only include days you need** – you can omit unused days entirely, but any day you declare must contain at least one slot.
 - **Use tags creatively** – they can highlight allergens, teams, or locations. The UI simply renders them as badges.
 - **One file per rota** – the app expects a single JSON file containing the entire cycle, plus overrides, whist you could have two rotas using the same day slots, it will probably just get messy and confusing.
-- **Regenerate with AI safely** – the built-in prompt in the app is schema-aware; if something looks off, ask your assistant to fix the specific field, re-save the JSON, then either tap **Refresh** in the app or reload the file via **Load rota file**.
+- **Regenerate with AI safely** – the built-in prompt in the app is schema-aware; if something looks off, ask your assistant to fix the specific field, re-save the JSON, then tap **Reload** for local files or **Fetch** for shared links.
 
 Need to test a change quickly? Edit one of the sample rotas in `app/src/main/assets/sample_rotas`, copy it to your device, and load it through the app.

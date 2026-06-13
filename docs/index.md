@@ -15,8 +15,8 @@ Roto is developed and maintained by **AnicetusCer**.
 - Flexible labelled slots with optional tags and notes  
 - Looping week cycles with a repeat anchor  
 - Per-date overrides and top-level `special_events` (single string or array for multiple banners on the same day)  
-- Supports local JSON files and HTTPS shared-link rotas (cached offline, with refresh)  
-- Recent rotas list with share/copy for remote links and a loaded card that surfaces rename/share/refresh controls  
+- Supports local JSON files and HTTPS shared-link rotas (cached offline, with explicit Fetch)
+- Recent rotas list with share/copy for remote links and a loaded card that surfaces rename/share/reload/fetch controls
 - Custom themes that apply to both app and widget; safe-area padding toggle for devices with gesture bars/notches  
 - Homescreen widget for quick rota summaries  
 - No analytics, tracking, or proprietary dependencies
@@ -36,7 +36,7 @@ Roto is distributed through open app stores and direct APKs.
 - [Privacy policy](./PRIVACY.md)  
 - [Legal & warranty summary](./LEGAL.md)  
 - Full license: `LICENSE`  
-- Disclaimer: `DISCLAIMER.md`
+- [Disclaimer](https://github.com/AnicetusCer/roto/blob/main/DISCLAIMER.md)
 
 ## Support & feedback
 

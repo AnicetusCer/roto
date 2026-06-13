@@ -131,6 +131,8 @@ fun MenuRoot(
         onFetchRemote = viewModel::fetchRemote,
         onChooseFile = { openDocumentLauncher.launch(arrayOf("application/json", "text/plain")) },
         onSubmitSharedLink = viewModel::submitSharedLink,
+        onSubmitPastedJson = viewModel::submitPastedJson,
+        onShareCurrentLocal = { viewModel.shareCurrentLocalRota(context) },
         onCopyInstructions = {
             clipboard.setText(AnnotatedString(viewModel.getAiInstructions()))
         },
@@ -164,6 +166,8 @@ fun MenuScreen(
     onFetchRemote: () -> Unit,
     onChooseFile: () -> Unit,
     onSubmitSharedLink: (String) -> Unit,
+    onSubmitPastedJson: (String) -> Unit,
+    onShareCurrentLocal: () -> Unit,
     onCopyInstructions: () -> Unit,
     onCopySample: (String) -> Unit,
     onApplySampleSelection: (MenuSelection) -> Unit,
@@ -188,6 +192,7 @@ fun MenuScreen(
 ) {
     var showSetupWhileLoaded by remember { mutableStateOf(false) }
     var showSharedLinkDialog by remember { mutableStateOf(false) }
+    var showPasteJsonDialog by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     var showRenameCurrent by rememberSaveable { mutableStateOf(false) }
     var renameCurrentText by rememberSaveable { mutableStateOf("") }
@@ -206,6 +211,16 @@ fun MenuScreen(
                 showSharedLinkDialog = false
             },
             onDismiss = { showSharedLinkDialog = false }
+        )
+    }
+
+    if (showPasteJsonDialog) {
+        PasteJsonDialog(
+            onSubmit = {
+                onSubmitPastedJson(it)
+                showPasteJsonDialog = false
+            },
+            onDismiss = { showPasteJsonDialog = false }
         )
     }
 
@@ -244,6 +259,7 @@ fun MenuScreen(
             onChooseFile = onChooseFile,
             onUseSharedLink = { showSharedLinkDialog = true },
             onCopyInstructions = onCopyInstructions,
+            onShareCurrentLocal = onShareCurrentLocal,
             onBackToSetup = { showSetupWhileLoaded = true },
             onRenameCurrent = {
                 renameCurrentText = state.selectedSourceLabel.orEmpty()
@@ -256,6 +272,7 @@ fun MenuScreen(
         else -> SetupState(
             onChooseFile = onChooseFile,
             onUseSharedLink = { showSharedLinkDialog = true },
+            onPasteJson = { showPasteJsonDialog = true },
             onCopyInstructions = onCopyInstructions,
         onCopySample = onCopySample,
         onApplySampleSelection = onApplySampleSelection,
@@ -267,6 +284,7 @@ fun MenuScreen(
             },
             onReload = onReload,
             onFetchRemote = onFetchRemote,
+            onShareCurrentLocal = onShareCurrentLocal,
             onRenameCurrent = {
                 renameCurrentText = state.selectedSourceLabel.orEmpty()
                 showRenameCurrent = true
@@ -384,6 +402,7 @@ private fun LoadingState(modifier: Modifier = Modifier) {
 private fun SetupState(
     onChooseFile: () -> Unit,
     onUseSharedLink: () -> Unit,
+    onPasteJson: () -> Unit,
     onCopyInstructions: () -> Unit,
     onCopySample: (String) -> Unit,
     onApplySampleSelection: (MenuSelection) -> Unit,
@@ -392,6 +411,7 @@ private fun SetupState(
     onViewCurrent: () -> Unit,
     onReload: () -> Unit,
     onFetchRemote: () -> Unit,
+    onShareCurrentLocal: () -> Unit,
     onRenameCurrent: () -> Unit,
     currentSelectionLabel: String?,
     sourceLabel: String,
@@ -486,6 +506,13 @@ private fun SetupState(
             Text("Use shared link")
         }
 
+        Button(
+            onClick = onPasteJson,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Paste JSON")
+        }
+
         currentSelectionLabel?.let { label ->
             val cardInteraction = remember { MutableInteractionSource() }
             val (statusText, statusColor) = buildRemoteStatusDisplay(remoteStatus, sourceType)
@@ -524,6 +551,11 @@ private fun SetupState(
                                 padding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
                             )
                         }
+                            if (sourceType == MenuSelectionType.LOCAL_FILE) {
+                                IconButton(onClick = onShareCurrentLocal, modifier = Modifier.size(32.dp)) {
+                                    Icon(imageVector = Icons.Filled.Share, contentDescription = "Share rota file")
+                                }
+                            }
                             IconButton(onClick = onRenameCurrent, modifier = Modifier.size(32.dp)) {
                                 Icon(imageVector = Icons.Filled.Edit, contentDescription = "Rename")
                             }
@@ -682,6 +714,7 @@ private fun MenuContent(
     onChooseFile: () -> Unit,
     onUseSharedLink: () -> Unit,
     onCopyInstructions: () -> Unit,
+    onShareCurrentLocal: () -> Unit,
     onBackToSetup: () -> Unit,
     onRenameCurrent: () -> Unit,
     onSelectWeek: (String) -> Unit,
@@ -737,6 +770,7 @@ private fun MenuContent(
             onChooseFile = onChooseFile,
             onReload = onReload,
             onFetchRemote = onFetchRemote,
+            onShareCurrentLocal = onShareCurrentLocal,
             showClear = state.selectedSourceLabel != "No rota selected",
             onClearMenu = onBackToSetup,
             onRenameCurrent = onRenameCurrent,
@@ -851,6 +885,7 @@ private fun SourceControls(
     onChooseFile: () -> Unit,
     onReload: () -> Unit,
     onFetchRemote: () -> Unit,
+    onShareCurrentLocal: () -> Unit,
     showClear: Boolean,
     onClearMenu: () -> Unit,
     onRenameCurrent: (() -> Unit)?,
@@ -910,6 +945,14 @@ private fun SourceControls(
                                 modifier = compactButtonHeight
                             ) {
                                 Text("Fetch", style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                        if (selectedSourceType == MenuSelectionType.LOCAL_FILE) {
+                            IconButton(
+                                onClick = onShareCurrentLocal,
+                                modifier = compactButtonHeight.then(Modifier.size(32.dp))
+                            ) {
+                                Icon(imageVector = Icons.Filled.Share, contentDescription = "Share rota file")
                             }
                         }
                         if (showClear) {
@@ -1046,6 +1089,47 @@ private fun SharedLinkDialog(
                     singleLine = true,
                     placeholder = { Text("https://gist.githubusercontent.com/.../raw/rota.json") },
                     modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    )
+}
+
+@Composable
+private fun PasteJsonDialog(
+    onSubmit: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var rawJson by rememberSaveable { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onSubmit(rawJson)
+                }
+            ) { Text("Save rota") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+        title = { Text("Paste JSON") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "Paste a complete Roto schema JSON object. Roto will validate it and save it as a local rota.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                OutlinedTextField(
+                    value = rawJson,
+                    onValueChange = { rawJson = it },
+                    label = { Text("Rota JSON") },
+                    placeholder = { Text("{ \"schema_version\": \"0.3\", ... }") },
+                    minLines = 8,
+                    maxLines = 14,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 220.dp)
                 )
             }
         }
@@ -1324,8 +1408,8 @@ private fun InstructionsDialog(
                     Text("- $example")
                 }
                 Text("The rota schema (a JSON structure) can be created by hand, but it’s much faster and easier to ask an AI to build it for you. Copy the helper prompt below, paste it into your favorite AI (ChatGPT, Gemini etc), then follow its instructions—I’ve tested this with photos, text docs, and simple chats.")
-                Text("At the end of the conversation the AI will provide text output (the rota file contents); save this to a file. Even though the data is JSON, it’s fine to store it as .txt for readability on Android—the app only cares that the structure is valid.")
-                Text("Once saved, you can load the file in the app, share it with others or post it to a website and share the link (I recommend GitHub Gist).")
+                Text("At the end of the conversation the AI will provide text output (the rota file contents). You can paste that JSON straight into Roto, or save it as a file if you want an external copy.")
+                Text("If you save a file, you can load it in the app, share it with others, or post it to a website and share the link (I recommend GitHub Gist).")
                 Text("The \"Copy Prompt\" button remains available even after you’ve loaded a rota. Use it any time you want AI to tweak an existing file: paste the current rota file contents into the AI prompt, describe the changes you want, and repeat as needed.")
                 Text("Please double-check any rota details an AI generates—AI can get things wrong. If something looks off, ask the AI to fix it, save the updated file (keep the same name), and then tap Reload or Fetch in Roto.")
                 Text(
@@ -1351,8 +1435,8 @@ private fun InstructionsDialog(
                     }
                     Text("2) Open your favourite AI and paste the prompt into it.")
                     Text("3) Follow the AI’s instructions to build your rota file.")
-                    Text("4) Save the file to your phone’s \"Downloads\" folder.")
-                    Text("5) Open the Roto app again and load your rota file.")
+                    Text("4) Copy the JSON output.")
+                    Text("5) Open Roto again and tap \"Paste JSON\", or save it to Downloads and load it as a file.")
                     TextButton(onClick = { showSchema = !showSchema }) {
                         Text(if (showSchema) "Hide JSON schema" else "Show JSON schema")
                     }

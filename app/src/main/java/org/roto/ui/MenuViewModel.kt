@@ -3,6 +3,7 @@ package org.roto.ui
 import android.app.Application
 import android.content.Context
 import android.content.ContentValues
+import android.content.Intent
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import android.widget.Toast
+import androidx.core.content.FileProvider
 import org.roto.data.MenuPreferencesDataSource
 import org.roto.data.MenuRepository
 import org.roto.data.MenuSelection
@@ -55,6 +57,11 @@ private data class SampleCopyOutcome(
 private data class MirrorFileResult(
     val uriString: String,
     val displayName: String,
+    val locationHint: String
+)
+
+private data class PastedRotaResult(
+    val selection: MenuSelection,
     val locationHint: String
 )
 
@@ -119,6 +126,21 @@ class MenuViewModel(
 
     private var currentSelection: MenuSelection? = null
     private var selectedWeekId: String? = null
+
+    private fun writePastedJsonToAppStorage(app: Application, rawJson: String, rotaName: String): PastedRotaResult {
+        val rotaDir = File(app.filesDir, "rotas").apply { if (!exists()) mkdirs() }
+        val target = nextPastedRotaFile(rotaDir)
+        target.writeText(rawJson.trim() + "\n")
+        val fileName = target.name
+        return PastedRotaResult(
+            selection = MenuSelection(
+                type = MenuSelectionType.LOCAL_FILE,
+                reference = Uri.fromFile(target).toString(),
+                displayName = rotaName
+            ),
+            locationHint = "App storage/rotas/$fileName"
+        )
+    }
 
     init {
         viewModelScope.launch {
@@ -298,6 +320,32 @@ class MenuViewModel(
         }
     }
 
+    fun shareCurrentLocalRota(context: Context) {
+        val selection = currentSelection
+        if (selection?.type != MenuSelectionType.LOCAL_FILE) {
+            Toast.makeText(context, "Only local rotas can be shared as files.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val sourceUri = runCatching { Uri.parse(selection.reference) }.getOrNull()
+        if (sourceUri == null) {
+            Toast.makeText(context, "Unable to share this rota.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val shareUri = buildShareUri(context, sourceUri)
+        if (shareUri == null) {
+            Toast.makeText(context, "Unable to share this rota.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val subject = selection.displayName?.takeIf { it.isNotBlank() } ?: "Roto rota"
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "application/json"
+            putExtra(Intent.EXTRA_STREAM, shareUri)
+            putExtra(Intent.EXTRA_SUBJECT, subject)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(intent, "Share rota file"))
+    }
+
     fun onAppForeground() {
         currentSelection?.let { selection ->
             viewModelScope.launch {
@@ -360,6 +408,40 @@ class MenuViewModel(
                 _uiState.update {
                     it.copy(
                         setupMessage = SetupMessage("Couldn't download shared rota: $reason", true)
+                    )
+                }
+            }
+        }
+    }
+
+    fun submitPastedJson(rawInput: String) {
+        val trimmed = rawInput.trim()
+        if (trimmed.isBlank()) {
+            _uiState.update { it.copy(setupMessage = SetupMessage("Paste rota JSON to continue.", true)) }
+            return
+        }
+        viewModelScope.launch {
+            val app = getApplication<Application>()
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    val parsed = RotoPayloadValidator.parseAndValidate(trimmed)
+                        .getOrElse { error -> throw IllegalArgumentException(formatImportValidationError(error), error) }
+                    writePastedJsonToAppStorage(app, trimmed, parsed.rotaName)
+                }
+            }
+            result.onSuccess { outcome ->
+                preferences.saveLocalSelection(outcome.selection.reference, outcome.selection.displayName)
+                _uiState.update {
+                    it.copy(setupMessage = SetupMessage("Saved pasted rota to ${outcome.locationHint}.", false))
+                }
+                refreshWidgets()
+            }.onFailure { error ->
+                _uiState.update {
+                    it.copy(
+                        setupMessage = SetupMessage(
+                            error.message ?: "That pasted text isn't valid Roto JSON.",
+                            true
+                        )
                     )
                 }
             }
@@ -808,6 +890,45 @@ class MenuViewModel(
                 ?: "Shared link"
             null -> "Chosen rota"
         }
+}
+
+private fun buildShareUri(context: Context, sourceUri: Uri): Uri? {
+    return when (sourceUri.scheme?.lowercase()) {
+        "content" -> sourceUri
+        "file" -> {
+            val path = sourceUri.path ?: return null
+            val file = File(path)
+            if (!file.exists() || !file.canRead()) return null
+            FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+        }
+        else -> null
+    }
+}
+
+internal fun buildPastedRotaFileName(existingNames: Set<String>): String {
+    var index = 1
+    while ("rota_$index.json" in existingNames) {
+        index += 1
+    }
+    return "rota_$index.json"
+}
+
+private fun nextPastedRotaFile(directory: File): File {
+    val existingNames = directory.list()?.toSet().orEmpty()
+    return File(directory, buildPastedRotaFileName(existingNames))
+}
+
+private fun formatImportValidationError(error: Throwable): String {
+    val message = error.message.orEmpty()
+    return if (error is IllegalArgumentException && message.startsWith("The rota file is missing")) {
+        "That pasted rota has validation issues:\n${message.substringAfter('\n', "")}"
+    } else {
+        "That pasted text isn't valid Roto JSON. Check it is a schema 0.3 rota object and try again."
+    }
 }
 
 private fun fallbackMessageForRemote(status: RemoteSourceStatus?): SetupMessage? {

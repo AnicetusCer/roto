@@ -127,7 +127,8 @@ fun MenuRoot(
 
     MenuScreen(
         state = state,
-        onRefresh = viewModel::refresh,
+        onReload = viewModel::reload,
+        onFetchRemote = viewModel::fetchRemote,
         onChooseFile = { openDocumentLauncher.launch(arrayOf("application/json", "text/plain")) },
         onSubmitSharedLink = viewModel::submitSharedLink,
         onCopyInstructions = {
@@ -159,7 +160,8 @@ fun MenuRoot(
 @Composable
 fun MenuScreen(
     state: MenuUiState,
-    onRefresh: () -> Unit,
+    onReload: () -> Unit,
+    onFetchRemote: () -> Unit,
     onChooseFile: () -> Unit,
     onSubmitSharedLink: (String) -> Unit,
     onCopyInstructions: () -> Unit,
@@ -237,7 +239,8 @@ fun MenuScreen(
         state.isLoading -> LoadingState(modifier)
         state.hasMenuData && !showSetupWhileLoaded -> MenuContent(
             state = state,
-            onRefresh = onRefresh,
+            onReload = onReload,
+            onFetchRemote = onFetchRemote,
             onChooseFile = onChooseFile,
             onUseSharedLink = { showSharedLinkDialog = true },
             onCopyInstructions = onCopyInstructions,
@@ -262,7 +265,8 @@ fun MenuScreen(
                 onEnsureCurrentInRecents()
                 showSetupWhileLoaded = false
             },
-            onRefresh = onRefresh,
+            onReload = onReload,
+            onFetchRemote = onFetchRemote,
             onRenameCurrent = {
                 renameCurrentText = state.selectedSourceLabel.orEmpty()
                 showRenameCurrent = true
@@ -386,7 +390,8 @@ private fun SetupState(
     onDismissSamplePrompt: () -> Unit,
     onClearMenu: () -> Unit,
     onViewCurrent: () -> Unit,
-    onRefresh: () -> Unit,
+    onReload: () -> Unit,
+    onFetchRemote: () -> Unit,
     onRenameCurrent: () -> Unit,
     currentSelectionLabel: String?,
     sourceLabel: String,
@@ -522,8 +527,16 @@ private fun SetupState(
                             IconButton(onClick = onRenameCurrent, modifier = Modifier.size(32.dp)) {
                                 Icon(imageVector = Icons.Filled.Edit, contentDescription = "Rename")
                             }
-                            IconButton(onClick = onRefresh, modifier = Modifier.size(32.dp)) {
-                                Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Refresh")
+                            IconButton(onClick = onReload, modifier = Modifier.size(32.dp)) {
+                                Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Reload local copy")
+                            }
+                            if (sourceType == MenuSelectionType.REMOTE_LINK) {
+                                TextButton(
+                                    onClick = onFetchRemote,
+                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text("Fetch", style = MaterialTheme.typography.labelSmall)
+                                }
                             }
                             TextButton(
                                 onClick = onClearMenu,
@@ -664,7 +677,8 @@ private fun RecentRotasList(
 @Composable
 private fun MenuContent(
     state: MenuUiState,
-    onRefresh: () -> Unit,
+    onReload: () -> Unit,
+    onFetchRemote: () -> Unit,
     onChooseFile: () -> Unit,
     onUseSharedLink: () -> Unit,
     onCopyInstructions: () -> Unit,
@@ -721,7 +735,8 @@ private fun MenuContent(
             remoteStatus = state.remoteStatus,
             onUseSharedLink = onUseSharedLink,
             onChooseFile = onChooseFile,
-            onRefresh = onRefresh,
+            onReload = onReload,
+            onFetchRemote = onFetchRemote,
             showClear = state.selectedSourceLabel != "No rota selected",
             onClearMenu = onBackToSetup,
             onRenameCurrent = onRenameCurrent,
@@ -834,7 +849,8 @@ private fun SourceControls(
     remoteStatus: RemoteStatusUi?,
     onUseSharedLink: () -> Unit,
     onChooseFile: () -> Unit,
-    onRefresh: () -> Unit,
+    onReload: () -> Unit,
+    onFetchRemote: () -> Unit,
     showClear: Boolean,
     onClearMenu: () -> Unit,
     onRenameCurrent: (() -> Unit)?,
@@ -882,10 +898,19 @@ private fun SourceControls(
                             }
                         }
                         IconButton(
-                            onClick = onRefresh,
+                            onClick = onReload,
                             modifier = compactButtonHeight.then(Modifier.size(32.dp))
                         ) {
-                            Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Refresh")
+                            Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Reload local copy")
+                        }
+                        if (selectedSourceType == MenuSelectionType.REMOTE_LINK) {
+                            TextButton(
+                                onClick = onFetchRemote,
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                modifier = compactButtonHeight
+                            ) {
+                                Text("Fetch", style = MaterialTheme.typography.labelSmall)
+                            }
                         }
                         if (showClear) {
                             TextButton(
@@ -933,7 +958,8 @@ private fun SourceControls(
         if (!isLoadedView && selectedSourceType == MenuSelectionType.REMOTE_LINK) {
             RemoteStatusInfo(
                 status = remoteStatus,
-                onRefresh = onRefresh,
+                onReload = onReload,
+                onFetchRemote = onFetchRemote,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -943,11 +969,12 @@ private fun SourceControls(
 @Composable
 private fun RemoteStatusInfo(
     status: RemoteStatusUi?,
-    onRefresh: () -> Unit,
+    onReload: () -> Unit,
+    onFetchRemote: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val (message, color) = when {
-        status == null -> "Shared link ready. Refresh to pull latest." to MaterialTheme.colorScheme.primary
+        status == null -> "Shared link ready. Fetch to pull latest." to MaterialTheme.colorScheme.primary
         status.isUsingCache -> "Using cached link from ${formatLastSynced(status.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.tertiary
         else -> "Last synced ${formatLastSynced(status.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.primary
     }
@@ -970,11 +997,18 @@ private fun RemoteStatusInfo(
             // URL/extra info omitted to keep height minimal
         }
         TextButton(
-            onClick = onRefresh,
+            onClick = onReload,
             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
             modifier = Modifier.heightIn(min = 28.dp)
         ) {
-            Text("Refresh")
+            Text("Reload")
+        }
+        TextButton(
+            onClick = onFetchRemote,
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+            modifier = Modifier.heightIn(min = 28.dp)
+        ) {
+            Text("Fetch")
         }
     }
 }
@@ -1049,7 +1083,7 @@ private fun buildRemoteStatusDisplay(
 ): Pair<String, Color> {
     return when {
         sourceType != MenuSelectionType.REMOTE_LINK -> "Local file loaded" to MaterialTheme.colorScheme.primary
-        remoteStatus == null -> "Shared link ready. Refresh to pull latest." to MaterialTheme.colorScheme.primary
+        remoteStatus == null -> "Shared link ready. Fetch to pull latest." to MaterialTheme.colorScheme.primary
         remoteStatus.isUsingCache -> "Cached from ${formatLastSynced(remoteStatus.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.tertiary
         else -> "Last synced ${formatLastSynced(remoteStatus.lastSyncedEpochMillis)}." to MaterialTheme.colorScheme.primary
     }
@@ -1293,7 +1327,7 @@ private fun InstructionsDialog(
                 Text("At the end of the conversation the AI will provide text output (the rota file contents); save this to a file. Even though the data is JSON, it’s fine to store it as .txt for readability on Android—the app only cares that the structure is valid.")
                 Text("Once saved, you can load the file in the app, share it with others or post it to a website and share the link (I recommend GitHub Gist).")
                 Text("The \"Copy Prompt\" button remains available even after you’ve loaded a rota. Use it any time you want AI to tweak an existing file: paste the current rota file contents into the AI prompt, describe the changes you want, and repeat as needed.")
-                Text("Please double-check any rota details an AI generates—AI can get things wrong. If something looks off, ask the AI to fix it save the updated file (keep the same name) and then tap Refresh in Roto.")
+                Text("Please double-check any rota details an AI generates—AI can get things wrong. If something looks off, ask the AI to fix it, save the updated file (keep the same name), and then tap Reload or Fetch in Roto.")
                 Text(
                     text = "NOTE: Alone, Roto is private and offline, It is your choice to use an AI to help build a rota file, it is also your choice how you share the file to others. This app collects no data.",
                     color = MaterialTheme.colorScheme.tertiary,

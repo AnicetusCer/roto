@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.Environment
 import androidx.annotation.VisibleForTesting
 import java.io.File
-import kotlinx.serialization.SerializationException
 import android.net.Uri
 
 enum class MenuSourceType {
@@ -34,7 +33,7 @@ class MenuRepository(
     fun loadMenu(
         selection: MenuSelection?,
         allowDownloadsFallback: Boolean = true,
-        forceRemoteRefresh: Boolean = false
+        fetchRemote: Boolean = false
     ): Result<MenuLoadResult> =
         runCatching {
             val rawResult = when (selection?.type) {
@@ -51,15 +50,18 @@ class MenuRepository(
                     val uri = runCatching { Uri.parse(selection.reference) }.getOrNull()
                         ?: throw IllegalStateException("Invalid mirror reference. Reload the shared link.")
                     val remoteUrl = selection.remoteUrl ?: throw IllegalStateException("Missing shared link URL.")
-                    if (forceRemoteRefresh) {
+                    if (fetchRemote) {
                         val fetchResult = remoteFetcher.fetch(remoteUrl, forceNetwork = true)
-                        if (!context.writeTextToUri(uri, fetchResult.rawJson)) {
-                            throw IllegalStateException("Couldn't update the shared rota file.")
-                        }
                         RawMenuResult(
                             rawJson = fetchResult.rawJson,
                             sourceType = MenuSourceType.REMOTE_LINK,
-                            remoteStatus = fetchResult.status
+                            remoteStatus = fetchResult.status,
+                            persistAfterValidation = {
+                                if (!context.writeTextToUri(uri, fetchResult.rawJson)) {
+                                    throw IllegalStateException("Couldn't update the shared rota file.")
+                                }
+                                fetchResult.persistCache?.invoke()
+                            }
                         )
                     } else {
                         val cached = readExternalFile(uri)
@@ -83,23 +85,14 @@ class MenuRepository(
                 }
             }
             val (rawJson, sourceType, remoteStatus) = rawResult
-            val parsed = try {
-                RotoJsonParser.parse(rawJson)
-            } catch (e: SerializationException) {
-                throw IllegalStateException(
-                    "That file couldn't be understood. Make sure it matches the rota JSON examples or regenerate it with the helper prompt.",
-                    e
-                )
-            } catch (e: IllegalArgumentException) {
-                throw IllegalStateException(e.message ?: "Unsupported rota schema. Please regenerate the file.", e)
-            }
-            val validationIssues = RotoValidator.validate(parsed)
-            if (validationIssues.isNotEmpty()) {
-                val bulletList = validationIssues.joinToString(separator = "\n• ", prefix = "• ")
-                throw IllegalStateException(
-                    "The rota file is missing some required details:\n$bulletList\nPlease fix these and try again."
-                )
-            }
+            val parsed = RotoPayloadValidator.parseAndValidate(rawJson)
+                .getOrElse { error ->
+                    throw IllegalStateException(
+                        error.message ?: "That file couldn't be understood. Make sure it matches the rota JSON examples or regenerate it with the helper prompt.",
+                        error
+                    )
+                }
+            rawResult.persistAfterValidation?.invoke()
             MenuLoadResult(
                 data = parsed,
                 sourceType = sourceType,
@@ -132,7 +125,8 @@ class MenuRepository(
 private data class RawMenuResult(
     val rawJson: String,
     val sourceType: MenuSourceType,
-    val remoteStatus: RemoteSourceStatus? = null
+    val remoteStatus: RemoteSourceStatus? = null,
+    val persistAfterValidation: (() -> Unit)? = null
 )
 
 @VisibleForTesting

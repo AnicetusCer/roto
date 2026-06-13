@@ -35,6 +35,7 @@ import org.roto.data.RemoteMenuFetcher
 import org.roto.data.RecentRota
 import org.roto.data.RemoteSourceStatus
 import org.roto.data.RotoData
+import org.roto.data.RotoPayloadValidator
 import org.roto.domain.DayResult
 import org.roto.domain.getMenuForDate
 import org.roto.widget.RotoTodayWidget
@@ -255,9 +256,23 @@ class MenuViewModel(
         }
     }
 
-    fun refresh() {
+    fun reload() {
         viewModelScope.launch {
-            performLoad(currentSelection, isManualRefresh = true)
+            performLoad(
+                selection = currentSelection,
+                isManualRefresh = true,
+                fetchRemote = false
+            )
+        }
+    }
+
+    fun fetchRemote() {
+        viewModelScope.launch {
+            performLoad(
+                selection = currentSelection,
+                isManualRefresh = true,
+                fetchRemote = currentSelection?.type == MenuSelectionType.REMOTE_LINK
+            )
         }
     }
 
@@ -284,9 +299,10 @@ class MenuViewModel(
     }
 
     fun onAppForeground() {
-        val selection = currentSelection
-        if (selection?.type == MenuSelectionType.REMOTE_LINK) {
-            refresh()
+        currentSelection?.let { selection ->
+            viewModelScope.launch {
+                performLoad(selection, fetchRemote = false)
+            }
         }
     }
 
@@ -318,10 +334,19 @@ class MenuViewModel(
                 runCatching { fetcher.fetch(trimmed, forceNetwork = true) }
             }
             fetchOutcome.onSuccess { remote ->
+                val validationError = validateFetchedRota(remote.rawJson)
+                if (validationError != null) {
+                    _uiState.update {
+                        it.copy(setupMessage = SetupMessage(validationError, true))
+                    }
+                    return@onSuccess
+                }
                 val remoteUrl = remote.status.url
                 val fileName = deriveRemoteFileName(remoteUrl)
                 val mirror = withContext(Dispatchers.IO) {
-                    writeJsonToDownloads(app, fileName, remote.rawJson)
+                    writeJsonToDownloads(app, fileName, remote.rawJson).also {
+                        remote.persistCache?.invoke()
+                    }
                 }
                 preferences.saveRemoteSelection(mirror.uriString, mirror.displayName, remoteUrl)
                 _uiState.update {
@@ -339,6 +364,21 @@ class MenuViewModel(
                 }
             }
         }
+    }
+
+    private fun validateFetchedRota(rawJson: String): String? {
+        return RotoPayloadValidator.parseAndValidate(rawJson)
+            .fold(
+                onSuccess = { null },
+                onFailure = { error ->
+                    if (error is IllegalArgumentException && error.message?.startsWith("The rota file is missing") == true) {
+                        "That shared link downloaded, but the rota has validation issues:\n" +
+                            error.message.orEmpty().substringAfter('\n', "")
+                    } else {
+                        "That shared link downloaded, but it isn't valid Roto JSON. Check the link points directly to a schema 0.3 rota file."
+                    }
+                }
+            )
     }
 
     fun getAiInstructions(): String = aiInstructionsText
@@ -448,16 +488,17 @@ class MenuViewModel(
 
     private suspend fun performLoad(
         selection: MenuSelection?,
-        isManualRefresh: Boolean = false
+        isManualRefresh: Boolean = false,
+        fetchRemote: Boolean = false
     ) {
         if (!isManualRefresh) {
-        val warning = _uiState.value.setupMessage?.takeIf { it.isError && it.text.contains("cached", ignoreCase = true) }
-        _uiState.emit(
-            _uiState.value.copy(
-                isLoading = true,
-                setupMessage = warning
+            val warning = _uiState.value.setupMessage?.takeIf { it.isError && it.text.contains("cached", ignoreCase = true) }
+            _uiState.emit(
+                _uiState.value.copy(
+                    isLoading = true,
+                    setupMessage = warning
+                )
             )
-        )
         } else {
             _uiState.emit(
                 _uiState.value.copy(
@@ -479,7 +520,7 @@ class MenuViewModel(
         val primaryResult = withContext(Dispatchers.IO) {
             repository.loadMenu(
                 selection = selection,
-                forceRemoteRefresh = selection?.type == MenuSelectionType.REMOTE_LINK
+                fetchRemote = fetchRemote && selection?.type == MenuSelectionType.REMOTE_LINK
             )
         }
         primaryResult.onSuccess { result ->
@@ -505,7 +546,7 @@ class MenuViewModel(
                     repository.loadMenu(
                         selection = selection,
                         allowDownloadsFallback = false,
-                        forceRemoteRefresh = false
+                        fetchRemote = false
                     ).getOrNull()
                 }
                 cachedResult?.let { cached ->

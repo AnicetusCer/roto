@@ -120,13 +120,13 @@ class RotoTodayWidget : GlanceAppWidget() {
             val ids = manager.getGlanceIds(RotoTodayWidget::class.java)
             if (ids.isEmpty()) return
             for (glanceId in ids) {
-                refreshSingle(context, glanceId)
+                refreshSingle(context, glanceId, fetchRemote = false)
             }
             WidgetRefreshScheduler.scheduleDailyRefresh(context)
         }
 
-        suspend fun refreshSingle(context: Context, glanceId: GlanceId, forceRefresh: Boolean = true) {
-            val freshState = computeWidgetState(context, forceRefresh)
+        suspend fun refreshSingle(context: Context, glanceId: GlanceId, fetchRemote: Boolean = false) {
+            val freshState = computeWidgetState(context, fetchRemote)
             val prefs = getAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId)
             val storedFocus = prefs[FOCUS_KEY]?.let { runCatching { DayFocus.valueOf(it) }.getOrNull() }
             val activeFocus = storedFocus ?: freshState.defaultFocus()
@@ -169,7 +169,7 @@ private suspend fun loadWidgetState(
         return cachedState.toWidgetState()
     }
 
-    val freshState = computeWidgetState(context, forceRefresh = false)
+    val freshState = computeWidgetState(context, fetchRemote = false)
 
     updateAppWidgetState(context, glanceId) { mutablePrefs ->
         mutablePrefs[STATE_CACHE_KEY] = cacheJson.encodeToString(freshState.toCached())
@@ -178,7 +178,7 @@ private suspend fun loadWidgetState(
     return freshState
 }
 
-private suspend fun computeWidgetState(context: Context, forceRefresh: Boolean = false): WidgetState =
+private suspend fun computeWidgetState(context: Context, fetchRemote: Boolean = false): WidgetState =
     withContext(Dispatchers.IO) {
         val preferences = MenuPreferencesDataSource(context)
         val themePreferences = ThemePreferencesDataSource(context)
@@ -204,7 +204,7 @@ private suspend fun computeWidgetState(context: Context, forceRefresh: Boolean =
         val rotaResult = repository.loadMenu(
             selection = selection,
             allowDownloadsFallback = false,
-            forceRemoteRefresh = forceRefresh && selection?.type == MenuSelectionType.REMOTE_LINK
+            fetchRemote = fetchRemote && selection?.type == MenuSelectionType.REMOTE_LINK
         )
 
         rotaResult.fold(
@@ -224,7 +224,8 @@ private suspend fun computeWidgetState(context: Context, forceRefresh: Boolean =
                         } ?: "No rota entries available."
                         ,
                         themeOption = themeOption,
-                        isDark = resolvedDark
+                        isDark = resolvedDark,
+                        canFetchRemote = selection?.type == MenuSelectionType.REMOTE_LINK
                     )
                 } else {
                     Log.d(TAG, "computeWidgetState: todayPresent=${todayResult != null}, tomorrowPresent=${tomorrowResult != null}")
@@ -234,7 +235,8 @@ private suspend fun computeWidgetState(context: Context, forceRefresh: Boolean =
                         tomorrow = tomorrowResult?.toSummary("Tomorrow", DayFocus.TOMORROW),
                         fallbackMessage = null,
                         themeOption = themeOption,
-                        isDark = resolvedDark
+                        isDark = resolvedDark,
+                        canFetchRemote = selection?.type == MenuSelectionType.REMOTE_LINK
                     )
                 }
             },
@@ -245,7 +247,8 @@ private suspend fun computeWidgetState(context: Context, forceRefresh: Boolean =
                     tomorrow = null,
                     fallbackMessage = error.message ?: "Add a rota in the app to populate the widget.",
                     themeOption = themeOption,
-                    isDark = resolvedDark
+                    isDark = resolvedDark,
+                    canFetchRemote = selection?.type == MenuSelectionType.REMOTE_LINK
                 )
             }
         )
@@ -257,7 +260,8 @@ private data class WidgetState(
     val tomorrow: DaySummary?,
     val fallbackMessage: String?,
     val themeOption: ThemeOption = ThemeOption.SYSTEM,
-    val isDark: Boolean = false
+    val isDark: Boolean = false,
+    val canFetchRemote: Boolean = false
 )
 
 private data class DaySummary(
@@ -277,7 +281,8 @@ private data class CachedWidgetState(
     val tomorrow: CachedDaySummary?,
     val fallbackMessage: String?,
     val themeOption: ThemeOption = ThemeOption.SYSTEM,
-    val isDark: Boolean = false
+    val isDark: Boolean = false,
+    val canFetchRemote: Boolean = false
 )
 
 @Serializable
@@ -298,7 +303,8 @@ private fun CachedWidgetState.toWidgetState(): WidgetState =
         tomorrow = tomorrow?.toDaySummary(),
         fallbackMessage = fallbackMessage,
         themeOption = themeOption,
-        isDark = isDark
+        isDark = isDark,
+        canFetchRemote = canFetchRemote
     )
 
 private fun CachedDaySummary.toDaySummary(): DaySummary =
@@ -319,7 +325,8 @@ private fun WidgetState.toCached(): CachedWidgetState =
         tomorrow = tomorrow?.toCached(),
         fallbackMessage = fallbackMessage,
         themeOption = themeOption,
-        isDark = isDark
+        isDark = isDark,
+        canFetchRemote = canFetchRemote
     )
 
 private fun DaySummary.toCached(): CachedDaySummary =
@@ -342,7 +349,8 @@ private fun RotoWidgetContent(
 ) {
     val palette = paletteForTheme(state.themeOption, state.isDark)
     val openAppAction = actionStartActivity<MainActivity>()
-    val refreshAction = actionRunCallback<RefreshWidgetCallback>()
+    val reloadAction = actionRunCallback<ReloadWidgetCallback>()
+    val fetchAction = actionRunCallback<FetchRemoteWidgetCallback>()
     Column(
         modifier = modifier
             .background(palette.background)
@@ -361,13 +369,22 @@ private fun RotoWidgetContent(
             horizontalAlignment = Alignment.Horizontal.End
         ) {
             OpenAppLink(openAppAction, palette)
-            Spacer(modifier = GlanceModifier.width(8.dp))
+            Spacer(modifier = GlanceModifier.width(4.dp))
             ActionChip(
-                label = "Refresh",
+                label = "Reload",
                 modifier = GlanceModifier,
-                onClick = refreshAction,
+                onClick = reloadAction,
                 palette = palette
             )
+            if (state.canFetchRemote) {
+                Spacer(modifier = GlanceModifier.width(4.dp))
+                ActionChip(
+                    label = "Fetch",
+                    modifier = GlanceModifier,
+                    onClick = fetchAction,
+                    palette = palette
+                )
+            }
         }
         Spacer(modifier = GlanceModifier.height(8.dp))
         if (summary != null) {
@@ -491,12 +508,12 @@ private fun SpecialEventBadge(
 @Composable
 private fun OpenAppLink(action: Action, palette: WidgetPalette) {
     Text(
-        text = "Open App",
+        text = "Open",
         style = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.Medium, color = palette.primaryTextColor),
         modifier = GlanceModifier
             .background(palette.chipUnselectedBackground)
             .cornerRadius(8.dp)
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .padding(horizontal = 6.dp, vertical = 4.dp)
             .clickable(action)
     )
 }
@@ -833,14 +850,14 @@ private fun ActionChip(
         modifier = modifier
             .background(palette.chipUnselectedBackground)
             .cornerRadius(12.dp)
-            .padding(horizontal = 10.dp, vertical = 7.dp)
+            .padding(horizontal = 7.dp, vertical = 6.dp)
             .clickable(onClick),
         horizontalAlignment = Alignment.Horizontal.CenterHorizontally
     ) {
         Text(
             text = label,
             style = TextStyle(
-                fontSize = 12.sp,
+                fontSize = 10.sp,
                 fontWeight = FontWeight.Medium,
                 color = palette.chipUnselectedText,
                 textAlign = TextAlign.Center
@@ -913,9 +930,9 @@ class ShowTodayCallback : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         Log.d(TAG, "ShowTodayCallback.onAction for $glanceId")
         updateStoredFocus(context, glanceId, DayFocus.TODAY)
-        // First repaint immediately with cached state/focus, then refresh data in the background.
+        // First repaint immediately with cached state/focus, then reload local data in the background.
         RotoTodayWidget().update(context, glanceId)
-        RotoTodayWidget.refreshSingle(context, glanceId, forceRefresh = false)
+        RotoTodayWidget.refreshSingle(context, glanceId, fetchRemote = false)
     }
 }
 
@@ -924,14 +941,22 @@ class ShowTomorrowCallback : ActionCallback {
         Log.d(TAG, "ShowTomorrowCallback.onAction for $glanceId")
         updateStoredFocus(context, glanceId, DayFocus.TOMORROW)
         RotoTodayWidget().update(context, glanceId)
-        RotoTodayWidget.refreshSingle(context, glanceId, forceRefresh = false)
+        RotoTodayWidget.refreshSingle(context, glanceId, fetchRemote = false)
     }
 }
 
-class RefreshWidgetCallback : ActionCallback {
+class ReloadWidgetCallback : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        Log.d(TAG, "RefreshWidgetCallback.onAction for $glanceId")
-        RotoTodayWidget.refreshSingle(context, glanceId)
+        Log.d(TAG, "ReloadWidgetCallback.onAction for $glanceId")
+        RotoTodayWidget.refreshSingle(context, glanceId, fetchRemote = false)
+        WidgetRefreshScheduler.scheduleDailyRefresh(context)
+    }
+}
+
+class FetchRemoteWidgetCallback : ActionCallback {
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        Log.d(TAG, "FetchRemoteWidgetCallback.onAction for $glanceId")
+        RotoTodayWidget.refreshSingle(context, glanceId, fetchRemote = true)
         WidgetRefreshScheduler.scheduleDailyRefresh(context)
     }
 }

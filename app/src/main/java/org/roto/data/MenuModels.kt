@@ -1,6 +1,7 @@
 package org.roto.data
 
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.json.JsonNames
 import kotlinx.serialization.Serializable
@@ -91,6 +92,28 @@ object RotoJsonParser {
 
     fun parseOrNull(rawJson: String): RotoData? =
         runCatching { parse(rawJson) }.getOrNull()
+}
+
+object RotoPayloadValidator {
+    fun parseAndValidate(rawJson: String): Result<RotoData> =
+        runCatching {
+            val data = try {
+                RotoJsonParser.parse(rawJson)
+            } catch (e: SerializationException) {
+                throw IllegalArgumentException(
+                    "That file couldn't be understood. Make sure it matches the rota JSON examples or regenerate it with the helper prompt.",
+                    e
+                )
+            }
+            val issues = RotoValidator.validate(data)
+            if (issues.isNotEmpty()) {
+                val bulletList = issues.joinToString(separator = "\n• ", prefix = "• ")
+                throw IllegalArgumentException(
+                    "The rota file is missing some required details:\n$bulletList\nPlease fix these and try again."
+                )
+            }
+            data
+        }
 }
 
 /**

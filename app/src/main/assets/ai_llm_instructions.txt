@@ -28,6 +28,7 @@ STEP‑BY‑STEP FLOW (KEEP IT FRIENDLY)
 2. If the user provides an existing JSON file:
    - First, check that it looks like valid Roto JSON (for example it has `schema_version`, `cycle`, and `weeks`).
    - Tell the user if you see obvious structural problems (for example missing `schema_version` or invalid dates) and fix them carefully.
+   - New files must use `rota_name` as the top-level display name. If the existing file uses `school_name`, convert it to `rota_name` in your output.
    - Apply their requested changes **on top of** the existing structure rather than starting from scratch, unless they explicitly ask for a clean file.
    - Keep `schema_version` as `"0.3"` unless they ask for a different version.
 3. Once you see the rota (from text, images, PDF, or an existing JSON file), ask:
@@ -45,16 +46,21 @@ STEP‑BY‑STEP FLOW (KEEP IT FRIENDLY)
 6. Add one‑off changes as overrides:
    - If the rota has special days (inset days, holidays, theme days), use `overrides` with an exact date (`YYYY-MM-DD`).
    - Use `"closed": true` when nothing runs that day (for example “School closed”).
+   - An override day should directly contain `slots` (an array of `{ "label": "...", "text": "..." }` objects) or `"closed": true`. It may also include `reason`, `special_event`, or `notes`.
+   - Never use relative words like “tomorrow”, “next Friday”, “next week”, or “last day of term” as override keys.
 7. Use repeating cycles instead of copying:
    - If the rota loops (for example Week 1–4 then back to Week 1), add a `cycle.repeat` section.
    - Set `start_date` to a real Monday and `start_week_id` to the first week in the loop.
 8. Before you reply, **check the JSON carefully**:
    - `schema_version` is `"0.3"`.
+   - The top-level display name key is `rota_name` (not `school_name`). If the user supplied `school_name`, output it as `rota_name`.
    - Every `week_commencing` entry is a real **Monday** in `YYYY-MM-DD` format.
+   - If the user said a relative date such as “tomorrow”, “next week”, or “Friday”, convert it to a real `YYYY-MM-DD` date using the Europe/London timezone and state the computed date in plain text before the JSON. If you cannot confidently compute it, ask for the exact date before writing the override.
    - Each day in `cycle.weeks[].days` has a `slots` array with objects including at least `label` and `text`.
    - Any `tags` are short labels (not full sentences).
    - All `overrides` keys are ISO dates (`YYYY-MM-DD`).
-9. Finally, show only the JSON in a ```json fenced code block.
+   - Every override key applies only to that exact date, and each override contains `slots` or `"closed": true`.
+9. Finally, show the JSON in a ```json fenced code block. If you computed a relative date, put one short sentence immediately before the code block saying which real date you used.
 10. After the code block, add a short plain‑language note:
    - “Save this text as a `.json` file (for example `RotoRota.json`) using a plain‑text editor app (for example Markor or any simple ‘text editor’ from your app store). Put it somewhere you can find it, such as Downloads, then load it in the Roto app.”
 11. Offer to tweak:
@@ -126,3 +132,14 @@ TIPS FOR THE AI (KEEP THE USER IN MIND)
 - Ask the user to clarify missing pieces (week labels, Monday dates, vague items) instead of inventing details.
 - If the user shares photos/screenshots, transcribe carefully and read them back in your own words to confirm.
 - Expect to iterate: it’s fine to adjust the JSON a few times until what they see in the Roto app matches the real rota.
+
+----------------------------------------------------------------------
+IF AN OVERRIDE ISN'T SHOWING IN ROTO
+----------------------------------------------------------------------
+Check these before changing the base rota:
+
+- The override key is an exact ISO date string (`YYYY-MM-DD`), not “tomorrow” or another relative phrase.
+- The date actually exists in the rota's calendar coverage, or the rota has `cycle.repeat` so future dates can be calculated.
+- The override object contains `slots` or `"closed": true`; add `reason`, `special_event`, or `notes` only as supporting fields.
+- The base rota is valid schema 0.3 and includes required top-level keys: `schema_version`, `rota_name`, and `cycle`.
+- If the file is shared/imported, tap Reload for local changes or Fetch for shared-link updates in Roto after saving changes, because the app may still be showing a cached copy.

@@ -5,6 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class RotoJsonParserTest {
@@ -104,8 +105,80 @@ class RotoJsonParserTest {
     }
 
     @Test
+    fun `parse accepts legacy school name as rota name`() {
+        val legacyJson = """
+            {
+              "schema_version": "0.3",
+              "school_name": "Legacy School Menu",
+              "cycle": {
+                "weeks": [
+                  {
+                    "week_id": "Week 1",
+                    "week_commencing": ["2025-09-01"],
+                    "days": {
+                      "monday": {
+                        "slots": [
+                          { "label": "Main", "text": "Pasta" }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+        """.trimIndent()
+
+        val rota = RotoJsonParser.parse(legacyJson)
+
+        assertEquals("Legacy School Menu", rota.rotaName)
+    }
+
+    @Test
     fun `parseOrNull returns null for invalid json`() {
         val result = RotoJsonParser.parseOrNull("not-json")
         assertNull(result)
+    }
+
+    @Test
+    fun `payload validator accepts valid rota json`() {
+        val result = RotoPayloadValidator.parseAndValidate(menuSample)
+
+        assertTrue(result.isSuccess)
+        assertEquals("Springfield Primary Sample Menu", result.getOrThrow().rotaName)
+    }
+
+    @Test
+    fun `payload validator rejects malformed json`() {
+        val result = RotoPayloadValidator.parseAndValidate("not-json")
+
+        assertFalse(result.isSuccess)
+    }
+
+    @Test
+    fun `payload validator rejects structurally invalid rota json`() {
+        val invalidRota = """
+            {
+              "schema_version": "0.3",
+              "rota_name": "Invalid",
+              "cycle": {
+                "weeks": [
+                  {
+                    "week_id": "Week 1",
+                    "week_commencing": ["2025-09-02"],
+                    "days": {
+                      "monday": {
+                        "slots": []
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+        """.trimIndent()
+
+        val result = RotoPayloadValidator.parseAndValidate(invalidRota)
+
+        assertFalse(result.isSuccess)
+        assertTrue(result.exceptionOrNull()?.message.orEmpty().contains("week_commencing"))
     }
 }
